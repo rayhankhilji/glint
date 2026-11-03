@@ -1,0 +1,14 @@
+# SwiftFormat 0.63.1 — run `swiftformat .` (check: `swiftformat --lint .`)
+--swiftversion 6.0
+--indent 4
+--maxwidth 120
+--wraparguments before-first
+--wrapparameters before-first
+--wrapcollections before-first
+--closingparen balanced
+--self remove
+--importgrouping testable-last
+--stripunusedargs closure-only
+--header ignore
+--exclude .build,.tools,build,**/.build,Packages/*/.build,DerivedData
+--disable redundantReturn,wrapMultilineStatementBraces,wrapPropertyBodies,blankLinesBetweenScopes

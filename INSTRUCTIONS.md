@@ -35,17 +35,17 @@ Never start the next phase until the current phase's exit criteria in `ROADMAP.m
 
 | Layer | Choice |
 |---|---|
-| Language | Swift 6 language mode, strict concurrency complete |
-| Toolchain | Xcode 26.x+ (latest stable), macOS 14.0 deployment target, arm64 only |
+| Language | Swift 6.4 toolchain, Swift 6 language mode, strict concurrency complete |
+| Toolchain | Xcode 27.1+, macOS 14.0 deployment target, arm64 only |
 | UI | SwiftUI (+ AppKit only for `NSPanel`, `NSStatusItem` geometry, window levels) |
 | Camera | AVFoundation |
-| Landmarks | MediaPipe Face Landmarker models via ONNX Runtime (Core ML EP); Apple Vision fallback |
-| Global hotkey | KeyboardShortcuts 2.x |
-| Updates | Sparkle 2.x |
-| Opt-in metrics / crashes | TelemetryDeck SwiftSDK 2.x / Sentry Cocoa 8.x |
-| Tests | Swift Testing, XCTest/XCUITest, swift-snapshot-testing |
-| Lint/format | SwiftLint (strict), SwiftFormat |
-| Project | XcodeGen (`project.yml`), local SwiftPM packages |
+| Landmarks | MediaPipe Face Landmarker models via ONNX Runtime 1.24.2 (Core ML EP); Apple Vision fallback |
+| Global hotkey | KeyboardShortcuts 3.1.0 |
+| Updates | Sparkle 2.10.0 |
+| Opt-in metrics / crashes | TelemetryDeck SwiftSDK 2.14.2 / Sentry Cocoa 9.30.2 |
+| Tests | Swift Testing, XCTest/XCUITest, swift-snapshot-testing 1.19.6 |
+| Lint/format | SwiftLint 0.65.1 (strict), SwiftFormat 0.63.1 |
+| Project | XcodeGen 2.46.0 (`project.yml`), local SwiftPM packages |
 | Scripts | bash (`set -euo pipefail`), Python 3.12 via `uv` for model conversion only |
 
 Do not introduce new frameworks, libraries, SPM packages, or services without recording an ADR in `ARCHITECTURE.md` §16 and noting it in `TASK_LOG.md` → Decisions. Versions are in ARCHITECTURE §2.

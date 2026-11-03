@@ -19,7 +19,7 @@ Glint's risk is not CRUD bugs; it's **perception and intent quality** (accuracy,
 
 ## 2. Setup
 
-Prerequisites: macOS 14+ on Apple Silicon, Xcode 26.x+ (`xcode-select -p` points to it), Homebrew, Git LFS. Linux (agents/CI) only needs the Swift 6 toolchain (`swift --version` ≥ 6.0) for GlintCore.
+Prerequisites: a dev Mac on macOS 26.6+ (Apple Silicon) with Xcode 27.1+ (`xcode-select -p` points to it), Homebrew, Git LFS. The app itself runs on macOS 14+. Linux (agents/CI) only needs the Swift 6.4 toolchain (`swift --version` ≥ 6.4) for GlintCore.
 
 From a clean clone (macOS):
 

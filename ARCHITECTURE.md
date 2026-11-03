@@ -26,32 +26,32 @@ flowchart LR
 
 ## 2. Tech Stack
 
-Pinned majors. P0.T1 verifies the current stable versions and updates this table in place.
+Pinned versions, verified 2026-11-03 (P0.T1). Rule: pin the newest release that is at least 14 days old. Exact pins live in `project.yml` / `Package.swift` / `scripts/install-tools.sh`; update this table when they change.
 
 | Layer | Choice | Version | Rationale |
 |---|---|---|---|
-| Language | Swift, language mode 6 (strict concurrency) | 6.x | Native APIs (AVFoundation, AX, Quartz, Core ML) with data-race safety. |
-| IDE / toolchain | Xcode | 26.x+ (latest stable) | Required for macOS 14+ SDK, Swift Testing, SwiftUI shaders. |
+| Language | Swift, language mode 6 (strict concurrency) | 6.4 (CI Linux image `swift:6.4.1-noble`; `swift-tools-version: 6.0`) | Native APIs (AVFoundation, AX, Quartz, Core ML) with data-race safety. |
+| IDE / toolchain | Xcode | 27.1+ (dev Mac must run macOS 26.6+) | macOS 27 SDK, Swift 6.4, Swift Testing, SwiftUI shaders, `glassEffect`. |
 | Min OS / hardware | macOS 14.0, Apple Silicon only | — | Neural Engine for latency/energy; `@Observable`, SwiftUI `MenuBarExtra`, shader effects. |
 | UI | SwiftUI + AppKit bridges (`NSPanel`, `NSStatusItem`) | — | SwiftUI for all views; AppKit only for window levels, click-through overlay, status item geometry. |
 | Glass material | `glassEffect()` on macOS 26+, `.ultraThinMaterial`/`NSVisualEffectView` fallback on 14–15 | — | Apple-native liquid glass where available, graceful fallback. |
 | Shaders | SwiftUI `layerEffect`/`colorEffect` with Metal `.metal` files | — | Glint bloom, specular sweep, and flare at 120 Hz on the GPU. |
 | Camera | AVFoundation `AVCaptureSession` | — | Native, supports Continuity Camera. |
-| Landmarks (primary) | MediaPipe Face Landmarker models (face detector + 478-pt landmarks incl. iris + blendshapes), converted to ONNX, run with ONNX Runtime + Core ML EP | ORT 1.x | Iris landmarks + blink blendshapes; Apache-2.0 models; ANE acceleration. Decided in ADR-002. |
+| Landmarks (primary) | MediaPipe Face Landmarker models (face detector + 478-pt landmarks incl. iris + blendshapes), converted to ONNX, run with ONNX Runtime + Core ML EP | ORT 1.24.2 (`onnxruntime-swift-package-manager`) | Iris landmarks + blink blendshapes; Apache-2.0 models; ANE acceleration. Decided in ADR-002. |
 | Landmarks (fallback) | Apple Vision `VNDetectFaceLandmarksRequest` (revision 3) + `VNDetectFaceRectanglesRequest` (yaw/pitch/roll) | — | Zero-dependency fallback; selected automatically if the ORT provider fails to load. |
 | Math | Hand-written small linear algebra in GlintCore (Cholesky ridge solve, ≤ 64×64) | — | Must compile on Linux (no Accelerate) for agent/CI testing. |
-| Global hotkey | `sindresorhus/KeyboardShortcuts` | 2.x | Battle-tested recorder UI + Carbon hotkeys; MIT. |
+| Global hotkey | `sindresorhus/KeyboardShortcuts` | 3.1.0 | Battle-tested recorder UI + Carbon hotkeys; MIT. |
 | Launch at login | `SMAppService.mainApp` | — | Native, no helper app. |
-| Updates | Sparkle | 2.x | De facto Mac updater, EdDSA-signed appcasts. |
-| Metrics (opt-in) | TelemetryDeck SwiftSDK | 2.x | Privacy-first, anonymized, no server to run. |
-| Crash reports (opt-in) | Sentry Cocoa SDK | 8.x | Symbolicated crashes; PII off. |
-| Project generation | XcodeGen (`project.yml`) | 2.x | Agents edit YAML, never `project.pbxproj`. |
+| Updates | Sparkle | 2.10.0 | De facto Mac updater, EdDSA-signed appcasts. |
+| Metrics (opt-in) | TelemetryDeck SwiftSDK | 2.14.2 | Privacy-first, anonymized, no server to run. |
+| Crash reports (opt-in) | Sentry Cocoa SDK | 9.30.2 | Symbolicated crashes; PII off. |
+| Project generation | XcodeGen (`project.yml`) | 2.46.0 | Agents edit YAML, never `project.pbxproj`. |
 | Packages | Swift Package Manager (local packages `Packages/GlintCore`, `Packages/GlintKit`) | — | Modular, testable with `swift test`; GlintCore also on Linux. |
-| Tests | Swift Testing (`import Testing`) for units; XCTest/XCUITest for UI; `pointfreeco/swift-snapshot-testing` for view snapshots | 1.x | Modern test macros; snapshot tests for visual regressions. |
-| Lint / format | SwiftLint (strict) + SwiftFormat | 0.5x | Consistent style, enforced in CI. |
+| Tests | Swift Testing (`import Testing`) for units; XCTest/XCUITest for UI; `pointfreeco/swift-snapshot-testing` for view snapshots | 1.19.6 | Modern test macros; snapshot tests for visual regressions. |
+| Lint / format | SwiftLint (strict) + SwiftFormat | SwiftLint 0.65.1, SwiftFormat 0.63.1 | Consistent style, enforced in CI. |
 | Model conversion | Python 3.12 via `uv`, `tf2onnx`, `onnx`, `onnxruntime` (scripts only, not shipped) | — | Reproducible `Models/` artifacts with checksums. |
 | DMG | `create-dmg` (npm or brew) | — | Branded drag-to-install DMG. |
-| CI | GitHub Actions: `ubuntu-latest` (Swift 6 toolchain) + `macos-latest` | — | Linux job tests GlintCore cheaply; macOS job builds/tests the app. |
+| CI | GitHub Actions: `ubuntu-24.04` (container `swift:6.4.1-noble`) + `macos-26` (Xcode 27.1) | — | Linux job tests GlintCore cheaply; macOS job builds/tests the app. |
 
 ## 3. Component Boundaries
 
@@ -512,10 +512,10 @@ All UI is in GlintUI; windows are created by controllers owned by `AppEnvironmen
 | **ONNX Runtime** | Run MediaPipe landmark models on ANE/GPU/CPU | `microsoft/onnxruntime-swift-package-manager` (product `onnxruntime`) | none | `Models/*.onnx` + `Models/checksums.sha256` | — | — | Load fails → Vision provider (`MODEL_LOAD_FAILED`) | Same models; `GLINT_PROVIDER=vision` env forces fallback |
 | **MediaPipe models** | face detector (short-range), face landmarks (478 incl. iris), blendshapes | Downloaded by `scripts/models/fetch_and_convert.py` from Google's MediaPipe model storage; converted with `tf2onnx` | — | Pinned URLs + SHA-256 in `scripts/models/manifest.json` | — | — | Checksum mismatch → refuse (G-SEC-08) | Converted ONNX committed via Git LFS |
 | **Apple Vision** | Fallback landmarks | system | — | — | — | — | — | — |
-| **Sparkle** | Auto-update (F-14) | `sparkle-project/Sparkle` 2.x | EdDSA public key in Info.plist `SUPublicEDKey` | `SUFeedURL` (`SPARKLE_FEED_URL`), `SUEnableAutomaticChecks = YES`, `SUScheduledCheckInterval = 86400` | — | GitHub Releases | Silent retry; errors shown only on manual check | `SPARKLE_FEED_URL` → local `python3 -m http.server` serving a test appcast |
-| **TelemetryDeck** | Opt-in metrics | `TelemetryDeck/SwiftSDK` 2.x | App ID | `TELEMETRYDECK_APP_ID` | — | Free-tier signal quota; we send ≤ ~3 signals/user/day | Queue up to 7 days, then drop | `testMode` auto-enabled in DEBUG; or leave App ID empty → client is a no-op |
-| **Sentry** | Opt-in crash reports | `getsentry/sentry-cocoa` 8.x | DSN | `SENTRY_DSN`; options: `sendDefaultPii = false`, `attachScreenshot = false`, `attachViewHierarchy = false`, `enableAutoBreadcrumbTracking = false`, `beforeSend` scrubber | — | Sentry plan quota | Never initialized unless opted in; init failure is ignored | Empty DSN → no-op |
-| **KeyboardShortcuts** | Global hotkey + recorder | `sindresorhus/KeyboardShortcuts` 2.x | — | Name `toggleGlint` default ⌃⌥G | — | — | Registration conflict → Settings shows "Shortcut in use" | — |
+| **Sparkle** | Auto-update (F-14) | `sparkle-project/Sparkle` 2.10.0 | EdDSA public key in Info.plist `SUPublicEDKey` | `SUFeedURL` (`SPARKLE_FEED_URL`), `SUEnableAutomaticChecks = YES`, `SUScheduledCheckInterval = 86400` | — | GitHub Releases | Silent retry; errors shown only on manual check | `SPARKLE_FEED_URL` → local `python3 -m http.server` serving a test appcast |
+| **TelemetryDeck** | Opt-in metrics | `TelemetryDeck/SwiftSDK` 2.14.2 | App ID | `TELEMETRYDECK_APP_ID` | — | Free-tier signal quota; we send ≤ ~3 signals/user/day | Queue up to 7 days, then drop | `testMode` auto-enabled in DEBUG; or leave App ID empty → client is a no-op |
+| **Sentry** | Opt-in crash reports | `getsentry/sentry-cocoa` 9.30.2 | DSN | `SENTRY_DSN`; options: `sendDefaultPii = false`, `attachScreenshot = false`, `attachViewHierarchy = false`, `enableAutoBreadcrumbTracking = false`, `beforeSend` scrubber | — | Sentry plan quota | Never initialized unless opted in; init failure is ignored | Empty DSN → no-op |
+| **KeyboardShortcuts** | Global hotkey + recorder | `sindresorhus/KeyboardShortcuts` 3.1.0 | — | Name `toggleGlint` default ⌃⌥G | — | — | Registration conflict → Settings shows "Shortcut in use" | — |
 | **GitHub Releases** | Host DMG + `appcast.xml` | `gh` CLI in release workflow | `GITHUB_TOKEN` (CI) | — | — | — | Release job fails loudly | — |
 | **Homebrew tap** | `brew install --cask` | separate repo `homebrew-tap`, `Casks/glint.rb` | `HOMEBREW_TAP_TOKEN` (CI) | — | — | — | Manual PR if the bot fails | — |
 

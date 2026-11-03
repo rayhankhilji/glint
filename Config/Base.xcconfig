@@ -1,0 +1,29 @@
+// Base build settings shared by Debug and Release. Values here are referenced by project.yml and Info.plist.
+// Secrets.xcconfig is optional (gitignored). Copy Secrets.example.xcconfig to create it.
+#include? "Secrets.xcconfig"
+
+MARKETING_VERSION = 0.1.0
+CURRENT_PROJECT_VERSION = 1
+
+// Overridden in Secrets.xcconfig for signed builds (PRD Q2).
+PRODUCT_BUNDLE_IDENTIFIER = $(GLINT_BUNDLE_ID)
+GLINT_BUNDLE_ID = com.example.glint
+DEVELOPMENT_TEAM = $(GLINT_DEVELOPMENT_TEAM)
+
+MACOSX_DEPLOYMENT_TARGET = 14.0
+ARCHS = arm64
+SWIFT_VERSION = 6.0
+SWIFT_STRICT_CONCURRENCY = complete
+ENABLE_HARDENED_RUNTIME = YES
+CODE_SIGN_ENTITLEMENTS = Config/Glint.entitlements
+INFOPLIST_FILE = Config/Info.plist
+GENERATE_INFOPLIST_FILE = NO
+ENABLE_USER_SCRIPT_SANDBOXING = YES
+DEAD_CODE_STRIPPING = YES
+
+// Public-by-design identifiers (ARCHITECTURE §11–§12). Empty = feature disabled.
+GLINT_TELEMETRYDECK_APP_ID =
+GLINT_SENTRY_DSN =
+// xcconfig treats `//` as a comment, so URLs are written with `$()` between the slashes.
+GLINT_SPARKLE_FEED_URL = https:/$()/127.0.0.1:8089/appcast.xml
+GLINT_SPARKLE_PUBLIC_ED_KEY =

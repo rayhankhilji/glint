@@ -1,0 +1,11 @@
+# SwiftPM package identity → license (G-SEC-12). Only MIT / Apache-2.0 / BSD are allowed.
+# Adding a line requires an ADR (EVAL_GUARDRAILS §9).
+sparkle                               MIT
+keyboardshortcuts                     MIT
+swiftsdk                              MIT          # TelemetryDeck/SwiftSDK
+sentry-cocoa                          MIT
+onnxruntime-swift-package-manager     MIT
+swift-snapshot-testing                MIT
+swift-custom-dump                     MIT          # transitive (snapshot-testing)
+swift-issue-reporting                 MIT          # transitive (snapshot-testing; formerly xctest-dynamic-overlay)
+swift-syntax                          Apache-2.0   # transitive (snapshot-testing)

@@ -1,0 +1,7 @@
+#include "Base.xcconfig"
+
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG $(inherited)
+SWIFT_OPTIMIZATION_LEVEL = -Onone
+ONLY_ACTIVE_ARCH = YES
+// Local builds sign ad hoc unless a team is configured; see INSTRUCTIONS §10 (Accessibility trust resets).
+CODE_SIGN_IDENTITY = -

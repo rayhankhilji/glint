@@ -1,0 +1,92 @@
+# CI (TESTING_GUIDE §9). Cheap Linux jobs carry everything that doesn't need macOS.
+name: CI
+
+on:
+  push:
+    branches: [main, "claude/**", "feat/**", "fix/**"]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  core-linux:
+    name: core-linux (GlintCore + glint-eval)
+    runs-on: ubuntu-24.04
+    container: swift:6.4.1-noble
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build and test GlintCore with coverage
+        run: swift test --package-path Packages/GlintCore --enable-code-coverage
+      - name: Coverage gate (GlintCore ≥ 90%)
+        run: |
+          apt-get update -qq && apt-get install -y -qq python3 >/dev/null
+          scripts/coverage.sh core
+      - name: glint-eval smoke
+        run: swift run --package-path Packages/GlintCore glint-eval --version
+
+  lint:
+    name: lint (format, SwiftLint, architecture, licenses, contrast)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install pinned tools
+        run: scripts/install-tools.sh && echo "$PWD/.tools/bin" >> "$GITHUB_PATH"
+      - run: swiftformat --lint .
+      - run: swiftlint --strict
+      - name: Architecture rules + self-test
+        run: scripts/check-architecture.sh && scripts/tests/check-architecture.test.sh
+      - name: Licenses + self-test
+        run: scripts/check-licenses.sh && scripts/tests/check-licenses.test.sh
+      - name: Color contrast
+        run: python3 -I scripts/contrast.py
+
+  app-macos:
+    name: app-macos (GlintKit + app + UI tests)
+    runs-on: macos-26
+    timeout-minutes: 30
+    env:
+      # Until snapshot references recorded on a Mac are committed, record missing ones without failing
+      # (TASK_LOG → Decisions, 2026-11-03). Remove this line once __Snapshots__ contains PNGs.
+      GLINT_SNAPSHOT_BOOTSTRAP: "1"
+    steps:
+      - uses: actions/checkout@v5
+      - name: Select Xcode 27.1+
+        run: |
+          XCODE="$(ls -d /Applications/Xcode_27*.app 2>/dev/null | sort -V | tail -1)"
+          if [ -z "$XCODE" ]; then echo "No Xcode 27 on this runner:"; ls -d /Applications/Xcode*.app; exit 1; fi
+          sudo xcode-select -s "$XCODE/Contents/Developer"
+          xcodebuild -version
+      - name: Install pinned tools
+        run: scripts/install-tools.sh && echo "$PWD/.tools/bin" >> "$GITHUB_PATH"
+      - name: Test GlintKit (unit + snapshot)
+        run: swift test --package-path Packages/GlintKit
+      - name: Upload recorded snapshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: snapshots
+          path: Packages/GlintKit/Tests/GlintUITests/__Snapshots__
+          if-no-files-found: ignore
+      - name: Generate Xcode project
+        run: xcodegen generate
+      - name: Build and test the app (UI tests)
+        run: |
+          set -o pipefail
+          xcodebuild -project Glint.xcodeproj -scheme Glint -configuration Debug \
+            -destination 'platform=macOS,arch=arm64' -derivedDataPath build \
+            -resultBundlePath build/TestResults.xcresult \
+            CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO SWIFT_TREAT_WARNINGS_AS_ERRORS=YES \
+            test | tail -200
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcresult
+          path: build/TestResults.xcresult

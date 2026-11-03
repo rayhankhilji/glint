@@ -1,0 +1,37 @@
+# Xcode / XcodeGen (project.yml is the source of truth — ADR-009)
+*.xcodeproj/
+*.xcworkspace/
+!Packages/**/*.xcworkspace/contents.xcworkspacedata
+xcuserdata/
+DerivedData/
+build/
+*.xcresult
+
+# SwiftPM
+.build/
+.swiftpm/
+Packages/*/Package.resolved.bak
+
+# Secrets (copy Config/Secrets.example.xcconfig → Config/Secrets.xcconfig)
+Config/Secrets.xcconfig
+*.p12
+*.pem
+.env
+.env.*
+
+# Generated reports (only baseline.json is committed)
+Evals/reports/*
+!Evals/reports/baseline.json
+!Evals/reports/.gitkeep
+
+# Snapshot failure artifacts
+**/__Snapshots__/**/*_failure.png
+
+# Python (model conversion scripts)
+__pycache__/
+.venv/
+scripts/models/.cache/
+
+# OS
+.DS_Store
+.tools/

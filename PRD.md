@@ -284,7 +284,7 @@ Measured only for users who opted in (F-12) via TelemetryDeck, and in the intern
 
 ## 8. Non-Functional Requirements
 
-- **Platform:** macOS 14.0+ on Apple Silicon (M1+) only. Built with the current stable Xcode (26.x or newer) in Swift 6 language mode.
+- **Platform:** macOS 14.0+ on Apple Silicon (M1+) only. Built with Xcode 27.1+ (Swift 6.4) in Swift 6 language mode.
 - **Performance:** frame→overlay p95 ≤ 50 ms; blink-2 end → click ≤ 120 ms; overlay render at the display refresh rate (60/120 Hz) with no dropped frames during glint motion; average CPU ≤ 15% of one core at 30 fps (M1); memory ≤ 250 MB resident; Energy Impact "Low" in Activity Monitor while tracking; away mode ≤ 3% CPU.
 - **Reliability:** crash-free sessions ≥ 99.5%; the camera pipeline self-heals from interruptions within 2 s; no action ever fires while confidence < 0.6 (fail safe: false negatives over false positives).
 - **Privacy:** frames are processed in memory and dropped; only numeric calibration features are persisted; metrics are opt-in; no network except Sparkle (daily) and opted-in telemetry.
