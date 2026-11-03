@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-  <title>Magnetic snap</title>
-  <path data-part="cornerTL" d="M3.5 8.5 V5.5 Q3.5 3.5 5.5 3.5 H8.5"/>
-  <path data-part="cornerTR" d="M20.5 8.5 V5.5 Q20.5 3.5 18.5 3.5 H15.5"/>
-  <path data-part="cornerBR" d="M20.5 15.5 V18.5 Q20.5 20.5 18.5 20.5 H15.5"/>
-  <path data-part="cornerBL" d="M3.5 15.5 V18.5 Q3.5 20.5 5.5 20.5 H8.5"/>
-  <rect data-part="target" x="8.5" y="8.5" width="7" height="7" rx="1.75"/>
-</svg>

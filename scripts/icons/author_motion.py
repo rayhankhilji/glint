@@ -1,153 +1,175 @@
 #!/usr/bin/env python3
 """Authors Glint's animated SVG motion studies (Design/Motion/*.svg), the motion spec for DESIGN_SYSTEM §6.2.
 
-Timings mirror the GlintMotion tokens and the SwiftUI keyframes in GlintUI/Icons/AnimatedIcons.swift; change both
-together. SMIL rules: keySplines control values must stay within 0...1 (express overshoot with extra values).
+Overlay language: a precise indigo ring with a soft fill (target), a 2 px progress bar (scroll), a soft line
+highlight (where was I), a shrinking target (calibration). No glows, gradients or sparkles. Timings mirror the
+GlintMotion tokens and the SwiftUI keyframes in GlintUI/Icons/AnimatedIcons.swift; change both together.
+SMIL rule: keySplines control values stay within 0...1 (express overshoot with extra values).
 Usage: python3 scripts/icons/author_motion.py   (writes Design/Motion/)
 """
 import pathlib
 import sys
+
 OUT = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else pathlib.Path(__file__).resolve().parents[2] / "Design/Motion"
-SCREEN, CONTENT, MUTED = "#17181B", "#2C2E33", "#3A3D43"
-CORE, ARMED, EDGE = "#FFD98A", "#FFE7B3", "#6B4300"
-GLIDE = "0.22 0.61 0.36 1"; STD = "0.2 0 0 1"; ENTER = "0 0 0 1"; EXIT = "0.3 0 1 1"
+PAGE, CHROME, INK, BAR, BAR2 = "#FFFFFF", "#F3F4F6", "#0F1011", "#E4E5E8", "#D5D7DB"
+ACCENT = "#6366F1"
+STD, ENTER, EXIT, GLIDE, LIN = "0.2 0 0 1", "0 0 0 1", "0.3 0 1 1", "0.22 0.61 0.36 1", "0 0 1 1"
 
-def f(v): return f"{v:.2f}".rstrip("0").rstrip(".")
-def sparkle(cx, cy, r, k=0.22):
-    i = r * k; p = lambda x, y: f"{f(cx+x)} {f(cy+y)}"
-    return (f"M{p(0,-r)} C{p(i*0.6,-i*2.6)} {p(i*2.6,-i*0.6)} {p(r,0)} C{p(i*2.6,i*0.6)} {p(i*0.6,i*2.6)} {p(0,r)} "
-            f"C{p(-i*0.6,i*2.6)} {p(-i*2.6,i*0.6)} {p(-r,0)} C{p(-i*2.6,-i*0.6)} {p(-i*0.6,-i*2.6)} {p(0,-r)} Z")
-def almond(x0, x1, cy, h):
-    w = x1 - x0
-    return (f"M{f(x0)} {f(cy)} C{f(x0+w*0.22)} {f(cy-h)} {f(x1-w*0.22)} {f(cy-h)} {f(x1)} {f(cy)} "
-            f"C{f(x1-w*0.22)} {f(cy+h)} {f(x0+w*0.22)} {f(cy+h)} {f(x0)} {f(cy)} Z")
-def kt(times, total): return ";".join(f(t/total) for t in times)
 
-def wrap(name, title, desc, w, h, body):
-    (OUT / f"{name}.svg").write_text(
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w} {h}" width="{w}" height="{h}" role="img">\n'
-        f'  <title>{title}</title>\n  <desc>{desc}</desc>\n'
-        f'  <rect width="{w}" height="{h}" rx="14" fill="{SCREEN}"/>\n{body}\n</svg>\n')
+def f(v):
+    s = f"{v:.2f}".rstrip("0").rstrip(".")
+    return "0" if s in ("-0", "") else s
+
+
+def kt(times, total):
+    return ";".join(f(t / total) for t in times)
+
+
+def anim(attr, values, times, total, splines=None):
+    spl = f' calcMode="spline" keySplines="{";".join(splines)}"' if splines else ""
+    return (f'<animate attributeName="{attr}" values="{values}" keyTimes="{kt(times, total)}" '
+            f'dur="{f(total)}s" repeatCount="indefinite"{spl}/>')
+
 
 def scale_about(cx, cy, inner, values, times, total, splines=None):
-    spl = f' calcMode="spline" keySplines="{splines}"' if splines else ""
-    return (f'<g transform="translate({f(cx)} {f(cy)})"><g>'
-            f'<animateTransform attributeName="transform" type="scale" values="{values}" keyTimes="{times}" dur="{f(total)}s" repeatCount="indefinite"{spl}/>'
+    spl = f' calcMode="spline" keySplines="{";".join(splines)}"' if splines else ""
+    return (f'<g transform="translate({f(cx)} {f(cy)})"><g><animateTransform attributeName="transform" type="scale" '
+            f'values="{values}" keyTimes="{kt(times, total)}" dur="{f(total)}s" repeatCount="indefinite"{spl}/>'
             f'<g transform="translate({f(-cx)} {f(-cy)})">{inner}</g></g></g>')
 
-# 1. Acquire → armed → click flare (3.2 s loop) --------------------------------------------------------
+
+def window(body, w=400, h=220):
+    """A light app window: hairline frame, title bar with traffic lights, white page."""
+    lights = "".join(f'<circle cx="{18 + i * 14}" cy="15" r="4.5" fill="{BAR2}"/>' for i in range(3))
+    return (f'<rect x="0.5" y="0.5" width="{w - 1}" height="{h - 1}" rx="12" fill="{PAGE}" stroke="#0F101114"/>'
+            f'<path d="M0.5 30 H{w - 0.5}" stroke="#0F101114"/>{lights}{body}')
+
+
+def wrap(name, title, desc, body, w=400, h=220):
+    (OUT / f"{name}.svg").write_text(
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w} {h}" width="{w}" height="{h}" role="img">\n'
+        f"  <title>{title}</title>\n  <desc>{desc}</desc>\n  {body}\n</svg>\n")
+
+
+def text_lines(x, y, widths, gap=20, h=7):
+    return "".join(f'<rect x="{x}" y="{y + i * gap}" width="{w}" height="{h}" rx="3.5" fill="{BAR}"/>'
+                   for i, w in enumerate(widths))
+
+
+# 1. Target: acquire → armed → click (3.2 s) -------------------------------------------------------------
 T = 3.2
-btn = (130, 92, 140, 36)
-x, y, w, h = btn
-ring_r = min(max(h * 0.28, 6), 14) + 4
-ring = (f'<rect x="{x-4}" y="{y-4}" width="{w+8}" height="{h+8}" rx="{f(ring_r)}" fill="none" stroke="{EDGE}" stroke-opacity="0.55" stroke-width="3.5"/>'
-        f'<rect x="{x-4}" y="{y-4}" width="{w+8}" height="{h+8}" rx="{f(ring_r)}" fill="none" stroke="{CORE}" stroke-width="1.75">'
-        f'<animate attributeName="stroke" values="{CORE};{CORE};{ARMED};{ARMED};{CORE}" keyTimes="{kt([0,1.2,1.28,1.5,T],T)}" dur="{T}s" repeatCount="indefinite"/>'
-        f'<animate attributeName="stroke-width" values="1.75;1.75;2.25;2.25;1.75" keyTimes="{kt([0,1.2,1.28,1.5,T],T)}" dur="{T}s" repeatCount="indefinite"/></rect>')
-ring_group = (f'<g opacity="0"><animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="{kt([0,0.4,0.54,1.5,1.76,T],T)}" dur="{T}s" repeatCount="indefinite"/>'
-              + scale_about(x+w/2, y+h/2, ring, "1.06;1.06;1;1;1.12;1.12", kt([0,0.4,0.68,1.5,1.76,T],T), T,
-                            f"0 0 1 1;{ENTER};0 0 1 1;{EXIT};0 0 1 1") + '</g>')
-flare = (f'<g opacity="0"><animate attributeName="opacity" values="0;0;1;0;0" keyTimes="{kt([0,1.5,1.62,1.76,T],T)}" dur="{T}s" repeatCount="indefinite"/>'
-         + scale_about(x+w, y, f'<path d="{sparkle(x+w, y, 16)}" fill="{CORE}"/>', "0.2;0.2;1.3;0.6;0.6", kt([0,1.5,1.62,1.76,T],T), T,
-                       f"0 0 1 1;{ENTER};{EXIT};0 0 1 1") + '</g>')
-button = (f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="9" fill="{CONTENT}">'
-          f'<animate attributeName="fill" values="{CONTENT};{CONTENT};{MUTED};{CONTENT};{CONTENT}" keyTimes="{kt([0,1.5,1.56,1.8,T],T)}" dur="{T}s" repeatCount="indefinite"/></rect>'
-          f'<rect x="{x+34}" y="{y+15}" width="{w-68}" height="6" rx="3" fill="#8C9099"/>')
-context = "".join(f'<rect x="{bx}" y="104" width="64" height="12" rx="6" fill="{CONTENT}"/>' for bx in (40, 306))
-wrap("glint-acquire-click", "Glint: acquire, arm, click",
-     "Gaze fixates on a button: the glint ring scales 1.06 to 1 in 140 ms, brightens when armed by the first blink, "
-     "then flares (260 ms) on the second blink while the button registers the press.",
-     400, 220, context + button + ring_group + flare)
+bx, by, bw, bh = 150, 112, 100, 30
+pad, rad = 4, 10
+hl = (f'<rect x="{bx - pad}" y="{by - pad}" width="{bw + 2 * pad}" height="{bh + 2 * pad}" rx="{rad}" fill="{ACCENT}">'
+      + anim("fill-opacity", "0.08;0.08;0.14;0.14;0.24;0.24", [0, 1.2, 1.28, 1.5, 1.56, T], T)
+      + f'</rect><rect x="{bx - pad}" y="{by - pad}" width="{bw + 2 * pad}" height="{bh + 2 * pad}" rx="{rad}" '
+      f'fill="none" stroke="{ACCENT}" stroke-width="1.5">'
+      + anim("stroke-width", "1.5;1.5;2;2", [0, 1.2, 1.28, T], T) + "</rect>")
+hl_group = ('<g opacity="0">' + anim("opacity", "0;0;1;1;0;0", [0, 0.4, 0.54, 1.56, 1.74, T], T)
+            + scale_about(bx + bw / 2, by + bh / 2, hl, "1.04;1.04;1;1;0.97;0.97", [0, 0.4, 0.54, 1.56, 1.74, T], T,
+                          [LIN, ENTER, LIN, EXIT, LIN]) + "</g>")
+button = (f'<rect x="{bx}" y="{by}" width="{bw}" height="{bh}" rx="6" fill="{INK}">'
+          + anim("fill-opacity", "1;1;0.82;1;1", [0, 1.5, 1.56, 1.8, T], T)
+          + f'</rect><rect x="{bx + 30}" y="{by + 12}" width="{bw - 60}" height="6" rx="3" fill="#FFFFFF" fill-opacity="0.85"/>')
+body = window(text_lines(40, 54, [220, 300, 260]) + button + hl_group)
+wrap("target-click", "Target highlight: acquire, arm, click",
+     "Gaze settles on a button: a 1.5 pt indigo ring with an 8% fill appears (scale 1.04 to 1, 140 ms). The first "
+     "blink arms it (2 pt ring, 14% fill); the second clicks: a 24% flash, then the highlight contracts and fades (180 ms).",
+     body)
 
-# 2. Double blink teaching loop (2.8 s) — same keyframes as GlintMark.doubleBlink -------------------------
-T = 2.8; cx, cy = 200, 118
-lidT = [0, 0.6, 0.68, 0.8, 0.98, 1.06, 1.18, T]
-lidV = "1;1;0.08;1;1;0.08;1;1"
-eye = (f'<path d="{almond(110, 290, cy, 62)}" fill="none" stroke="#ECEDEF" stroke-width="7" stroke-linejoin="round"/>'
-       f'<circle cx="{cx}" cy="{cy}" r="27" fill="none" stroke="#ECEDEF" stroke-width="7"/>')
-eye_anim = (f'<g transform="translate({cx} {cy})"><g><animateTransform attributeName="transform" type="scale" '
-            f'values="{";".join("1 " + v for v in lidV.split(";"))}" keyTimes="{kt(lidT,T)}" dur="{T}s" repeatCount="indefinite"/>'
-            f'<g transform="translate({-cx} {-cy})">{eye}</g></g></g>')
-sp = scale_about(286, 46, f'<path d="{sparkle(286, 46, 30)}" fill="{CORE}"/>', "1;1;1.45;0.94;1;1",
-                 kt([0, 1.18, 1.3, 1.55, 1.8, T], T), T, f"0 0 1 1;{STD};{STD};{STD};0 0 1 1")
-sp_op = f'<g opacity="0.55"><animate attributeName="opacity" values="0.55;0.55;1;1;0.55" keyTimes="{kt([0,0.8,1.3,2.2,T],T)}" dur="{T}s" repeatCount="indefinite"/>{sp}</g>'
-wrap("double-blink", "Double blink to click",
-     "Two deliberate blinks (80 ms close, 120 ms open, 180 ms gap) and the glint flares: the onboarding teaching loop.",
-     400, 220, eye_anim + sp_op)
+# 2. Double blink teaching loop (2.6 s), same keyframes as GlintMark.doubleBlink ------------------------
+T = 2.6
+cx, cy, s = 200, 112, 6.4
+ring_r, cl = 8.25 * s, (cx + 2.75 * s, cy - 2.75 * s, 2.25 * s)
+lid_t = [0, 0.6, 0.68, 0.8, 0.98, 1.06, 1.18, T]
+lid_v = ";".join("1 " + v for v in "1;1;0.06;1;1;0.06;1;1".split(";"))
+catch = scale_about(cl[0], cl[1], f'<circle cx="{f(cl[0])}" cy="{f(cl[1])}" r="{f(cl[2])}" fill="{ACCENT}"/>',
+                    "1;1;1.5;0.94;1;1", [0, 1.18, 1.32, 1.5, 1.72, T], T, [LIN, STD, STD, STD, LIN])
+# Ring and catchlight squash together toward the eye's center, like a lid closing.
+ring = (f'<g transform="translate({cx} {cy})"><g><animateTransform attributeName="transform" type="scale" values="{lid_v}" '
+        f'keyTimes="{kt(lid_t, T)}" dur="{f(T)}s" repeatCount="indefinite"/><g transform="translate({-cx} {-cy})">'
+        f'<circle cx="{cx}" cy="{cy}" r="{f(ring_r)}" fill="none" stroke="{INK}" stroke-width="{f(1.75 * s)}"/>{catch}</g></g></g>')
+catch = ""
+wrap("double-blink", "Double blink",
+     "The mark teaches the gesture: two deliberate blinks (80 ms close, 120 ms open, 180 ms apart), then the catchlight "
+     "pulses to show the click.", f'<rect width="400" height="220" rx="12" fill="{CHROME}"/>{ring}{catch}')
 
-# 3. Glide scroll (4.0 s) -----------------------------------------------------------------------------
-T = 4.0; win = (60, 24, 280, 172); wx, wy, ww, wh = win
-zone_top = wy + wh * 0.85
-lines = "".join(f'<rect x="{wx+24}" y="{wy+18+i*22}" width="{ww-48-(i%3)*38}" height="7" rx="3.5" fill="{CONTENT}"/>' for i in range(16))
-content = (f'<g><animateTransform attributeName="transform" type="translate" values="0 0;0 0;0 {-wh*0.4:.1f};0 {-wh*0.4:.1f}" '
-           f'keyTimes="{kt([0,2.0,2.52,T],T)}" dur="{T}s" repeatCount="indefinite" calcMode="spline" keySplines="0 0 1 1;{GLIDE};0 0 1 1"/>{lines}</g>')
-clip = f'<clipPath id="win"><rect x="{wx}" y="{wy}" width="{ww}" height="{wh}" rx="10"/></clipPath>'
-frame = f'<rect x="{wx}" y="{wy}" width="{ww}" height="{wh}" rx="10" fill="none" stroke="{MUTED}" stroke-width="1"/>'
-zone = f'<line x1="{wx}" x2="{wx+ww}" y1="{zone_top:.1f}" y2="{zone_top:.1f}" stroke="{MUTED}" stroke-dasharray="3 5"/>'
-gaze = (f'<circle r="11" fill="none" stroke="{CORE}" stroke-opacity="0.7" stroke-width="1.5" stroke-dasharray="3 4">'
-        f'<animate attributeName="cx" values="{wx+40};{wx+220};{wx+60};{wx+180};{wx+180};{wx+180}" keyTimes="{kt([0,0.6,0.9,1.6,2.0,T],T)}" dur="{T}s" repeatCount="indefinite"/>'
-        f'<animate attributeName="cy" values="{wy+60};{wy+60};{zone_top+10:.1f};{zone_top+10:.1f};{zone_top+10:.1f};{wy+60}" keyTimes="{kt([0,0.6,0.9,1.6,2.6,T],T)}" dur="{T}s" repeatCount="indefinite"/></circle>')
-progress = (f'<line x1="{wx}" y1="{wy+wh-1.5}" y2="{wy+wh-1.5}" stroke="{CORE}" stroke-width="2.5" stroke-linecap="round">'
-            f'<animate attributeName="x2" values="{wx};{wx};{wx+ww};{wx+ww};{wx}" keyTimes="{kt([0,1.7,2.0,2.05,2.25],T)};1" dur="{T}s" repeatCount="indefinite"/>'
-            f'<animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="{kt([0,1.68,1.7,2.0,2.2,T],T)}" dur="{T}s" repeatCount="indefinite"/></line>')
+# 3. Glide scroll (4.0 s) -------------------------------------------------------------------------------
+T = 4.0
+view_top, view_h = 31, 189
+zone_y = view_top + view_h * 0.85
+content = (f'<g><animateTransform attributeName="transform" type="translate" values="0 0;0 0;0 {-view_h * 0.4:.1f};0 {-view_h * 0.4:.1f}" '
+           f'keyTimes="{kt([0, 2.0, 2.52, T], T)}" dur="{f(T)}s" repeatCount="indefinite" calcMode="spline" '
+           f'keySplines="{LIN};{GLIDE};{LIN}"/>{text_lines(40, 52, [320, 300, 250, 320, 280, 200, 320, 300, 260, 310, 240, 320], 22)}</g>')
+clip = f'<clipPath id="view"><rect x="1" y="{view_top}" width="398" height="{view_h - 1}" rx="0"/></clipPath>'
+gaze = (f'<circle r="7" fill="none" stroke="{ACCENT}" stroke-opacity="0.55" stroke-width="1.25">'
+        + anim("cx", "70;300;90;250;250;250", [0, 0.6, 0.9, 1.6, 2.0, T], T)
+        + anim("cy", f"70;70;{zone_y + 12:.1f};{zone_y + 12:.1f};{zone_y + 12:.1f};70", [0, 0.6, 0.9, 1.6, 2.6, T], T)
+        + "</circle>")
+progress = (f'<rect x="1" y="{view_top + view_h - 3}" height="2" rx="1" fill="{ACCENT}">'
+            + anim("width", "0;0;398;398;398", [0, 1.7, 2.0, 2.2, T], T, [LIN, STD, LIN, LIN])
+            + anim("opacity", "0;0;1;1;0;0", [0, 1.68, 1.7, 2.0, 2.2, T], T) + "</rect>")
+zone = f'<path d="M1 {zone_y:.1f} H399" stroke="#0F10111A" stroke-dasharray="2 4"/>'
 wrap("glide-scroll", "Glide scroll",
-     "Gaze settles in the bottom 15% of the scroll area; a 2 pt progress line fills during the 300 ms dwell, then the page "
-     "glides up 40% of its height over 520 ms on the glide curve.",
-     400, 220, f'<defs>{clip}</defs><g clip-path="url(#win)">{content}</g>{frame}{zone}{gaze}{progress}')
-# fix keyTimes count for progress x2 (5 values need 5 keyTimes)
-p = OUT / "glide-scroll.svg"; s = p.read_text()
-s = s.replace(f'keyTimes="{kt([0,1.7,2.0,2.05,2.25],T)};1"', f'keyTimes="{kt([0,1.7,2.0,2.2,T],T)}"'); p.write_text(s)
+     "Gaze settles in the bottom 15% of the scroll area; a 2 pt progress bar fills along the bottom edge during the "
+     "300 ms dwell, then the page glides up 40% of its height over 520 ms.",
+     window(f'<defs>{clip}</defs><g clip-path="url(#view)">{content}</g>{zone}{gaze}{progress}'))
 
-# 4. Where was I (4.4 s) ------------------------------------------------------------------------------
+# 4. Where was I (4.4 s) --------------------------------------------------------------------------------
 T = 4.4
-lines = "".join(f'<rect x="64" y="{40+i*26}" width="{272-(i%3)*44}" height="8" rx="4" fill="{CONTENT}"/>' for i in range(6))
-ly = 40 + 2*26 + 14
-marker = (f'<line x1="64" y1="{ly}" y2="{ly}" stroke="{CORE}" stroke-width="2.5" stroke-linecap="round">'
-          f'<animate attributeName="x2" values="64;64;{64+272-88};{64+272-88}" keyTimes="{kt([0,2.6,3.05,T],T)}" dur="{T}s" repeatCount="indefinite" calcMode="spline" keySplines="0 0 1 1;{STD};0 0 1 1"/>'
-          f'<animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="{kt([0,2.58,2.6,3.65,4.25,T],T)}" dur="{T}s" repeatCount="indefinite"/></line>')
-away = (f'<g opacity="1"><animate attributeName="opacity" values="1;1;0;0;1;1" keyTimes="{kt([0,0.9,1.0,2.5,2.6,T],T)}" dur="{T}s" repeatCount="indefinite"/>'
-        f'<circle r="11" fill="none" stroke="{CORE}" stroke-opacity="0.7" stroke-width="1.5" stroke-dasharray="3 4" cy="{ly-10}">'
-        f'<animate attributeName="cx" values="80;250;250;120;120" keyTimes="{kt([0,0.9,2.6,2.61,T],T)}" dur="{T}s" repeatCount="indefinite"/></circle></g>')
+widths = [300, 320, 260, 310, 240, 280]
+line_y = 52 + 2 * 22
+hl = (f'<rect x="34" y="{line_y - 6}" height="19" rx="4" fill="{ACCENT}" fill-opacity="0.18">'
+      + anim("width", "0;0;272;272", [0, 2.6, 3.05, T], T, [LIN, STD, LIN])
+      + anim("opacity", "0;0;1;1;0;0", [0, 2.58, 2.6, 3.65, 4.25, T], T) + "</rect>")
+away = ('<g>' + anim("opacity", "1;1;0;0;1;1", [0, 0.9, 1.0, 2.5, 2.6, T], T)
+        + f'<circle r="7" fill="none" stroke="{ACCENT}" stroke-opacity="0.55" stroke-width="1.25" cy="{line_y + 3}">'
+        + anim("cx", "60;290;290;80;80", [0, 0.9, 2.6, 2.61, T], T) + "</circle></g>")
 wrap("where-was-i", "Where was I",
-     "You read line 3, look away for more than 2 s, and when you return a 2 pt underline sweeps the line left to right "
-     "(450 ms), holds 600 ms, then fades over 600 ms.",
-     400, 220, lines + away + marker)
+     "You read line 3, look away for more than 2 s, and when you return the line gets a soft highlight that sweeps "
+     "left to right (450 ms), holds 600 ms and fades over 600 ms.",
+     window(hl + text_lines(40, 52, widths, 22) + away))
 
-# 5. Calibration pursuit (9 anchors, 1.2 s pause + 0.45 s move each) --------------------------------
-anchors = [(0.1,0.1),(0.5,0.1),(0.9,0.1),(0.9,0.5),(0.5,0.5),(0.1,0.5),(0.1,0.9),(0.5,0.9),(0.9,0.9)]
-W, H = 400, 220; P = 24
-pts = [(P + ax*(W-2*P), P + ay*(H-2*P)) for ax, ay in anchors]
-pause, move = 1.2, 0.45; T = len(pts)*(pause+move)
-times, xs, ys = [], [], []
-t = 0
-for i, (px, py) in enumerate(pts):
-    times += [t, t+pause]; xs += [px, px]; ys += [py, py]; t += pause + move
-times.append(T); xs.append(pts[0][0]); ys.append(pts[0][1])
-dots = "".join(f'<circle cx="{f(px)}" cy="{f(py)}" r="2.5" fill="{MUTED}"/>' for px, py in pts)
-circ = 2*3.14159*13
-ring_keys, ring_vals = [], []
-t = 0
+# 5. Calibration (9 anchors, 1.2 s pause + 0.45 s move each) -------------------------------------------
+W, H, P = 400, 220, 26
+anchors = [(0.1, 0.1), (0.5, 0.1), (0.9, 0.1), (0.9, 0.5), (0.5, 0.5), (0.1, 0.5), (0.1, 0.9), (0.5, 0.9), (0.9, 0.9)]
+pts = [(P + ax * (W - 2 * P), P + ay * (H - 2 * P)) for ax, ay in anchors]
+pause, move = 1.2, 0.45
+T = len(pts) * (pause + move)
+times, vals, t = [], [], 0.0
+for px, py in pts:
+    times += [t, t + pause]
+    vals += [f"{f(px)} {f(py)}"] * 2
+    t += pause + move
+times.append(T)
+vals.append(f"{f(pts[0][0])} {f(pts[0][1])}")
+rk, rv, t = [], [], 0.0
 for _ in pts:
-    ring_keys += [t, t+0.3, t+pause, t+pause+0.001]; ring_vals += [circ, circ, 0, circ]; t += pause + move
-ring_keys.append(T); ring_vals.append(circ)
-glint = (f'<g><animateTransform attributeName="transform" type="translate" '
-         f'values="{";".join(f"{f(x)} {f(y)}" for x, y in zip(xs, ys))}" keyTimes="{kt(times,T)}" dur="{f(T)}s" repeatCount="indefinite" '
-         f'calcMode="spline" keySplines="{";".join(["0 0 1 1" if i % 2 == 0 else "0.45 0 0.55 1" for i in range(len(times)-1)])}"/>'
-         f'<circle r="13" fill="none" stroke="{CORE}" stroke-opacity="0.25" stroke-width="2"/>'
-         f'<circle r="13" fill="none" stroke="{CORE}" stroke-width="2" stroke-linecap="round" transform="rotate(-90)" stroke-dasharray="{f(circ)}">'
-         f'<animate attributeName="stroke-dashoffset" values="{";".join(f(v) for v in ring_vals)}" keyTimes="{kt(ring_keys,T)}" dur="{f(T)}s" repeatCount="indefinite"/></circle>'
-         f'<path d="{sparkle(0, 0, 8)}" fill="{CORE}"/></g>')
-wrap("calibration", "Calibration pursuit",
-     "The glint drifts through 9 anchors (critically damped), pausing 1.2 s at each while a ring fills; samples are "
-     "taken after the first 300 ms of each pause.", W, H, dots + glint)
+    rk += [t, t + 0.3, t + pause, t + pause + 0.001]
+    rv += ["20", "20", "6", "20"]
+    t += pause + move
+rk.append(T)
+rv.append("20")
+dots = "".join(f'<circle cx="{f(x)}" cy="{f(y)}" r="2" fill="#FFFFFF" fill-opacity="0.25"/>' for x, y in pts)
+target = (f'<g><animateTransform attributeName="transform" type="translate" values="{";".join(vals)}" '
+          f'keyTimes="{kt(times, T)}" dur="{f(T)}s" repeatCount="indefinite" calcMode="spline" '
+          f'keySplines="{";".join([LIN if i % 2 == 0 else "0.45 0 0.55 1" for i in range(len(times) - 1)])}"/>'
+          f'<circle r="20" fill="none" stroke="#FFFFFF" stroke-opacity="0.9" stroke-width="1.25">'
+          f'<animate attributeName="r" values="{";".join(rv)}" keyTimes="{kt(rk, T)}" dur="{f(T)}s" repeatCount="indefinite"/></circle>'
+          f'<circle r="4.5" fill="#FFFFFF"/></g>')
+wrap("calibration", "Calibration",
+     "A small target drifts through 9 anchors and pauses 1.2 s at each; its ring tightens from 20 to 6 pt as samples "
+     "are collected (after the first 300 ms).",
+     f'<rect width="{W}" height="{H}" rx="12" fill="#0B0C0D"/>{dots}{target}')
 
-# 6. Twinkle (production cadence 12 s; this study loops every 2.4 s) -----------------------------------
-T = 2.4; cx, cy = 200, 110
-sp = (f'<g transform="translate({cx} {cy})"><g>'
-      f'<animateTransform attributeName="transform" type="scale" values="1;1;1.25;0.97;1" keyTimes="{kt([0,1.8,2.04,2.26,2.4],T)}" dur="{T}s" repeatCount="indefinite" calcMode="spline" keySplines="0 0 1 1;{STD};{STD};{STD}"/>'
-      f'<g><animateTransform attributeName="transform" type="rotate" values="0;0;90;90" keyTimes="{kt([0,1.8,2.4,T],T)}" dur="{T}s" repeatCount="indefinite" calcMode="spline" keySplines="0 0 1 1;{STD};0 0 1 1"/>'
-      f'<path d="{sparkle(0, 0, 56)}" fill="{CORE}"/></g></g></g>')
-wrap("twinkle", "Glint twinkle",
-     "While tracking, the mark's glint twinkles once every 12 s: scale 1 to 1.25 and a quarter turn over 600 ms (the glint is 4-fold symmetric, so the loop is seamless). "
-     "This study compresses the rest period to 1.8 s.", 400, 220, sp)
+# 6. Live mark (production: every 8 s; this study loops every 2 s) -------------------------------------
+T = 2.0
+cx, cy, s = 200, 110, 6.4
+cl = (cx + 2.75 * s, cy - 2.75 * s, 2.25 * s)
+mark = (f'<circle cx="{cx}" cy="{cy}" r="{f(8.25 * s)}" fill="none" stroke="{INK}" stroke-width="{f(1.75 * s)}"/>'
+        + scale_about(cl[0], cl[1], f'<circle cx="{f(cl[0])}" cy="{f(cl[1])}" r="{f(cl[2])}" fill="{ACCENT}"/>',
+                      "1;1;1.3;0.97;1", [0, 1.5, 1.7, 1.88, T], T, [LIN, STD, STD, STD]))
+wrap("live-mark", "Live mark",
+     "While Glint is tracking, the catchlight swells once every 8 s (scale 1 to 1.3, 500 ms). This study shortens "
+     "the rest period to 1.5 s.", f'<rect width="400" height="220" rx="12" fill="{CHROME}"/>{mark}')
 print("motion studies written")

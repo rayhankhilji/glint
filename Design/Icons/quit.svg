@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-  <title>Quit</title>
-  <path data-part="door" d="M13.5 4.5 H7 C5.62 4.5 4.5 5.62 4.5 7 V17 C4.5 18.38 5.62 19.5 7 19.5 H13.5"/>
-  <path data-part="shaft" d="M10.5 12 H20"/>
-  <path data-part="head" d="M16.75 8.75 L20 12 L16.75 15.25"/>
-</svg>

@@ -1,79 +1,59 @@
 #!/usr/bin/env python3
-"""Verifies WCAG contrast of the chrome color tokens straight from the asset catalog (DESIGN_SYSTEM §2.2).
+"""Verifies WCAG contrast of the color tokens in Design/tokens.json (DESIGN_SYSTEM §2).
 
-Usage: python3 scripts/contrast.py [path/to/Colors.xcassets]
-Exit 1 if any documented pair falls below its minimum in light or dark appearance.
+Checks every pair in tokens.json "contrast" in light and dark, and the overlay ring against pure white and black.
+Translucent tokens are composited over the pair's background first. Exit 1 on any failure.
 """
 import json
 import pathlib
 import sys
 
-DEFAULT = pathlib.Path(__file__).resolve().parent.parent / "Packages/GlintKit/Sources/GlintUI/Resources/Colors.xcassets"
-
-# (foreground, background, minimum ratio). Text ≥ 4.5:1; UI and focus ≥ 3:1 (DESIGN_SYSTEM §2.2).
-PAIRS = [
-    ("text", "background", 4.5),
-    ("textMuted", "background", 4.5),
-    ("accentText", "background", 4.5),
-    ("onAccent", "accent", 4.5),
-    ("danger", "background", 4.5),
-    ("success", "background", 4.5),
-    ("warning", "background", 4.5),
-    ("info", "background", 4.5),
-    ("text", "surfaceRaised", 4.5),
-    ("textMuted", "surfaceRaised", 4.5),
-    ("focusRing", "background", 3.0),
-    ("focusRing", "surfaceRaised", 3.0),
-    ("glintMark", "background", 3.0),
-    ("glintMark", "surfaceRaised", 3.0),
-]
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+TOKENS = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "Design/tokens.json"
 
 
-def load(catalog: pathlib.Path) -> dict:
-    colors = {}
-    for colorset in catalog.glob("*.colorset"):
-        data = json.loads((colorset / "Contents.json").read_text())
-        values = {}
-        for entry in data["colors"]:
-            dark = any(a.get("value") == "dark" for a in entry.get("appearances", []))
-            c = entry["color"]["components"]
-            rgb = tuple(int(c[k], 16) / 255 if str(c[k]).startswith("0x") else float(c[k]) for k in ("red", "green", "blue"))
-            values["dark" if dark else "light"] = (rgb, float(c["alpha"]))
-        colors[colorset.stem] = values
-    return colors
+def rgba(h):
+    h = h.lstrip("#")
+    r, g, b = (int(h[i : i + 2], 16) / 255 for i in (0, 2, 4))
+    return r, g, b, (int(h[6:8], 16) / 255 if len(h) == 8 else 1.0)
 
 
-def luminance(rgb) -> float:
-    def channel(v):
-        return v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4
-    r, g, b = (channel(v) for v in rgb)
+def over(fg, bg):
+    r, g, b, a = fg
+    return tuple(c * a + bc * (1 - a) for c, bc in zip((r, g, b), bg[:3])) + (1.0,)
+
+
+def luminance(c):
+    f = lambda v: v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4
+    r, g, b = (f(v) for v in c[:3])
     return 0.2126 * r + 0.7152 * g + 0.0722 * b
 
 
-def ratio(a, b) -> float:
+def ratio(a, b):
     la, lb = sorted((luminance(a), luminance(b)), reverse=True)
     return (la + 0.05) / (lb + 0.05)
 
 
-def main() -> int:
-    catalog = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT
-    if not catalog.exists():
-        print(f"contrast: catalog not found: {catalog}")
-        return 2
-    colors = load(catalog)
-    failures = 0
-    for fg, bg, minimum in PAIRS:
+def main():
+    t = json.loads(TOKENS.read_text())
+    chrome, failures, checks = t["chrome"], 0, 0
+    for fg, bg, minimum in t["contrast"]:
         for mode in ("light", "dark"):
-            (fg_rgb, fg_a), (bg_rgb, _) = colors[fg][mode], colors[bg][mode]
-            if fg_a < 1:
-                print(f"✗ {fg} is translucent in {mode}; contrast pairs must use opaque tokens")
-                failures += 1
-                continue
-            r = ratio(fg_rgb, bg_rgb)
+            b = rgba(chrome[bg][mode])
+            f = over(rgba(chrome[fg][mode]), b)
+            r = ratio(f, b)
+            checks += 1
             ok = r >= minimum
             failures += not ok
-            print(f"{'✓' if ok else '✗'} {fg:11s} on {bg:13s} {mode:5s} {r:5.2f}:1 (min {minimum})")
-    print(f"contrast: {len(PAIRS) * 2 - failures}/{len(PAIRS) * 2} checks passed")
+            print(f"{'✓' if ok else '✗'} {fg:10s} on {bg:10s} {mode:5s} {r:5.2f}:1 (min {minimum})")
+    ring = rgba(t["overlay"]["ring"]["value"])
+    for name, bg in (("white", (1, 1, 1, 1)), ("black", (0, 0, 0, 1))):
+        r = ratio(ring, bg)
+        checks += 1
+        ok = r >= 3.0
+        failures += not ok
+        print(f"{'✓' if ok else '✗'} overlay ring on {name:5s} {r:5.2f}:1 (min 3.0)")
+    print(f"contrast: {checks - failures}/{checks} checks passed")
     return 1 if failures else 0
 
 

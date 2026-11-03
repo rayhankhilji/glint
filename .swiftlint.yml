@@ -9,6 +9,7 @@ included:
 excluded:
   - "**/.build"
   - Packages/GlintKit/Sources/GlintUI/Icons/GlintIconData.swift   # generated (scripts/icons/build_icons.py)
+  - Packages/GlintKit/Sources/GlintUI/DesignSystem/GlintColorTokens.swift   # generated (scripts/design/build_tokens.py)
   - .tools
   - build
 

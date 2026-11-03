@@ -35,20 +35,20 @@ struct DesignSystemSnapshotTests {
         assertGlintSnapshot(scale, size: CGSize(width: 560, height: 420), named: "type-scale")
     }
 
-    @Test("Every chrome token resolves from the asset catalog in both appearances")
-    func tokensResolve() throws {
-        for name in GlintColor.chromeTokenNames {
-            for appearance in [NSAppearance.Name.aqua, .darkAqua] {
-                let color = try #require(
-                    NSColor(named: name, bundle: GlintColor.resourceBundle),
-                    "missing colorset \(name)"
-                )
-                var resolved: NSColor?
-                NSAppearance(named: appearance)?.performAsCurrentDrawingAppearance {
-                    resolved = color.usingColorSpace(.sRGB)
-                }
-                #expect(resolved != nil, "\(name) did not resolve in \(appearance.rawValue)")
+    @Test("Chrome tokens resolve differently in light and dark appearance")
+    func tokensAdapt() {
+        func resolve(_ color: Color, _ name: NSAppearance.Name) -> NSColor? {
+            var out: NSColor?
+            NSAppearance(named: name)?.performAsCurrentDrawingAppearance {
+                out = NSColor(color).usingColorSpace(.sRGB)
             }
+            return out
+        }
+        for name in ["background", "text", "accent", "surface"] {
+            let light = resolve(GlintColor.chrome(name), .aqua)
+            let dark = resolve(GlintColor.chrome(name), .darkAqua)
+            #expect(light != nil && dark != nil)
+            #expect(light != dark, "\(name) should differ between appearances")
         }
     }
 

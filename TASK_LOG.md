@@ -6,9 +6,9 @@
 
 - **Current phase:** P0 — Foundation (exit criteria **not** met yet)
 - **Current focus:** P0.T6 — get CI running (blocked: GitHub Actions jobs never get a runner, BLK-1)
-- **Next action:** Human: check GitHub → Settings → Billing/Actions for `rayhankhilji/glint` (BLK-1). Then re-run CI and fix whatever the `app-macos` job reports for the macOS-only code (P0.T4, P0.T8, P0.T9).
+- **Next action:** Human: run `scripts/build-app.sh --install --open` on a Mac (README) and send back any build errors; in parallel fix GitHub Actions (BLK-1). Then fix what the first macOS build reports (P0.T4, P0.T8, P0.T9).
 - **Blocked:** BLK-1 (CI runners), BLK-2 (Developer ID / notary credentials, PRD Q2), BLK-3 (snapshot references must be recorded on a Mac)
-- **Last updated:** 2026-11-03 by agent (session 2: design system v1.1)
+- **Last updated:** 2026-11-03 by agent (session 3: design system v2 + local build script)
 
 ## Current Phase Checklist
 
@@ -52,6 +52,8 @@ Phase 1 — Gaze engine (do not start until the P0 exit criteria pass):
 
 ## Decisions & Deviations
 
+Note: the design system v2 rows (2026-11-03, session 3) supersede the v1.1 rows about palette, icons and motion.
+
 | Date | Decision | Reason | Docs updated |
 |---|---|---|---|
 | 2026-11-03 | Native macOS app instead of browser extension | User pivoted during planning: "works all across ur mac" | PRD §6, ADR-001 |
@@ -76,7 +78,18 @@ Phase 1 — Gaze engine (do not start until the P0 exit criteria pass):
 | 2026-11-03 | Popover redesigned: live mark + switch, plain-text accuracy (`AccuracyReadout` replaces the chip), flat banner, custom-icon action rows with flat hover | Remove chip/dashboard clutter | DESIGN_SYSTEM §9.1 |
 | 2026-11-03 | App icon redrawn flat from `Design/AppIcon/glint-app-icon.svg` (ink tile, paper eye, gold catchlight), rasterized with `scripts/icons/render-app-icon.mjs` (dev-only Node + Playwright tool, not shipped) | Replaces the PIL gradient placeholder; macOS 26 Icon Composer variants remain P5.T8 | DESIGN_SYSTEM §7 |
 
+| 2026-11-03 | **Design system v2** (user: "looks like shit… modern, clean, AI startup style, Linear, Notion; the icons, overlays and glows look bad"): neutral Linear/Notion chrome with one indigo accent (`#5753D9` / `#8B8DF8`); overlay is a precise `#6366F1` ring + 8% fill (4.5:1 on white and black); no gold, sparkles or glows | User direction | DESIGN_SYSTEM v2 §1, §2, §6.2, §9.1 |
+| 2026-11-03 | UI icons are SF Symbols via one `GlintSymbol` enum (guarded by check-architecture); the 28 hand-drawn icons are removed; custom artwork is only the mark (ring + catchlight) and 5 menu bar glyphs | Hand-drawn icons were the weak point; SF Symbols match SF Pro | DESIGN_SYSTEM §7, INSTRUCTIONS §7 |
+| 2026-11-03 | Colors move to `Design/tokens.json` → generated `GlintColorTokens.swift` (dynamic NSColor); GlintUI has no package resources (asset catalog and string catalog removed; strings use the main bundle) | One source of truth; removes the risk that `swift build`/`swift test` mis-handle Xcode-only resources | DESIGN_SYSTEM §2, §13 |
+| 2026-11-03 | `scripts/build-app.sh` builds an ad-hoc-signed Release `Glint.app` locally (optional `--install`, `--open`, `--dmg`); hardened runtime off for local builds only; README documents the terminal steps | User wants to try it on their Mac; CI is blocked and this session can't reach their computer | README, INSTRUCTIONS §5 |
 ## Session Log
+
+### 2026-11-03 — Session 3 (design system v2, local build)
+
+- Done: Linear/Notion-style redesign (tokens, SF Symbols, mark, menu bar glyphs, popover, banner, empty state, Settings, app icon, overlay motion studies); `scripts/build-app.sh` + README.
+- Tests (Linux): GlintCore 46 pass; SettingsStore 7/7 via `os` stand-in; converter 10 pass; tokens/artwork `--check` up to date; contrast 28/28; check-architecture 25/25 self-tests; SwiftLint + SwiftFormat clean. Visual QA in Chromium: app icon 16–256 px, motion studies frame by frame (fixed a tinted-button click flash and a floating catchlight during blinks).
+- Not verified: compiling GlintUI/App (SwiftUI/AppKit), snapshot references, `build-app.sh` on a real Mac (no Mac reachable from this session; CI blocked).
+- Next: user runs the build script; fix reported errors.
 
 ### 2026-11-03 — Session 2 (design system v1.1)
 

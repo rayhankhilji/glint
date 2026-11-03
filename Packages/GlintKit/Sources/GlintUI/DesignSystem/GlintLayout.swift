@@ -28,7 +28,9 @@ public enum GlintRadius {
 
 /// Fixed layout metrics (DESIGN_SYSTEM §4).
 public enum GlintLayout {
-    public static let popoverWidth: CGFloat = 320
+    public static let popoverWidth: CGFloat = 300
+    /// Compact list row height (Linear-style density).
+    public static let rowHeight: CGFloat = 28
     public static let onboardingSize = CGSize(width: 720, height: 520)
     public static let settingsMinSize = CGSize(width: 640, height: 480)
     public static let settingsLabelColumn: CGFloat = 180

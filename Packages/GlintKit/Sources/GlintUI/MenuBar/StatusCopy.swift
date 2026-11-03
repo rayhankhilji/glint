@@ -6,23 +6,23 @@ enum StatusCopy {
     static func statusLine(for status: GlintStatus) -> String {
         switch status {
         case .starting:
-            return String(localized: "Starting…", bundle: .module)
+            return String(localized: "Starting…")
         case let .tracking(fps):
-            return String(localized: "Tracking · \(fps) fps", bundle: .module)
+            return String(localized: "Tracking · \(fps) fps")
         case .off:
-            return String(localized: "Off — camera is off", bundle: .module)
+            return String(localized: "Off — camera is off")
         case let .paused(until):
-            guard let until else { return String(localized: "Paused", bundle: .module) }
+            guard let until else { return String(localized: "Paused") }
             let time = until.formatted(date: .omitted, time: .shortened)
-            return String(localized: "Paused · resumes \(time)", bundle: .module)
+            return String(localized: "Paused · resumes \(time)")
         case .away:
-            return String(localized: "Waiting for you…", bundle: .module)
+            return String(localized: "Waiting for you…")
         case .needsAttention(.lowLight):
-            return String(localized: "Too dark to see your eyes", bundle: .module)
+            return String(localized: "Too dark to see your eyes")
         case .needsAttention(.notCalibrated):
-            return String(localized: "Calibrate to start", bundle: .module)
+            return String(localized: "Calibrate to start")
         case .needsAttention:
-            return String(localized: "Glint can't run right now", bundle: .module)
+            return String(localized: "Glint can't run right now")
         }
     }
 
@@ -32,18 +32,18 @@ enum StatusCopy {
         switch attention {
         case .cameraPermissionMissing:
             return (
-                String(localized: "Glint can't see — camera access is off", bundle: .module),
-                String(localized: "Fix", bundle: .module)
+                String(localized: "Glint can't see — camera access is off"),
+                String(localized: "Fix")
             )
         case .accessibilityPermissionMissing:
             return (
-                String(localized: "Glint can't act — Accessibility is off", bundle: .module),
-                String(localized: "Fix", bundle: .module)
+                String(localized: "Glint can't act — Accessibility is off"),
+                String(localized: "Fix")
             )
         case .cameraMissing:
             return (
-                String(localized: "No camera found", bundle: .module),
-                String(localized: "Help", bundle: .module)
+                String(localized: "No camera found"),
+                String(localized: "Help")
             )
         case .notCalibrated, .lowLight:
             return nil

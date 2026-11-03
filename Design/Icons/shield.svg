@@ -1,5 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-  <title>Privacy</title>
-  <path data-part="shield" d="M12 3.25 L18.75 5.75 C19.2 5.92 19.5 6.35 19.5 6.83 V11.4 C19.5 15.6 16.5 19.2 12 20.75 C7.5 19.2 4.5 15.6 4.5 11.4 V6.83 C4.5 6.35 4.8 5.92 5.25 5.75 Z"/>
-  <path data-part="tick" d="M9 12.2 L11.1 14.3 L15.2 10.2"/>
-</svg>

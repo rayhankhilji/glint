@@ -3,101 +3,20 @@
 
 import GlintCore
 
-/// Every custom icon (DESIGN_SYSTEM §7). Source of truth: `Design/Icons/<rawValue>.svg`.
+/// Brand artwork (DESIGN_SYSTEM §7). Source of truth: `Design/Icons/<rawValue>.svg`. UI icons use `GlintSymbol`.
 public enum GlintIconName: String, CaseIterable, Sendable {
-    case camera
-    case check
-    case chevronRight = "chevron-right"
-    case close
-    case cursorGlint = "cursor-glint"
-    case display
-    case eyeClosed = "eye-closed"
-    case eyeGlint = "eye-glint"
-    case eye
-    case faceScan = "face-scan"
-    case focusWindow = "focus-window"
-    case gauge
-    case glint
-    case grid
-    case info
-    case keyboard
-    case lowLight = "low-light"
-    case pause
-    case play
-    case power
-    case quit
-    case reading
-    case recalibrate
-    case scrollGlide = "scroll-glide"
-    case shield
-    case target
-    case tune
-    case warning
+    case mark
 
     /// The icon's accessible name, from the SVG `<title>`.
     public var title: String {
         switch self {
-        case .camera: "Camera"
-        case .check: "Done"
-        case .chevronRight: "More"
-        case .close: "Close"
-        case .cursorGlint: "Act for you"
-        case .display: "Display"
-        case .eyeClosed: "Eye closed"
-        case .eyeGlint: "Glint mark"
-        case .eye: "Eye"
-        case .faceScan: "Waiting for you"
-        case .focusWindow: "Focus follows gaze"
-        case .gauge: "Diagnostics"
-        case .glint: "Glint"
-        case .grid: "Apps"
-        case .info: "Info"
-        case .keyboard: "Shortcut"
-        case .lowLight: "Low light"
-        case .pause: "Pause"
-        case .play: "Resume"
-        case .power: "On or off"
-        case .quit: "Quit"
-        case .reading: "Where was I"
-        case .recalibrate: "Recalibrate"
-        case .scrollGlide: "Glide scroll"
-        case .shield: "Privacy"
-        case .target: "Magnetic snap"
-        case .tune: "Settings"
-        case .warning: "Warning"
+        case .mark: "Glint"
         }
     }
 
     public var artwork: GlintIconArtwork {
         switch self {
-        case .camera: GlintIconArtworks.camera
-        case .check: GlintIconArtworks.check
-        case .chevronRight: GlintIconArtworks.chevronRight
-        case .close: GlintIconArtworks.close
-        case .cursorGlint: GlintIconArtworks.cursorGlint
-        case .display: GlintIconArtworks.display
-        case .eyeClosed: GlintIconArtworks.eyeClosed
-        case .eyeGlint: GlintIconArtworks.eyeGlint
-        case .eye: GlintIconArtworks.eye
-        case .faceScan: GlintIconArtworks.faceScan
-        case .focusWindow: GlintIconArtworks.focusWindow
-        case .gauge: GlintIconArtworks.gauge
-        case .glint: GlintIconArtworks.glint
-        case .grid: GlintIconArtworks.grid
-        case .info: GlintIconArtworks.info
-        case .keyboard: GlintIconArtworks.keyboard
-        case .lowLight: GlintIconArtworks.lowLight
-        case .pause: GlintIconArtworks.pause
-        case .play: GlintIconArtworks.play
-        case .power: GlintIconArtworks.power
-        case .quit: GlintIconArtworks.quit
-        case .reading: GlintIconArtworks.reading
-        case .recalibrate: GlintIconArtworks.recalibrate
-        case .scrollGlide: GlintIconArtworks.scrollGlide
-        case .shield: GlintIconArtworks.shield
-        case .target: GlintIconArtworks.target
-        case .tune: GlintIconArtworks.tune
-        case .warning: GlintIconArtworks.warning
+        case .mark: GlintIconArtworks.mark
         }
     }
 }
@@ -116,172 +35,29 @@ extension MenuBarGlyphState {
 }
 
 enum GlintIconArtworks {
-    static let camera = GlintIconArtwork(grid: 24, strokeWidth: 1.5, parts: [
-        GlintIconPart(id: "hump", style: .stroke, commands: [.move(8.5, 7), .line(9.7, 5.2), .curve(9.9, 4.9, 10.2, 4.75, 10.55, 4.75), .line(13.45, 4.75), .curve(13.8, 4.75, 14.1, 4.9, 14.3, 5.2), .line(15.5, 7)]),
-        GlintIconPart(id: "body", style: .stroke, commands: [.move(5.75, 7), .line(18.25, 7), .curve(19.907, 7, 21.25, 8.343, 21.25, 10), .line(21.25, 16.25), .curve(21.25, 17.907, 19.907, 19.25, 18.25, 19.25), .line(5.75, 19.25), .curve(4.093, 19.25, 2.75, 17.907, 2.75, 16.25), .line(2.75, 10), .curve(2.75, 8.343, 4.093, 7, 5.75, 7), .close]),
-        GlintIconPart(id: "lens", style: .stroke, commands: [.move(15.4, 13.1), .curve(15.4, 14.978, 13.878, 16.5, 12, 16.5), .curve(10.122, 16.5, 8.6, 14.978, 8.6, 13.1), .curve(8.6, 11.222, 10.122, 9.7, 12, 9.7), .curve(13.878, 9.7, 15.4, 11.222, 15.4, 13.1), .close]),
+    static let mark = GlintIconArtwork(grid: 24, strokeWidth: 1.75, parts: [
+        GlintIconPart(id: "ring", style: .stroke, commands: [.move(20.25, 12), .curve(20.25, 16.556, 16.556, 20.25, 12, 20.25), .curve(7.444, 20.25, 3.75, 16.556, 3.75, 12), .curve(3.75, 7.444, 7.444, 3.75, 12, 3.75), .curve(16.556, 3.75, 20.25, 7.444, 20.25, 12), .close]),
+        GlintIconPart(id: "catchlight", style: .fill, commands: [.move(17, 9.25), .curve(17, 10.493, 15.993, 11.5, 14.75, 11.5), .curve(13.507, 11.5, 12.5, 10.493, 12.5, 9.25), .curve(12.5, 8.007, 13.507, 7, 14.75, 7), .curve(15.993, 7, 17, 8.007, 17, 9.25), .close]),
     ])
-    static let check = GlintIconArtwork(grid: 24, strokeWidth: 1.5, parts: [
-        GlintIconPart(id: "tick", style: .stroke, commands: [.move(5.5, 12.6), .line(9.9, 17), .line(18.5, 7.4)]),
+    static let menuBarAway = GlintIconArtwork(grid: 18, strokeWidth: 1.5, parts: [
+        GlintIconPart(id: "ring", style: .stroke, commands: [.move(15.75, 9), .curve(15.75, 12.728, 12.728, 15.75, 9, 15.75), .curve(5.272, 15.75, 2.25, 12.728, 2.25, 9), .curve(2.25, 5.272, 5.272, 2.25, 9, 2.25), .curve(12.728, 2.25, 15.75, 5.272, 15.75, 9), .close]),
+        GlintIconPart(id: "lid", style: .stroke, commands: [.move(6, 9.5), .line(12, 9.5)]),
     ])
-    static let chevronRight = GlintIconArtwork(grid: 24, strokeWidth: 1.5, parts: [
-        GlintIconPart(id: "chevron", style: .stroke, commands: [.move(10, 6.75), .line(15.25, 12), .line(10, 17.25)]),
+    static let menuBarNeedsAttention = GlintIconArtwork(grid: 18, strokeWidth: 1.5, parts: [
+        GlintIconPart(id: "ring", style: .stroke, commands: [.move(15.75, 9), .curve(15.75, 12.728, 12.728, 15.75, 9, 15.75), .curve(5.272, 15.75, 2.25, 12.728, 2.25, 9), .curve(2.25, 5.272, 5.272, 2.25, 9, 2.25), .curve(12.728, 2.25, 15.75, 5.272, 15.75, 9), .close]),
+        GlintIconPart(id: "bang", style: .stroke, commands: [.move(9, 5.6), .line(9, 9.4)]),
+        GlintIconPart(id: "dot", style: .fill, commands: [.move(9.95, 12.1), .curve(9.95, 12.625, 9.525, 13.05, 9, 13.05), .curve(8.475, 13.05, 8.05, 12.625, 8.05, 12.1), .curve(8.05, 11.575, 8.475, 11.15, 9, 11.15), .curve(9.525, 11.15, 9.95, 11.575, 9.95, 12.1), .close]),
     ])
-    static let close = GlintIconArtwork(grid: 24, strokeWidth: 1.5, parts: [
-        GlintIconPart(id: "cross", style: .stroke, commands: [.move(7, 7), .line(17, 17), .move(17, 7), .line(7, 17)]),
+    static let menuBarOff = GlintIconArtwork(grid: 18, strokeWidth: 1.5, parts: [
+        GlintIconPart(id: "ring", style: .stroke, commands: [.move(15.75, 9), .curve(15.75, 12.728, 12.728, 15.75, 9, 15.75), .curve(5.272, 15.75, 2.25, 12.728, 2.25, 9), .curve(2.25, 5.272, 5.272, 2.25, 9, 2.25), .curve(12.728, 2.25, 15.75, 5.272, 15.75, 9), .close]),
     ])
-    static let cursorGlint = GlintIconArtwork(grid: 24, strokeWidth: 1.5, parts: [
-        GlintIconPart(id: "pointer", style: .stroke, commands: [.move(5.5, 3.8), .line(16.2, 11.1), .curve(16.75, 11.45, 16.6, 12.3, 15.96, 12.44), .line(11.9, 13.3), .curve(11.6, 13.37, 11.35, 13.57, 11.22, 13.85), .line(9.4, 17.6), .curve(9.13, 18.17, 8.28, 18.08, 8.14, 17.47), .close]),
-        GlintIconPart(id: "sparkle", style: .fill, commands: [.move(18.25, 14.75), .curve(18.71, 16.25, 20.25, 17.79, 21.75, 18.25), .curve(20.25, 18.71, 18.71, 20.25, 18.25, 21.75), .curve(17.79, 20.25, 16.25, 18.71, 14.75, 18.25), .curve(16.25, 17.79, 17.79, 16.25, 18.25, 14.75), .close]),
+    static let menuBarPaused = GlintIconArtwork(grid: 18, strokeWidth: 1.5, parts: [
+        GlintIconPart(id: "ring", style: .stroke, commands: [.move(15.75, 9), .curve(15.75, 12.728, 12.728, 15.75, 9, 15.75), .curve(5.272, 15.75, 2.25, 12.728, 2.25, 9), .curve(2.25, 5.272, 5.272, 2.25, 9, 2.25), .curve(12.728, 2.25, 15.75, 5.272, 15.75, 9), .close]),
+        GlintIconPart(id: "barL", style: .fill, commands: [.move(7.4, 6), .line(7.4, 6), .curve(7.842, 6, 8.2, 6.358, 8.2, 6.8), .line(8.2, 11.2), .curve(8.2, 11.642, 7.842, 12, 7.4, 12), .line(7.4, 12), .curve(6.958, 12, 6.6, 11.642, 6.6, 11.2), .line(6.6, 6.8), .curve(6.6, 6.358, 6.958, 6, 7.4, 6), .close]),
+        GlintIconPart(id: "barR", style: .fill, commands: [.move(10.6, 6), .line(10.6, 6), .curve(11.042, 6, 11.4, 6.358, 11.4, 6.8), .line(11.4, 11.2), .curve(11.4, 11.642, 11.042, 12, 10.6, 12), .line(10.6, 12), .curve(10.158, 12, 9.8, 11.642, 9.8, 11.2), .line(9.8, 6.8), .curve(9.8, 6.358, 10.158, 6, 10.6, 6), .close]),
     ])
-    static let display = GlintIconArtwork(grid: 24, strokeWidth: 1.5, parts: [
-        GlintIconPart(id: "screen", style: .stroke, commands: [.move(5.25, 4), .line(18.75, 4), .curve(19.993, 4, 21, 5.007, 21, 6.25), .line(21, 14), .curve(21, 15.243, 19.993, 16.25, 18.75, 16.25), .line(5.25, 16.25), .curve(4.007, 16.25, 3, 15.243, 3, 14), .line(3, 6.25), .curve(3, 5.007, 4.007, 4, 5.25, 4), .close]),
-        GlintIconPart(id: "neck", style: .stroke, commands: [.move(12, 16.25), .line(12, 19.75)]),
-        GlintIconPart(id: "foot", style: .stroke, commands: [.move(8.5, 19.75), .line(15.5, 19.75)]),
-    ])
-    static let eyeClosed = GlintIconArtwork(grid: 24, strokeWidth: 1.5, parts: [
-        GlintIconPart(id: "lid", style: .stroke, commands: [.move(3, 10.5), .curve(6.4, 14.6, 9.2, 15.6, 12, 15.6), .curve(14.8, 15.6, 17.6, 14.6, 21, 10.5)]),
-        GlintIconPart(id: "lashes", style: .stroke, commands: [.move(12, 15.6), .line(12, 18.4), .move(7.6, 14.7), .line(6, 17), .move(16.4, 14.7), .line(18, 17)]),
-    ])
-    static let eyeGlint = GlintIconArtwork(grid: 24, strokeWidth: 1.5, parts: [
-        GlintIconPart(id: "outline", style: .stroke, commands: [.move(2, 14), .curve(5.41, 8.8, 14.09, 8.8, 17.5, 14), .curve(14.09, 19.2, 5.41, 19.2, 2, 14), .close]),
-        GlintIconPart(id: "iris", style: .stroke, commands: [.move(12.15, 14), .curve(12.15, 15.325, 11.075, 16.4, 9.75, 16.4), .curve(8.425, 16.4, 7.35, 15.325, 7.35, 14), .curve(7.35, 12.675, 8.425, 11.6, 9.75, 11.6), .curve(11.075, 11.6, 12.15, 12.675, 12.15, 14), .close]),
-        GlintIconPart(id: "sparkle", style: .fill, commands: [.move(18.5, 1), .curve(19.09, 2.93, 21.07, 4.91, 23, 5.5), .curve(21.07, 6.09, 19.09, 8.07, 18.5, 10), .curve(17.91, 8.07, 15.93, 6.09, 14, 5.5), .curve(15.93, 4.91, 17.91, 2.93, 18.5, 1), .close]),
-    ])
-    static let eye = GlintIconArtwork(grid: 24, strokeWidth: 1.5, parts: [
-        GlintIconPart(id: "outline", style: .stroke, commands: [.move(2.5, 12), .curve(6.68, 5.4, 17.32, 5.4, 21.5, 12), .curve(17.32, 18.6, 6.68, 18.6, 2.5, 12), .close]),
-        GlintIconPart(id: "iris", style: .stroke, commands: [.move(15, 12), .curve(15, 13.657, 13.657, 15, 12, 15), .curve(10.343, 15, 9, 13.657, 9, 12), .curve(9, 10.343, 10.343, 9, 12, 9), .curve(13.657, 9, 15, 10.343, 15, 12), .close]),
-    ])
-    static let faceScan = GlintIconArtwork(grid: 24, strokeWidth: 1.5, parts: [
-        GlintIconPart(id: "cornerTL", style: .stroke, commands: [.move(3.5, 8), .line(3.5, 5.5), .quad(3.5, 3.5, 5.5, 3.5), .line(8, 3.5)]),
-        GlintIconPart(id: "cornerTR", style: .stroke, commands: [.move(20.5, 8), .line(20.5, 5.5), .quad(20.5, 3.5, 18.5, 3.5), .line(16, 3.5)]),
-        GlintIconPart(id: "cornerBR", style: .stroke, commands: [.move(20.5, 16), .line(20.5, 18.5), .quad(20.5, 20.5, 18.5, 20.5), .line(16, 20.5)]),
-        GlintIconPart(id: "cornerBL", style: .stroke, commands: [.move(3.5, 16), .line(3.5, 18.5), .quad(3.5, 20.5, 5.5, 20.5), .line(8, 20.5)]),
-        GlintIconPart(id: "eyeL", style: .fill, commands: [.move(10.45, 10.4), .curve(10.45, 10.98, 9.98, 11.45, 9.4, 11.45), .curve(8.82, 11.45, 8.35, 10.98, 8.35, 10.4), .curve(8.35, 9.82, 8.82, 9.35, 9.4, 9.35), .curve(9.98, 9.35, 10.45, 9.82, 10.45, 10.4), .close]),
-        GlintIconPart(id: "eyeR", style: .fill, commands: [.move(15.65, 10.4), .curve(15.65, 10.98, 15.18, 11.45, 14.6, 11.45), .curve(14.02, 11.45, 13.55, 10.98, 13.55, 10.4), .curve(13.55, 9.82, 14.02, 9.35, 14.6, 9.35), .curve(15.18, 9.35, 15.65, 9.82, 15.65, 10.4), .close]),
-        GlintIconPart(id: "mouth", style: .stroke, commands: [.move(9.4, 15), .line(14.6, 15)]),
-    ])
-    static let focusWindow = GlintIconArtwork(grid: 24, strokeWidth: 1.5, parts: [
-        GlintIconPart(id: "back", style: .stroke, commands: [.move(14.5, 6.5), .line(14.5, 5.75), .curve(14.5, 4.65, 13.6, 3.75, 12.5, 3.75), .line(5, 3.75), .curve(3.9, 3.75, 3, 4.65, 3, 5.75), .line(3, 12.25), .curve(3, 13.35, 3.9, 14.25, 5, 14.25), .line(7.5, 14.25)]),
-        GlintIconPart(id: "front", style: .stroke, commands: [.move(11, 9.75), .line(19, 9.75), .curve(20.105, 9.75, 21, 10.645, 21, 11.75), .line(21, 18.25), .curve(21, 19.355, 20.105, 20.25, 19, 20.25), .line(11, 20.25), .curve(9.895, 20.25, 9, 19.355, 9, 18.25), .line(9, 11.75), .curve(9, 10.645, 9.895, 9.75, 11, 9.75), .close]),
-        GlintIconPart(id: "titlebar", style: .stroke, commands: [.move(9, 13), .line(21, 13)]),
-    ])
-    static let gauge = GlintIconArtwork(grid: 24, strokeWidth: 1.5, parts: [
-        GlintIconPart(id: "dial", style: .stroke, commands: [.move(4.48, 17.74), .curve(3.275, 14.419, 4.39, 10.701, 7.225, 8.592), .curve(10.059, 6.483, 13.941, 6.483, 16.775, 8.592), .curve(19.61, 10.701, 20.725, 14.419, 19.52, 17.74)]),
-        GlintIconPart(id: "needle", style: .stroke, commands: [.move(12, 15), .line(15.6, 9.6)]),
-        GlintIconPart(id: "hub", style: .fill, commands: [.move(13.5, 15), .curve(13.5, 15.828, 12.828, 16.5, 12, 16.5), .curve(11.172, 16.5, 10.5, 15.828, 10.5, 15), .curve(10.5, 14.172, 11.172, 13.5, 12, 13.5), .curve(12.828, 13.5, 13.5, 14.172, 13.5, 15), .close]),
-    ])
-    static let glint = GlintIconArtwork(grid: 24, strokeWidth: 1.5, parts: [
-        GlintIconPart(id: "sparkle", style: .fill, commands: [.move(12, 3), .curve(13.19, 6.85, 17.15, 10.81, 21, 12), .curve(17.15, 13.19, 13.19, 17.15, 12, 21), .curve(10.81, 17.15, 6.85, 13.19, 3, 12), .curve(6.85, 10.81, 10.81, 6.85, 12, 3), .close]),
-    ])
-    static let grid = GlintIconArtwork(grid: 24, strokeWidth: 1.5, parts: [
-        GlintIconPart(id: "a", style: .stroke, commands: [.move(5.75, 4), .line(8.75, 4), .curve(9.716, 4, 10.5, 4.784, 10.5, 5.75), .line(10.5, 8.75), .curve(10.5, 9.716, 9.716, 10.5, 8.75, 10.5), .line(5.75, 10.5), .curve(4.784, 10.5, 4, 9.716, 4, 8.75), .line(4, 5.75), .curve(4, 4.784, 4.784, 4, 5.75, 4), .close]),
-        GlintIconPart(id: "b", style: .stroke, commands: [.move(15.25, 4), .line(18.25, 4), .curve(19.216, 4, 20, 4.784, 20, 5.75), .line(20, 8.75), .curve(20, 9.716, 19.216, 10.5, 18.25, 10.5), .line(15.25, 10.5), .curve(14.284, 10.5, 13.5, 9.716, 13.5, 8.75), .line(13.5, 5.75), .curve(13.5, 4.784, 14.284, 4, 15.25, 4), .close]),
-        GlintIconPart(id: "c", style: .stroke, commands: [.move(5.75, 13.5), .line(8.75, 13.5), .curve(9.716, 13.5, 10.5, 14.284, 10.5, 15.25), .line(10.5, 18.25), .curve(10.5, 19.216, 9.716, 20, 8.75, 20), .line(5.75, 20), .curve(4.784, 20, 4, 19.216, 4, 18.25), .line(4, 15.25), .curve(4, 14.284, 4.784, 13.5, 5.75, 13.5), .close]),
-        GlintIconPart(id: "d", style: .stroke, commands: [.move(15.25, 13.5), .line(18.25, 13.5), .curve(19.216, 13.5, 20, 14.284, 20, 15.25), .line(20, 18.25), .curve(20, 19.216, 19.216, 20, 18.25, 20), .line(15.25, 20), .curve(14.284, 20, 13.5, 19.216, 13.5, 18.25), .line(13.5, 15.25), .curve(13.5, 14.284, 14.284, 13.5, 15.25, 13.5), .close]),
-    ])
-    static let info = GlintIconArtwork(grid: 24, strokeWidth: 1.5, parts: [
-        GlintIconPart(id: "ring", style: .stroke, commands: [.move(20.75, 12), .curve(20.75, 16.832, 16.832, 20.75, 12, 20.75), .curve(7.168, 20.75, 3.25, 16.832, 3.25, 12), .curve(3.25, 7.168, 7.168, 3.25, 12, 3.25), .curve(16.832, 3.25, 20.75, 7.168, 20.75, 12), .close]),
-        GlintIconPart(id: "stem", style: .stroke, commands: [.move(12, 11), .line(12, 16.5)]),
-        GlintIconPart(id: "dot", style: .fill, commands: [.move(13.1, 7.9), .curve(13.1, 8.508, 12.608, 9, 12, 9), .curve(11.392, 9, 10.9, 8.508, 10.9, 7.9), .curve(10.9, 7.292, 11.392, 6.8, 12, 6.8), .curve(12.608, 6.8, 13.1, 7.292, 13.1, 7.9), .close]),
-    ])
-    static let keyboard = GlintIconArtwork(grid: 24, strokeWidth: 1.5, parts: [
-        GlintIconPart(id: "body", style: .stroke, commands: [.move(5.25, 6), .line(18.75, 6), .curve(20.131, 6, 21.25, 7.119, 21.25, 8.5), .line(21.25, 15.5), .curve(21.25, 16.881, 20.131, 18, 18.75, 18), .line(5.25, 18), .curve(3.869, 18, 2.75, 16.881, 2.75, 15.5), .line(2.75, 8.5), .curve(2.75, 7.119, 3.869, 6, 5.25, 6), .close]),
-        GlintIconPart(id: "k1", style: .fill, commands: [.move(7.9, 10), .curve(7.9, 10.497, 7.497, 10.9, 7, 10.9), .curve(6.503, 10.9, 6.1, 10.497, 6.1, 10), .curve(6.1, 9.503, 6.503, 9.1, 7, 9.1), .curve(7.497, 9.1, 7.9, 9.503, 7.9, 10), .close]),
-        GlintIconPart(id: "k2", style: .fill, commands: [.move(11.23, 10), .curve(11.23, 10.497, 10.827, 10.9, 10.33, 10.9), .curve(9.833, 10.9, 9.43, 10.497, 9.43, 10), .curve(9.43, 9.503, 9.833, 9.1, 10.33, 9.1), .curve(10.827, 9.1, 11.23, 9.503, 11.23, 10), .close]),
-        GlintIconPart(id: "k3", style: .fill, commands: [.move(14.57, 10), .curve(14.57, 10.497, 14.167, 10.9, 13.67, 10.9), .curve(13.173, 10.9, 12.77, 10.497, 12.77, 10), .curve(12.77, 9.503, 13.173, 9.1, 13.67, 9.1), .curve(14.167, 9.1, 14.57, 9.503, 14.57, 10), .close]),
-        GlintIconPart(id: "k4", style: .fill, commands: [.move(17.9, 10), .curve(17.9, 10.497, 17.497, 10.9, 17, 10.9), .curve(16.503, 10.9, 16.1, 10.497, 16.1, 10), .curve(16.1, 9.503, 16.503, 9.1, 17, 9.1), .curve(17.497, 9.1, 17.9, 9.503, 17.9, 10), .close]),
-        GlintIconPart(id: "space", style: .stroke, commands: [.move(8.5, 14.25), .line(15.5, 14.25)]),
-    ])
-    static let lowLight = GlintIconArtwork(grid: 24, strokeWidth: 1.5, parts: [
-        GlintIconPart(id: "core", style: .stroke, commands: [.move(15.6, 12), .curve(15.6, 13.988, 13.988, 15.6, 12, 15.6), .curve(10.012, 15.6, 8.4, 13.988, 8.4, 12), .curve(8.4, 10.012, 10.012, 8.4, 12, 8.4), .curve(13.988, 8.4, 15.6, 10.012, 15.6, 12), .close]),
-        GlintIconPart(id: "ray0", style: .fill, commands: [.move(13, 4.4), .curve(13, 4.952, 12.552, 5.4, 12, 5.4), .curve(11.448, 5.4, 11, 4.952, 11, 4.4), .curve(11, 3.848, 11.448, 3.4, 12, 3.4), .curve(12.552, 3.4, 13, 3.848, 13, 4.4), .close]),
-        GlintIconPart(id: "ray1", style: .fill, commands: [.move(18.37, 6.63), .curve(18.37, 7.182, 17.922, 7.63, 17.37, 7.63), .curve(16.818, 7.63, 16.37, 7.182, 16.37, 6.63), .curve(16.37, 6.078, 16.818, 5.63, 17.37, 5.63), .curve(17.922, 5.63, 18.37, 6.078, 18.37, 6.63), .close]),
-        GlintIconPart(id: "ray2", style: .fill, commands: [.move(20.6, 12), .curve(20.6, 12.552, 20.152, 13, 19.6, 13), .curve(19.048, 13, 18.6, 12.552, 18.6, 12), .curve(18.6, 11.448, 19.048, 11, 19.6, 11), .curve(20.152, 11, 20.6, 11.448, 20.6, 12), .close]),
-        GlintIconPart(id: "ray3", style: .fill, commands: [.move(18.37, 17.37), .curve(18.37, 17.922, 17.922, 18.37, 17.37, 18.37), .curve(16.818, 18.37, 16.37, 17.922, 16.37, 17.37), .curve(16.37, 16.818, 16.818, 16.37, 17.37, 16.37), .curve(17.922, 16.37, 18.37, 16.818, 18.37, 17.37), .close]),
-        GlintIconPart(id: "ray4", style: .fill, commands: [.move(13, 19.6), .curve(13, 20.152, 12.552, 20.6, 12, 20.6), .curve(11.448, 20.6, 11, 20.152, 11, 19.6), .curve(11, 19.048, 11.448, 18.6, 12, 18.6), .curve(12.552, 18.6, 13, 19.048, 13, 19.6), .close]),
-        GlintIconPart(id: "ray5", style: .fill, commands: [.move(7.63, 17.37), .curve(7.63, 17.922, 7.182, 18.37, 6.63, 18.37), .curve(6.078, 18.37, 5.63, 17.922, 5.63, 17.37), .curve(5.63, 16.818, 6.078, 16.37, 6.63, 16.37), .curve(7.182, 16.37, 7.63, 16.818, 7.63, 17.37), .close]),
-        GlintIconPart(id: "ray6", style: .fill, commands: [.move(5.4, 12), .curve(5.4, 12.552, 4.952, 13, 4.4, 13), .curve(3.848, 13, 3.4, 12.552, 3.4, 12), .curve(3.4, 11.448, 3.848, 11, 4.4, 11), .curve(4.952, 11, 5.4, 11.448, 5.4, 12), .close]),
-        GlintIconPart(id: "ray7", style: .fill, commands: [.move(7.63, 6.63), .curve(7.63, 7.182, 7.182, 7.63, 6.63, 7.63), .curve(6.078, 7.63, 5.63, 7.182, 5.63, 6.63), .curve(5.63, 6.078, 6.078, 5.63, 6.63, 5.63), .curve(7.182, 5.63, 7.63, 6.078, 7.63, 6.63), .close]),
-    ])
-    static let pause = GlintIconArtwork(grid: 24, strokeWidth: 1.5, parts: [
-        GlintIconPart(id: "left", style: .stroke, commands: [.move(8, 5), .line(9, 5), .curve(9.69, 5, 10.25, 5.56, 10.25, 6.25), .line(10.25, 17.75), .curve(10.25, 18.44, 9.69, 19, 9, 19), .line(8, 19), .curve(7.31, 19, 6.75, 18.44, 6.75, 17.75), .line(6.75, 6.25), .curve(6.75, 5.56, 7.31, 5, 8, 5), .close]),
-        GlintIconPart(id: "right", style: .stroke, commands: [.move(15, 5), .line(16, 5), .curve(16.69, 5, 17.25, 5.56, 17.25, 6.25), .line(17.25, 17.75), .curve(17.25, 18.44, 16.69, 19, 16, 19), .line(15, 19), .curve(14.31, 19, 13.75, 18.44, 13.75, 17.75), .line(13.75, 6.25), .curve(13.75, 5.56, 14.31, 5, 15, 5), .close]),
-    ])
-    static let play = GlintIconArtwork(grid: 24, strokeWidth: 1.5, parts: [
-        GlintIconPart(id: "triangle", style: .stroke, commands: [.move(8.5, 5.25), .line(18.75, 12), .line(8.5, 18.75), .close]),
-    ])
-    static let power = GlintIconArtwork(grid: 24, strokeWidth: 1.5, parts: [
-        GlintIconPart(id: "stem", style: .stroke, commands: [.move(12, 3.5), .line(12, 11)]),
-        GlintIconPart(id: "ring", style: .stroke, commands: [.move(16.82, 6.75), .curve(19.236, 8.776, 20.126, 12.098, 19.048, 15.061), .curve(17.97, 18.024, 15.153, 19.996, 12, 19.996), .curve(8.847, 19.996, 6.03, 18.024, 4.952, 15.061), .curve(3.874, 12.098, 4.764, 8.776, 7.18, 6.75)]),
-    ])
-    static let quit = GlintIconArtwork(grid: 24, strokeWidth: 1.5, parts: [
-        GlintIconPart(id: "door", style: .stroke, commands: [.move(13.5, 4.5), .line(7, 4.5), .curve(5.62, 4.5, 4.5, 5.62, 4.5, 7), .line(4.5, 17), .curve(4.5, 18.38, 5.62, 19.5, 7, 19.5), .line(13.5, 19.5)]),
-        GlintIconPart(id: "shaft", style: .stroke, commands: [.move(10.5, 12), .line(20, 12)]),
-        GlintIconPart(id: "head", style: .stroke, commands: [.move(16.75, 8.75), .line(20, 12), .line(16.75, 15.25)]),
-    ])
-    static let reading = GlintIconArtwork(grid: 24, strokeWidth: 1.5, parts: [
-        GlintIconPart(id: "line1", style: .stroke, commands: [.move(4, 6.5), .line(20, 6.5)]),
-        GlintIconPart(id: "line2", style: .stroke, commands: [.move(4, 11.5), .line(20, 11.5)]),
-        GlintIconPart(id: "line3", style: .stroke, commands: [.move(4, 16.5), .line(11, 16.5)]),
-        GlintIconPart(id: "sparkle", style: .fill, commands: [.move(16.5, 12.9), .curve(16.98, 14.44, 18.56, 16.02, 20.1, 16.5), .curve(18.56, 16.98, 16.98, 18.56, 16.5, 20.1), .curve(16.02, 18.56, 14.44, 16.98, 12.9, 16.5), .curve(14.44, 16.02, 16.02, 14.44, 16.5, 12.9), .close]),
-    ])
-    static let recalibrate = GlintIconArtwork(grid: 24, strokeWidth: 1.5, parts: [
-        GlintIconPart(id: "ring", style: .stroke, commands: [.move(15.75, 5.5), .curve(18.48, 7.076, 19.933, 10.191, 19.386, 13.296), .curve(18.84, 16.4, 16.41, 18.832, 13.306, 19.381), .curve(10.202, 19.93, 7.086, 18.479, 5.508, 15.75), .curve(3.929, 13.021, 4.226, 9.597, 6.25, 7.18)]),
-        GlintIconPart(id: "arrow", style: .stroke, commands: [.move(3.69, 7.63), .line(6.25, 7.18), .line(6.25, 9.78)]),
-        GlintIconPart(id: "center", style: .fill, commands: [.move(13.6, 12), .curve(13.6, 12.884, 12.884, 13.6, 12, 13.6), .curve(11.116, 13.6, 10.4, 12.884, 10.4, 12), .curve(10.4, 11.116, 11.116, 10.4, 12, 10.4), .curve(12.884, 10.4, 13.6, 11.116, 13.6, 12), .close]),
-    ])
-    static let scrollGlide = GlintIconArtwork(grid: 24, strokeWidth: 1.5, parts: [
-        GlintIconPart(id: "shaft", style: .stroke, commands: [.move(12, 4), .line(12, 15)]),
-        GlintIconPart(id: "head", style: .stroke, commands: [.move(7.5, 10.75), .line(12, 15.25), .line(16.5, 10.75)]),
-        GlintIconPart(id: "baseline", style: .stroke, commands: [.move(5.5, 20), .line(18.5, 20)]),
-    ])
-    static let shield = GlintIconArtwork(grid: 24, strokeWidth: 1.5, parts: [
-        GlintIconPart(id: "shield", style: .stroke, commands: [.move(12, 3.25), .line(18.75, 5.75), .curve(19.2, 5.92, 19.5, 6.35, 19.5, 6.83), .line(19.5, 11.4), .curve(19.5, 15.6, 16.5, 19.2, 12, 20.75), .curve(7.5, 19.2, 4.5, 15.6, 4.5, 11.4), .line(4.5, 6.83), .curve(4.5, 6.35, 4.8, 5.92, 5.25, 5.75), .close]),
-        GlintIconPart(id: "tick", style: .stroke, commands: [.move(9, 12.2), .line(11.1, 14.3), .line(15.2, 10.2)]),
-    ])
-    static let target = GlintIconArtwork(grid: 24, strokeWidth: 1.5, parts: [
-        GlintIconPart(id: "cornerTL", style: .stroke, commands: [.move(3.5, 8.5), .line(3.5, 5.5), .quad(3.5, 3.5, 5.5, 3.5), .line(8.5, 3.5)]),
-        GlintIconPart(id: "cornerTR", style: .stroke, commands: [.move(20.5, 8.5), .line(20.5, 5.5), .quad(20.5, 3.5, 18.5, 3.5), .line(15.5, 3.5)]),
-        GlintIconPart(id: "cornerBR", style: .stroke, commands: [.move(20.5, 15.5), .line(20.5, 18.5), .quad(20.5, 20.5, 18.5, 20.5), .line(15.5, 20.5)]),
-        GlintIconPart(id: "cornerBL", style: .stroke, commands: [.move(3.5, 15.5), .line(3.5, 18.5), .quad(3.5, 20.5, 5.5, 20.5), .line(8.5, 20.5)]),
-        GlintIconPart(id: "target", style: .stroke, commands: [.move(10.25, 8.5), .line(13.75, 8.5), .curve(14.716, 8.5, 15.5, 9.284, 15.5, 10.25), .line(15.5, 13.75), .curve(15.5, 14.716, 14.716, 15.5, 13.75, 15.5), .line(10.25, 15.5), .curve(9.284, 15.5, 8.5, 14.716, 8.5, 13.75), .line(8.5, 10.25), .curve(8.5, 9.284, 9.284, 8.5, 10.25, 8.5), .close]),
-    ])
-    static let tune = GlintIconArtwork(grid: 24, strokeWidth: 1.5, parts: [
-        GlintIconPart(id: "rail1", style: .stroke, commands: [.move(4, 8), .line(6.75, 8), .move(11.25, 8), .line(20, 8)]),
-        GlintIconPart(id: "knob1", style: .stroke, commands: [.move(11.25, 8), .curve(11.25, 9.243, 10.243, 10.25, 9, 10.25), .curve(7.757, 10.25, 6.75, 9.243, 6.75, 8), .curve(6.75, 6.757, 7.757, 5.75, 9, 5.75), .curve(10.243, 5.75, 11.25, 6.757, 11.25, 8), .close]),
-        GlintIconPart(id: "rail2", style: .stroke, commands: [.move(4, 16), .line(12.75, 16), .move(17.25, 16), .line(20, 16)]),
-        GlintIconPart(id: "knob2", style: .stroke, commands: [.move(17.25, 16), .curve(17.25, 17.243, 16.243, 18.25, 15, 18.25), .curve(13.757, 18.25, 12.75, 17.243, 12.75, 16), .curve(12.75, 14.757, 13.757, 13.75, 15, 13.75), .curve(16.243, 13.75, 17.25, 14.757, 17.25, 16), .close]),
-    ])
-    static let warning = GlintIconArtwork(grid: 24, strokeWidth: 1.5, parts: [
-        GlintIconPart(id: "triangle", style: .stroke, commands: [.move(10.27, 4.5), .curve(11.04, 3.17, 12.96, 3.17, 13.73, 4.5), .line(20.7, 16.5), .curve(21.47, 17.83, 20.51, 19.5, 18.97, 19.5), .line(5.03, 19.5), .curve(3.49, 19.5, 2.53, 17.83, 3.3, 16.5), .close]),
-        GlintIconPart(id: "stem", style: .stroke, commands: [.move(12, 9.5), .line(12, 13.25)]),
-        GlintIconPart(id: "dot", style: .fill, commands: [.move(13.05, 16.1), .curve(13.05, 16.68, 12.58, 17.15, 12, 17.15), .curve(11.42, 17.15, 10.95, 16.68, 10.95, 16.1), .curve(10.95, 15.52, 11.42, 15.05, 12, 15.05), .curve(12.58, 15.05, 13.05, 15.52, 13.05, 16.1), .close]),
-    ])
-    static let menuBarAway = GlintIconArtwork(grid: 18, strokeWidth: 1.4, parts: [
-        GlintIconPart(id: "lid", style: .stroke, commands: [.move(1.6, 8.8), .curve(3.9, 11.6, 5.6, 12.4, 7.3, 12.4), .curve(9, 12.4, 10.7, 11.6, 13, 8.8)]),
-        GlintIconPart(id: "lashes", style: .stroke, commands: [.move(7.3, 12.4), .line(7.3, 14.6), .move(4.1, 11.6), .line(3, 13.4), .move(10.5, 11.6), .line(11.6, 13.4)]),
-        GlintIconPart(id: "sparkle", style: .stroke, commands: [.move(14.3, 1.1), .curve(14.7, 2.38, 16.02, 3.7, 17.3, 4.1), .curve(16.02, 4.5, 14.7, 5.82, 14.3, 7.1), .curve(13.9, 5.82, 12.58, 4.5, 11.3, 4.1), .curve(12.58, 3.7, 13.9, 2.38, 14.3, 1.1), .close]),
-    ])
-    static let menuBarNeedsAttention = GlintIconArtwork(grid: 18, strokeWidth: 1.4, parts: [
-        GlintIconPart(id: "outline", style: .stroke, commands: [.move(1.4, 10.6), .curve(4, 6.1, 10.6, 6.1, 13.2, 10.6), .curve(10.6, 15.1, 4, 15.1, 1.4, 10.6), .close]),
-        GlintIconPart(id: "iris", style: .fill, commands: [.move(9.2, 10.6), .curve(9.2, 11.649, 8.349, 12.5, 7.3, 12.5), .curve(6.251, 12.5, 5.4, 11.649, 5.4, 10.6), .curve(5.4, 9.551, 6.251, 8.7, 7.3, 8.7), .curve(8.349, 8.7, 9.2, 9.551, 9.2, 10.6), .close]),
-        GlintIconPart(id: "bang", style: .stroke, commands: [.move(14.6, 1.6), .line(14.6, 4.9)]),
-        GlintIconPart(id: "dot", style: .fill, commands: [.move(15.55, 7.3), .curve(15.55, 7.825, 15.125, 8.25, 14.6, 8.25), .curve(14.075, 8.25, 13.65, 7.825, 13.65, 7.3), .curve(13.65, 6.775, 14.075, 6.35, 14.6, 6.35), .curve(15.125, 6.35, 15.55, 6.775, 15.55, 7.3), .close]),
-    ])
-    static let menuBarOff = GlintIconArtwork(grid: 18, strokeWidth: 1.4, parts: [
-        GlintIconPart(id: "outline", style: .stroke, commands: [.move(1.4, 10.6), .curve(4, 6.1, 10.6, 6.1, 13.2, 10.6), .curve(10.6, 15.1, 4, 15.1, 1.4, 10.6), .close]),
-        GlintIconPart(id: "iris", style: .stroke, commands: [.move(9.2, 10.6), .curve(9.2, 11.649, 8.349, 12.5, 7.3, 12.5), .curve(6.251, 12.5, 5.4, 11.649, 5.4, 10.6), .curve(5.4, 9.551, 6.251, 8.7, 7.3, 8.7), .curve(8.349, 8.7, 9.2, 9.551, 9.2, 10.6), .close]),
-    ])
-    static let menuBarPaused = GlintIconArtwork(grid: 18, strokeWidth: 1.4, parts: [
-        GlintIconPart(id: "outline", style: .stroke, commands: [.move(1.4, 10.6), .curve(4, 6.1, 10.6, 6.1, 13.2, 10.6), .curve(10.6, 15.1, 4, 15.1, 1.4, 10.6), .close]),
-        GlintIconPart(id: "iris", style: .fill, commands: [.move(9.2, 10.6), .curve(9.2, 11.649, 8.349, 12.5, 7.3, 12.5), .curve(6.251, 12.5, 5.4, 11.649, 5.4, 10.6), .curve(5.4, 9.551, 6.251, 8.7, 7.3, 8.7), .curve(8.349, 8.7, 9.2, 9.551, 9.2, 10.6), .close]),
-        GlintIconPart(id: "barL", style: .stroke, commands: [.move(13.05, 1.4), .line(13.05, 1.4), .curve(13.409, 1.4, 13.7, 1.691, 13.7, 2.05), .line(13.7, 6.15), .curve(13.7, 6.509, 13.409, 6.8, 13.05, 6.8), .line(13.05, 6.8), .curve(12.691, 6.8, 12.4, 6.509, 12.4, 6.15), .line(12.4, 2.05), .curve(12.4, 1.691, 12.691, 1.4, 13.05, 1.4), .close]),
-        GlintIconPart(id: "barR", style: .stroke, commands: [.move(15.85, 1.4), .line(15.85, 1.4), .curve(16.209, 1.4, 16.5, 1.691, 16.5, 2.05), .line(16.5, 6.15), .curve(16.5, 6.509, 16.209, 6.8, 15.85, 6.8), .line(15.85, 6.8), .curve(15.491, 6.8, 15.2, 6.509, 15.2, 6.15), .line(15.2, 2.05), .curve(15.2, 1.691, 15.491, 1.4, 15.85, 1.4), .close]),
-    ])
-    static let menuBarTracking = GlintIconArtwork(grid: 18, strokeWidth: 1.4, parts: [
-        GlintIconPart(id: "outline", style: .stroke, commands: [.move(1.4, 10.6), .curve(4, 6.1, 10.6, 6.1, 13.2, 10.6), .curve(10.6, 15.1, 4, 15.1, 1.4, 10.6), .close]),
-        GlintIconPart(id: "iris", style: .fill, commands: [.move(9.2, 10.6), .curve(9.2, 11.649, 8.349, 12.5, 7.3, 12.5), .curve(6.251, 12.5, 5.4, 11.649, 5.4, 10.6), .curve(5.4, 9.551, 6.251, 8.7, 7.3, 8.7), .curve(8.349, 8.7, 9.2, 9.551, 9.2, 10.6), .close]),
-        GlintIconPart(id: "sparkle", style: .fill, commands: [.move(14.3, 0.8), .curve(14.74, 2.21, 16.19, 3.66, 17.6, 4.1), .curve(16.19, 4.54, 14.74, 5.99, 14.3, 7.4), .curve(13.86, 5.99, 12.41, 4.54, 11, 4.1), .curve(12.41, 3.66, 13.86, 2.21, 14.3, 0.8), .close]),
+    static let menuBarTracking = GlintIconArtwork(grid: 18, strokeWidth: 1.5, parts: [
+        GlintIconPart(id: "ring", style: .stroke, commands: [.move(15.75, 9), .curve(15.75, 12.728, 12.728, 15.75, 9, 15.75), .curve(5.272, 15.75, 2.25, 12.728, 2.25, 9), .curve(2.25, 5.272, 5.272, 2.25, 9, 2.25), .curve(12.728, 2.25, 15.75, 5.272, 15.75, 9), .close]),
+        GlintIconPart(id: "catchlight", style: .fill, commands: [.move(12.95, 6.9), .curve(12.95, 7.922, 12.122, 8.75, 11.1, 8.75), .curve(10.078, 8.75, 9.25, 7.922, 9.25, 6.9), .curve(9.25, 5.878, 10.078, 5.05, 11.1, 5.05), .curve(12.122, 5.05, 12.95, 5.878, 12.95, 6.9), .close]),
     ])
 }

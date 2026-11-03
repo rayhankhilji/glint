@@ -50,8 +50,8 @@ jobs:
         run: scripts/check-licenses.sh && scripts/tests/check-licenses.test.sh
       - name: Color contrast
         run: python3 -I scripts/contrast.py
-      - name: Icons compiled from SVG are up to date + converter tests
-        run: python3 -I scripts/icons/build_icons.py --check && python3 -m unittest discover -s scripts/tests -p 'test_*.py'
+      - name: Generated tokens and artwork are up to date + converter tests
+        run: python3 -I scripts/design/build_tokens.py --check && python3 -I scripts/icons/build_icons.py --check && python3 -m unittest discover -s scripts/tests -p 'test_*.py'
 
   app-macos:
     name: app-macos (GlintKit + app + UI tests)

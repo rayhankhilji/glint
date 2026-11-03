@@ -1,5 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-  <title>Eye</title>
-  <path data-part="outline" d="M2.5 12 C6.68 5.4 17.32 5.4 21.5 12 C17.32 18.6 6.68 18.6 2.5 12 Z"/>
-  <circle data-part="iris" cx="12" cy="12" r="3"/>
-</svg>

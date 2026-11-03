@@ -30,11 +30,8 @@ let package = Package(
         .target(name: "GlintServices", dependencies: [
             .product(name: "GlintCore", package: "GlintCore"), "GlintPlatform",
         ]),
-        .target(
-            name: "GlintUI",
-            dependencies: [.product(name: "GlintCore", package: "GlintCore"), "GlintPlatform"],
-            resources: [.process("Resources")]
-        ),
+        // No resources: colors are generated Swift (Design/tokens.json) and UI icons are SF Symbols.
+        .target(name: "GlintUI", dependencies: [.product(name: "GlintCore", package: "GlintCore"), "GlintPlatform"]),
         .target(name: "GlintRuntime", dependencies: [
             .product(name: "GlintCore", package: "GlintCore"),
             "GlintPlatform", "GlintPerception", "GlintSystem", "GlintServices",

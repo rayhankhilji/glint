@@ -104,6 +104,9 @@ rule "No decorative gradients or blur glows (DESIGN_SYSTEM §1): light is drawn 
   'LinearGradient|RadialGradient|AngularGradient|EllipticalGradient|\.linearGradient\(|\.radialGradient\(|NSGradient|CAGradientLayer|\.blur\(radius' \
   "$KIT/GlintUI" App
 
+rule "UI icons come from GlintSymbol only (DESIGN_SYSTEM §7)" 'Image\(systemName:' \
+  "$KIT/GlintUI" App -- "$KIT/GlintUI/Icons/GlintSymbol.swift"
+
 # --- G-SEC-07: entitlements -------------------------------------------------------------------------------
 if [[ -f Config/Glint.entitlements && -f Config/Glint.entitlements.expected ]]; then
   if ! diff -q Config/Glint.entitlements Config/Glint.entitlements.expected >/dev/null; then

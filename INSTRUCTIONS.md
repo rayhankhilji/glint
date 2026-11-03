@@ -81,7 +81,7 @@ glint/
 │       ├── Sources/{GlintPlatform,GlintPerception,GlintSystem,GlintServices,GlintUI,GlintRuntime}/
 │       └── Tests/{GlintPlatformTests,GlintServicesTests,GlintUITests,GlintRuntimeTests,…}/   # GlintUITests = snapshot tests
 ├── UITests/                        # XCUITest target (onboarding, settings) using GLINT_FAKE_CAMERA
-├── Design/                         # Icons/ MenuBar/ (SVG sources), AppIcon/, Motion/ (animated SVG motion spec)
+├── Design/                         # tokens.json, Icons/mark.svg, MenuBar/, AppIcon/, Motion/ (animated SVG motion spec)
 ├── Models/                         # *.onnx via Git LFS + checksums.sha256
 ├── Evals/
 │   ├── datasets/ci/                # small (≤ 20 MB) traces used in CI
@@ -134,7 +134,9 @@ scripts/bootstrap.sh
 | License check | `scripts/check-licenses.sh` |
 | Contrast check | `python3 -I scripts/contrast.py` |
 | Coverage gate | `swift test --package-path Packages/GlintCore --enable-code-coverage && scripts/coverage.sh core` |
-| Compile icons from SVG | `python3 scripts/icons/build_icons.py` (CI: `--check`) |
+| Build + install the app locally (Mac) | `scripts/build-app.sh --install --open` |
+| Compile color tokens | `python3 scripts/design/build_tokens.py` (CI: `--check`) |
+| Compile brand artwork from SVG | `python3 scripts/icons/build_icons.py` (CI: `--check`) |
 | Icon converter tests | `python3 -m unittest discover -s scripts/tests -p 'test_*.py'` |
 | Regenerate motion studies | `python3 scripts/icons/author_motion.py` |
 | Rasterize app icon | `node scripts/icons/render-app-icon.mjs` (dev-only; Node + Playwright) |
@@ -186,7 +188,8 @@ func checkScroll() {
 ## 7. Frontend Rules (GlintUI)
 
 - Use tokens from `GlintUI/DesignSystem` only: no raw `Color(red:…)`, hex, numeric font sizes, or ad-hoc animation durations. Add a token (DESIGN_SYSTEM §13) if one is missing.
-- Icons: use `GlintIcon(.name)` / `GlintMark` from the custom set (DESIGN_SYSTEM §7). New icons start as an SVG in `Design/Icons/` and are compiled with `python3 scripts/icons/build_icons.py`; never edit `GlintIconData.swift` by hand. SF Symbols only inside system-provided controls.
+- Icons: UI icons are SF Symbols, declared once in `GlintSymbol` and drawn with `GlintSymbolImage`. The brand mark and menu bar glyphs are SVGs in `Design/` compiled with `python3 scripts/icons/build_icons.py`; never edit generated `GlintIconData.swift` or `GlintColorTokens.swift` by hand.
+- Colors: add or change them only in `Design/tokens.json`, then run `python3 scripts/design/build_tokens.py` and `python3 scripts/contrast.py`.
 - No decorative gradients, glows or blur (`LinearGradient`, `RadialGradient`, `.blur(radius:)`, …): light is crisp geometry. `scripts/check-architecture.sh` enforces this.
 - Glass: always use `GlassSurface` (wraps `glassEffect()` on macOS 26+, material fallback on 14–15). Never call `.glassEffect` directly in feature views.
 - Every screen implements every state in DESIGN_SYSTEM §9 and PRD (`States:`), including permission-denied, not-calibrated, and camera-missing.

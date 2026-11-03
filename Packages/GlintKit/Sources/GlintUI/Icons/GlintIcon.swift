@@ -42,7 +42,11 @@ struct GlintArtworkView: View {
                 .opacity(look.opacity)
                 .scaleEffect(look.scale, anchor: look.anchor(part: part, grid: artwork.grid))
                 .rotationEffect(look.rotation, anchor: look.anchor(part: part, grid: artwork.grid))
-                .scaleEffect(x: 1, y: look.scaleY, anchor: look.anchor(part: part, grid: artwork.grid))
+                .scaleEffect(
+                    x: 1,
+                    y: look.scaleY,
+                    anchor: look.squashAnchor ?? look.anchor(part: part, grid: artwork.grid)
+                )
             }
         }
         .frame(width: size, height: size)
@@ -56,6 +60,9 @@ struct PartAppearance {
     var scaleY: CGFloat = 1
     var rotation: Angle = .zero
     var drawProgress: CGFloat = 1
+    /// Anchor for `scaleY` only (e.g. `.center` to squash parts toward the icon center like a closing lid).
+    /// `scale` and `rotation` always use the part's own center, so a catchlight swells in place.
+    var squashAnchor: UnitPoint?
 
     func anchor(part: GlintIconPart, grid: CGFloat) -> UnitPoint {
         let b = part.gridBounds

@@ -1,9 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
   <title>Glint app icon</title>
-  <!-- Flat by design (DESIGN_SYSTEM §7): ink tile, paper eye, one warm glint as the eye's catchlight. -->
-  <rect x="100" y="100" width="824" height="824" rx="186" fill="#111214"/>
-  <rect x="101" y="101" width="822" height="822" rx="185" fill="none" stroke="#FFFFFF" stroke-opacity="0.08" stroke-width="2"/>
-  <path d="M232 548 C355.2 343 668.8 343 792 548 C668.8 753 355.2 753 232 548 Z" fill="none" stroke="#ECEDEF" stroke-width="46" stroke-linejoin="round"/>
-  <circle cx="512" cy="548" r="86" fill="none" stroke="#ECEDEF" stroke-width="46"/>
-  <path d="M704 208 C720.9 262.8 777.2 319.1 832 336 C777.2 352.9 720.9 409.2 704 464 C687.1 409.2 630.8 352.9 576 336 C630.8 319.1 687.1 262.8 704 208 Z" fill="#FFC85C"/>
+  <!-- The mark at 30x (ring r 8.25, catchlight +2.75/-2.75 r 2.25) on a flat near-black tile. No gradients. -->
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="#0B0C0D"/>
+  <rect x="100.75" y="100.75" width="822.5" height="822.5" rx="184.25" fill="none" stroke="#FFFFFF" stroke-opacity="0.09" stroke-width="1.5"/>
+  <circle cx="512" cy="512" r="247.5" fill="none" stroke="#EDEEF0" stroke-width="52"/>
+  <circle cx="594.5" cy="429.5" r="67.5" fill="#8B8DF8"/>
 </svg>

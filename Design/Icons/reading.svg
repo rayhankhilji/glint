@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-  <title>Where was I</title>
-  <path data-part="line1" d="M4 6.5 H20"/>
-  <path data-part="line2" d="M4 11.5 H20"/>
-  <path data-part="line3" d="M4 16.5 H11"/>
-  <path data-part="sparkle" d="M16.5 12.9 C16.98 14.44 18.56 16.02 20.1 16.5 C18.56 16.98 16.98 18.56 16.5 20.1 C16.02 18.56 14.44 16.98 12.9 16.5 C14.44 16.02 16.02 14.44 16.5 12.9 Z" fill="currentColor" stroke="none"/>
-</svg>

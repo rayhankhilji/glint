@@ -1,14 +1,14 @@
 import SwiftUI
 
-/// The Glint mark (eye + glint) with its signature motions (DESIGN_SYSTEM §6.2, Design/Motion/*.svg).
-/// Every motion has a static Reduce Motion fallback.
+/// The Glint mark: a ring (the eye) with an accent catchlight (DESIGN_SYSTEM §7). Its motions are quiet and
+/// brief; every one has a static Reduce Motion fallback.
 public struct GlintMark: View {
     public enum Motion: Sendable {
         /// No motion.
         case still
-        /// Live: the glint twinkles once every 12 s (popover header while tracking).
-        case twinkle
-        /// Teaching loop: the eye double-blinks, then the glint flares (onboarding, Playground).
+        /// Live: every 8 s the catchlight brightens and swells slightly (popover header while tracking).
+        case live
+        /// Teaching loop: the ring blinks twice, then the catchlight pulses (onboarding, Playground).
         case doubleBlink
     }
 
@@ -25,11 +25,11 @@ public struct GlintMark: View {
         Group {
             if reduceMotion || motion == .still {
                 draw(MarkPose())
-            } else if motion == .twinkle {
+            } else if motion == .live {
                 KeyframeAnimator(initialValue: MarkPose(), repeating: true) { pose in
                     draw(pose)
                 } keyframes: { _ in
-                    Self.twinkle
+                    Self.live
                 }
             } else {
                 KeyframeAnimator(initialValue: MarkPose(), repeating: true) { pose in
@@ -43,77 +43,54 @@ public struct GlintMark: View {
     }
 
     private func draw(_ pose: MarkPose) -> some View {
-        GlintArtworkView(artwork: GlintIconName.eyeGlint.artwork, size: size) { part in
-            switch part.id {
-            case "sparkle":
-                PartAppearance(
-                    opacity: pose.sparkleOpacity,
-                    scale: pose.sparkleScale,
-                    rotation: .degrees(pose.sparkleSpin)
-                )
-            case "outline", "iris":
-                PartAppearance(scaleY: pose.lid)
-            default:
-                PartAppearance()
+        let art = GlintIconName.mark.artwork
+        return ZStack {
+            GlintArtworkView(artwork: art, size: size) { part in
+                part.id == "ring" ? PartAppearance(scaleY: pose.lid, squashAnchor: .center) : PartAppearance(opacity: 0)
             }
-        }
-        .foregroundStyle(GlintColor.text)
-        .overlay {
-            // The glint is the one warm element: recolor only the sparkle part.
-            GlintArtworkView(artwork: GlintIconName.eyeGlint.artwork, size: size) { part in
-                part.id == "sparkle"
+            .foregroundStyle(GlintColor.text)
+            GlintArtworkView(artwork: art, size: size) { part in
+                part.id == "catchlight"
+                    // Squashes with the lid toward the eye's center, then swells on its own center.
                     ? PartAppearance(
-                        opacity: pose.sparkleOpacity,
-                        scale: pose.sparkleScale,
-                        rotation: .degrees(pose.sparkleSpin)
+                        opacity: pose.catchlightOpacity,
+                        scale: pose.catchlightScale,
+                        scaleY: pose.lid,
+                        squashAnchor: .center
                     )
                     : PartAppearance(opacity: 0)
             }
-            .foregroundStyle(GlintColor.glintMark)
+            .foregroundStyle(GlintColor.accent)
         }
     }
 
-    /// 12 s cycle: 11.4 s rest, then a 600 ms twinkle (scale 1 → 1.25 → 1, a quarter turn). The glint is 4-fold
-    /// symmetric, so the 90° → 0° reset at the loop is invisible (a 45° turn would snap).
+    /// 8 s cycle: rest, then a 500 ms swell (scale 1 → 1.3 → 1) with the opacity dipping and returning.
     @KeyframesBuilder<MarkPose>
-    private static var twinkle: some Keyframes<MarkPose> {
-        KeyframeTrack(\.sparkleScale) {
-            LinearKeyframe(1, duration: 11.4)
-            CubicKeyframe(1.25, duration: 0.24)
-            SpringKeyframe(1, duration: 0.36, spring: .snappy)
-        }
-        KeyframeTrack(\.sparkleSpin) {
-            LinearKeyframe(0, duration: 11.4)
-            CubicKeyframe(90, duration: 0.6)
-            LinearKeyframe(0, duration: 0.001)
+    private static var live: some Keyframes<MarkPose> {
+        KeyframeTrack(\.catchlightScale) {
+            LinearKeyframe(1, duration: 7.5)
+            CubicKeyframe(1.3, duration: 0.2)
+            SpringKeyframe(1, duration: 0.3, spring: .snappy)
         }
     }
 
-    /// 2.8 s teaching loop: open → blink (80 ms close, 120 ms open) → 180 ms gap → blink → flare → rest.
+    /// 2.6 s loop: open → blink (80 ms close, 120 ms open) → 180 ms gap → blink → catchlight pulse → rest.
     @KeyframesBuilder<MarkPose>
     private static var doubleBlink: some Keyframes<MarkPose> {
         KeyframeTrack(\.lid) {
             LinearKeyframe(1, duration: 0.6)
-            CubicKeyframe(0.08, duration: 0.08)
+            CubicKeyframe(0.06, duration: 0.08)
             CubicKeyframe(1, duration: 0.12)
             LinearKeyframe(1, duration: 0.18)
-            CubicKeyframe(0.08, duration: 0.08)
+            CubicKeyframe(0.06, duration: 0.08)
             CubicKeyframe(1, duration: 0.12)
-            LinearKeyframe(1, duration: 1.62)
+            LinearKeyframe(1, duration: 1.42)
         }
-        KeyframeTrack(\.sparkleScale) {
+        KeyframeTrack(\.catchlightScale) {
             LinearKeyframe(1, duration: 1.18)
-            CubicKeyframe(1.45, duration: 0.12)
-            SpringKeyframe(1, duration: 0.5, spring: .bouncy)
-            LinearKeyframe(1, duration: 1.0)
-        }
-        KeyframeTrack(\.sparkleOpacity) {
-            LinearKeyframe(0.55, duration: 0.6)
-            LinearKeyframe(0.55, duration: 0.2)
-            LinearKeyframe(0.85, duration: 0.38)
-            CubicKeyframe(1, duration: 0.12)
-            LinearKeyframe(1, duration: 0.9)
-            CubicKeyframe(0.55, duration: 0.6)
+            CubicKeyframe(1.5, duration: 0.14)
+            SpringKeyframe(1, duration: 0.4, spring: .snappy)
+            LinearKeyframe(1, duration: 0.88)
         }
     }
 }
@@ -121,32 +98,6 @@ public struct GlintMark: View {
 /// Animatable pose of the mark's parts.
 struct MarkPose {
     var lid: CGFloat = 1
-    var sparkleScale: CGFloat = 1
-    var sparkleSpin: Double = 0
-    var sparkleOpacity: Double = 1
-}
-
-/// An icon whose strokes draw on once when it appears (permission granted, calibration done).
-public struct DrawOnIcon: View {
-    private let name: GlintIconName
-    private let size: CGFloat
-    @State private var progress: CGFloat = 0
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    public init(_ name: GlintIconName, size: CGFloat = 20) {
-        self.name = name
-        self.size = size
-    }
-
-    public var body: some View {
-        GlintArtworkView(artwork: name.artwork, size: size) { _ in PartAppearance(drawProgress: progress) }
-            .accessibilityHidden(true)
-            .onAppear {
-                if reduceMotion {
-                    progress = 1
-                } else {
-                    withAnimation(GlintMotion.standard.animation(duration: 0.28)) { progress = 1 }
-                }
-            }
-    }
+    var catchlightScale: CGFloat = 1
+    var catchlightOpacity: Double = 1
 }

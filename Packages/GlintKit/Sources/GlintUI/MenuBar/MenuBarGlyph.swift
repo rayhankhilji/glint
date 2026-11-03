@@ -16,11 +16,11 @@ public enum MenuBarGlyph {
 
     public static func accessibilityDescription(for state: MenuBarGlyphState) -> String {
         switch state {
-        case .tracking: String(localized: "Glint is on", bundle: .module)
-        case .paused: String(localized: "Glint is paused", bundle: .module)
-        case .off: String(localized: "Glint is off", bundle: .module)
-        case .away: String(localized: "Glint is waiting for you", bundle: .module)
-        case .needsAttention: String(localized: "Glint needs attention", bundle: .module)
+        case .tracking: String(localized: "Glint is on")
+        case .paused: String(localized: "Glint is paused")
+        case .off: String(localized: "Glint is off")
+        case .away: String(localized: "Glint is waiting for you")
+        case .needsAttention: String(localized: "Glint needs attention")
         }
     }
 }

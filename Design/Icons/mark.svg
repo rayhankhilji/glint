@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+  <title>Glint</title>
+  <circle data-part="ring" cx="12" cy="12" r="8.25"/>
+  <circle data-part="catchlight" cx="14.75" cy="9.25" r="2.25" fill="currentColor" stroke="none"/>
+</svg>

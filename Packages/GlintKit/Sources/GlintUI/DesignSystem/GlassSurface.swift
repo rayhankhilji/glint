@@ -20,13 +20,13 @@ public struct GlassSurface<S: Shape, Content: View>: View {
 
     public var body: some View {
         if reduceTransparency {
-            content.background(GlintColor.surfaceRaised, in: shape)
+            content.background(GlintColor.surface, in: shape)
         } else if #available(macOS 26.0, *) {
             content.glassEffect(style == .clear ? .clear : .regular, in: shape)
         } else {
             content
                 .background(.ultraThinMaterial, in: shape)
-                .overlay(shape.stroke(GlintColor.glassEdge, lineWidth: GlintLayout.hairline))
+                .overlay(shape.stroke(GlintColor.border, lineWidth: GlintLayout.hairline))
         }
     }
 }

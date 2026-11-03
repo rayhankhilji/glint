@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-  <title>Warning</title>
-  <path data-part="triangle" d="M10.27 4.5 C11.04 3.17 12.96 3.17 13.73 4.5 L20.7 16.5 C21.47 17.83 20.51 19.5 18.97 19.5 H5.03 C3.49 19.5 2.53 17.83 3.3 16.5 Z"/>
-  <path data-part="stem" d="M12 9.5 V13.25"/>
-  <circle data-part="dot" cx="12" cy="16.1" r="1.05" fill="currentColor" stroke="none"/>
-</svg>

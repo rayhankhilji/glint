@@ -60,7 +60,7 @@ class Shapes(unittest.TestCase):
 class Sources(unittest.TestCase):
     def test_all_icon_sources_load(self):
         swift, icons, menubar = bi.generate()
-        self.assertGreaterEqual(len(icons), 20)
+        self.assertIn("mark", icons)
         self.assertEqual(set(menubar), {"tracking", "paused", "off", "away", "needsAttention"})
         self.assertIn("public enum GlintIconName", swift)
 
