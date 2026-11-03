@@ -8,9 +8,12 @@ public struct FaceObservation: Sendable, Equatable {
     /// Eye outline points, in any order (at least 4 each).
     public var leftEye: [Point]
     public var rightEye: [Point]
-    /// Pupil centers, when the provider found them.
+    /// Pupil centers from the landmark model (coarse), when the provider found them.
     public var leftPupil: Point?
     public var rightPupil: Point?
+    /// Iris centers measured from the eye pixels by `IrisLocator` (sub-pixel). Preferred over the pupils.
+    public var leftIris: Point?
+    public var rightIris: Point?
     /// Face bounding box in image pixels.
     public var faceBounds: Rect
     /// Head pose in radians, when available.
@@ -22,7 +25,7 @@ public struct FaceObservation: Sendable, Equatable {
 
     public init(
         timestamp: TimeInterval, imageSize: Size, leftEye: [Point], rightEye: [Point],
-        leftPupil: Point?, rightPupil: Point?, faceBounds: Rect,
+        leftPupil: Point?, rightPupil: Point?, leftIris: Point? = nil, rightIris: Point? = nil, faceBounds: Rect,
         yaw: Double? = nil, pitch: Double? = nil, roll: Double? = nil, confidence: Double
     ) {
         self.timestamp = timestamp
@@ -31,6 +34,8 @@ public struct FaceObservation: Sendable, Equatable {
         self.rightEye = rightEye
         self.leftPupil = leftPupil
         self.rightPupil = rightPupil
+        self.leftIris = leftIris
+        self.rightIris = rightIris
         self.faceBounds = faceBounds
         self.yaw = yaw
         self.pitch = pitch

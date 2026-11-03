@@ -1,8 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
   <title>Saccade app icon</title>
-  <!-- The mark at 30x (ring r 8.25, catchlight +2.75/-2.75 r 2.25) on a flat near-black tile. No gradients. -->
-  <rect x="100" y="100" width="824" height="824" rx="185" fill="#0B0C0D"/>
-  <rect x="100.75" y="100.75" width="822.5" height="822.5" rx="184.25" fill="none" stroke="#FFFFFF" stroke-opacity="0.09" stroke-width="1.5"/>
-  <circle cx="512" cy="512" r="247.5" fill="none" stroke="#EDEEF0" stroke-width="52"/>
-  <circle cx="594.5" cy="429.5" r="67.5" fill="#8B8DF8"/>
+  <!-- Monochrome: the Saccade mark (fixation, jump, fixation) in white on a flat black tile. -->
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="#0A0A0A"/>
+  <rect x="100.75" y="100.75" width="822.5" height="822.5" rx="184.25" fill="none" stroke="#FFFFFF" stroke-opacity="0.1" stroke-width="1.5"/>
+  <g transform="translate(126 80) scale(34.0)" color="#FFFFFF" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+  <circle data-part="dot" cx="6.5" cy="17.5" r="2.6" fill="currentColor" stroke="none"/>
+  <path data-part="path" d="M9.33 14.67 L10.55 13.45"/>
+  <circle data-part="ring" cx="15.25" cy="8.75" r="5.25"/>
+  </g>
 </svg>

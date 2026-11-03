@@ -4,60 +4,61 @@
 
 ## 1. Design Direction
 
-**Personality:** clean, precise, quiet, fast. The bar is Linear and Notion: modern product software where nothing is decorative and every pixel is deliberate. **Not** gamer-neon, not sci-fi HUD, not a dashboard, no sparkles.
+**Personality:** precise, quiet, fast. Pure monochrome: ink on paper, paper on ink. The bar is Linear, Notion and Vercel: modern product software where nothing is decorative and every pixel is deliberate. **Not** gamer-neon, not sci-fi HUD, not a dashboard, no glows, no sparkles, no brand color.
 
 | Reference | What we take |
 |---|---|
-| Linear | Density (13 pt rows, 28 pt controls), hairline section dividers, a single indigo accent, status dots, keyboard shortcuts in faint text |
-| Notion | Calm neutral pages, soft highlight for "where you are", plain words over badges |
-| macOS / visionOS | SF Pro and SF Symbols, system materials, the hover highlight that hugs a target's real shape |
+| Linear | Density (13 pt rows, 28 pt controls), hairline section dividers, status dots, keyboard shortcuts in faint text |
+| Notion / Vercel | Black and white only, calm neutral pages, plain words over badges |
+| macOS | SF Pro and SF Symbols, native grouped forms, the hover highlight that hugs a target's real shape |
 
 **Principles**
 
-1. **One accent.** Indigo marks what matters: the primary action, the switch, selection, focus, the mark's catchlight and the overlay highlight. Everything else is neutral.
+1. **No color.** The interface is black, white and greys. Primary buttons and switches are ink (light) or paper (dark). Semantic colors (success, warning, danger) appear only in status dots and callout symbols, always next to words.
 2. **No decoration.** No gradients, glows, blur halos or sparkles. `check-architecture.sh` bans gradient and blur APIs in SaccadeUI and App. Emphasis comes from weight, opacity and position.
 3. **System-native.** SF Pro for type, SF Symbols for every UI icon. Only the brand mark and menu bar glyphs are custom.
-4. **Hug, don't point.** The overlay highlights the real element's shape; there is no cursor dot in production.
-5. **Anticipate, then act.** Every action has a visible build-up (armed highlight, dwell progress bar) so the user can abort by looking away (G-ML-03).
-6. **Calm when uncertain.** Uncertainty shows as two faint rings, never flicker.
+4. **Hug, don't point.** The overlay outlines the real element 3 pt outside its frame. A 7 pt dot shows the gaze only when nothing is under it.
+5. **Dual-tone marks.** Every overlay mark is an ink core over a paper halo, so it reads on white pages, dark mode and photos without any color.
+6. **Anticipate, then act.** Every action has a visible build-up (armed highlight, dwell progress bar) so the user can abort by looking away (G-ML-03).
+7. **Calm when uncertain.** Two close candidates show as two faint dashed outlines; nothing is clickable until one wins.
 
 ## 2. Color Tokens
 
-All colors live in `Design/tokens.json`, the single source of truth. `scripts/design/build_tokens.py` compiles them to `SaccadeUI/DesignSystem/SaccadeColorTokens.swift` (appearance-aware `NSColor` providers, so the Swift package has no asset catalog), and `scripts/contrast.py` checks every documented pair (28/28 pass). Components use `SaccadeColor.*` only.
+All colors live in `Design/tokens.json`, the single source of truth. `scripts/design/build_tokens.py` compiles them to `SaccadeUI/DesignSystem/SaccadeColorTokens.swift` (appearance-aware `NSColor` providers, so the Swift package has no asset catalog), and `scripts/contrast.py` checks every documented pair (22/22 pass). Components use `SaccadeColor.*` only.
 
 ### 2.1 Chrome (Saccade's windows)
 
 | Token | Light | Dark | Use |
 |---|---|---|---|
-| `background` | `#FBFBFC` | `#0B0C0D` | Window background |
-| `surface` | `#FFFFFF` | `#141516` | Raised surfaces |
-| `subtle` | `#F3F4F6` | `#1B1C1E` | Row hover, inline callouts |
-| `border` | `#0F1011` @ 6% | `#FFFFFF` @ 8% | Hairlines |
-| `text` | `#0F1011` | `#EDEEF0` | Primary text |
-| `textMuted` | `#6B6F76` | `#8A8F98` | Secondary text, row icons |
-| `textFaint` | `#9A9DA3` | `#5E636B` | Shortcuts, placeholders (non-essential) |
-| `accent` | `#5753D9` | `#8B8DF8` | Primary actions, switch, links, catchlight |
-| `onAccent` | `#FFFFFF` | `#0B0C0D` | Text on accent |
-| `accentSoft` | `#5753D9` @ 10% | `#8B8DF8` @ 12% | Selected rows |
-| `success` | `#16794A` | `#4CC38A` | Tracking, good accuracy |
-| `warning` | `#9A5B00` | `#F1A33C` | Paused, fair accuracy, low light |
-| `danger` | `#C42B1C` | `#FF6B5E` | Blocked, poor accuracy |
-| `focusRing` | `#5753D9` | `#8B8DF8` | Keyboard focus |
+| `background` | `#FFFFFF` | `#0A0A0A` | Window background |
+| `surface` | `#FFFFFF` | `#141414` | Raised surfaces |
+| `subtle` | `#F4F4F5` | `#1C1C1E` | Row hover, inline callouts, onboarding rows |
+| `border` | `#0A0A0A` @ 8% | `#FFFFFF` @ 9% | Hairlines |
+| `text` | `#0A0A0A` | `#FAFAFA` | Primary text, the mark |
+| `textMuted` | `#636366` | `#8E8E93` | Secondary text, row icons |
+| `textFaint` | `#A1A1A6` | `#5A5A5F` | Shortcuts, placeholders (non-essential) |
+| `accent` | `#0A0A0A` | `#FAFAFA` | Primary buttons, switches, sliders (ink / paper) |
+| `onAccent` | `#FFFFFF` | `#0A0A0A` | Text on accent |
+| `accentSoft` | `#0A0A0A` @ 6% | `#FAFAFA` @ 8% | Selected rows |
+| `success` | `#1F7A45` | `#5BC98A` | Status dot: tracking, good accuracy |
+| `warning` | `#94600A` | `#E9A949` | Status dot: paused, fair accuracy, low light |
+| `danger` | `#C0362C` | `#FF6F61` | Status dot / callout: blocked, poor accuracy |
+| `focusRing` | `#0A0A0A` | `#FAFAFA` | Keyboard focus |
 | `scrim` | `#000000` @ 35% | `#000000` @ 55% | Calibration backdrop |
 
 ### 2.2 Overlay (drawn over other apps)
 
-Appearance-independent, because the overlay sits on arbitrary content. The ring color `#6366F1` clears 4.5:1 on pure white and 4.7:1 on pure black.
+Appearance-independent, because the overlay sits on arbitrary content. Every stroke is drawn twice: a paper halo (core + 2 pt) under an ink core, so the mark clears 3:1 on pure white (ink, 21:1) and on pure black (paper, 21:1).
 
 | Token | Value | Use |
 |---|---|---|
-| `overlayRing` | `#6366F1` | Target highlight ring, 1.5 pt; 2 pt when armed |
-| `overlayFill` / `overlayFillArmed` / `overlayFillPress` | `#6366F1` @ 8% / 14% / 24% | Highlight fill: resting / armed / click flash |
-| `overlayHairline` | `#FFFFFF` @ 70% | 1 pt inner hairline, separates the ring from indigo UI |
-| `overlayUncertain` | `#6366F1` @ 45% | Two candidate rings, 1 pt |
-| `overlayProgress` | `#6366F1` | Scroll-dwell progress bar, 2 pt |
-| `overlayLineHighlight` | `#6366F1` @ 18% | "Where was I" line highlight |
-| `overlayDebugDot` | `#FF3B6B` @ 80% | Debug gaze dot (Advanced only) |
+| `overlayInk` | `#000000` | Core stroke: 1.5 pt locked, 2 pt armed; scroll bar; gaze-dot ring |
+| `overlayPaper` | `#FFFFFF` | Halo stroke under every core; gaze-dot fill |
+| `overlayInkFill` / `overlayInkFillArmed` | `#000000` @ 7% / 13% | Target fill: locked / armed |
+| `overlayPaperFlash` | `#FFFFFF` @ 45% | Click flash over the target |
+| `overlayUncertain` | `#000000` @ 45% | Dashed (3/3) candidate outlines when two targets tie |
+| `overlayLineHighlight` | `#000000` @ 10% | "Where was I" line band |
+| `overlayDebugDot` | `#FF3B6B` @ 80% | Reserved for diagnostics builds |
 
 ## 3. Typography
 
@@ -133,22 +134,20 @@ Each overlay pattern has an animated SVG study in `Design/Motion/` (written by `
 
 | Pattern | Spec | Reduced motion |
 |---|---|---|
-| **Target acquire** | Rounded-rect highlight 4 pt outside the element: 1.5 pt `overlayRing` + `overlayFill`, opacity 0→1 and scale 1.04→1 (140 ms, `ease.enter`). Study: `target-click.svg` | Opacity only, 120 ms |
-| **Target follow** | Frame and corner radius animate with `spring.follow`; the highlight never fades out between adjacent targets | Cross-fade 100 ms |
-| **Armed** | Ring 1.5→2 pt, fill → `overlayFillArmed`, 80 ms | Same |
-| **Click** | Fill flashes to `overlayFillPress` (60 ms), then the highlight contracts 1→0.97 and fades (180 ms, `ease.exit`). Study: `target-click.svg` | Fill flash only |
-| **Right-click** | Same as click, plus a 1 pt second ring 3 pt outside that fades with it | Fill flash only |
-| **Reject** | Horizontal shake ±2 pt, 2 cycles, 180 ms | Opacity dip 1→0.5→1 |
-| **Uncertain** | Two 1 pt `overlayUncertain` rings on the top two candidates, no fill | Same |
-| **No-AX aura** | 1 pt `overlayRing` circle at 50% opacity, radius = sigmaPt, following gaze with `spring.follow` | Static, repositions with a fade |
-| **Scroll dwell** | 2 pt `overlayProgress` bar fills along the scroll area's bottom edge over the 300 ms dwell, then fades (200 ms). Study: `glide-scroll.svg` | Same (functional) |
-| **Glide** | Content scrolls 40% with `ease.glide` over 520 ms | 300 ms `ease.standard` |
-| **At end** | The progress bar flashes once at full width and fades (240 ms) | Same |
-| **Where was I** | `overlayLineHighlight` band behind the line, 4 pt radius, sweeps in left to right (450 ms), holds 600 ms, fades 600 ms. Study: `where-was-i.svg` | Fade in 150 ms, hold 900 ms, fade 150 ms |
-| **Window focus** | 1.5 pt `overlayRing` outline on the window frame, fades over 300 ms | 150 ms fade |
-| **Calibration** | A white 9 pt dot inside a 1.25 pt ring that tightens from 20 to 6 pt as samples are collected; drifts between anchors with `spring.calibration`. Study: `calibration.svg` | Dot jumps with a fade; ring still tightens |
-| **Live mark** | `SaccadeMark(.live)`: every 8 s the catchlight swells 1→1.3→1 (500 ms). Study: `live-mark.svg` | Static |
-| **Double blink** | `SaccadeMark(.doubleBlink)`: ring and catchlight squash toward the center twice (80 ms close, 120 ms open, 180 ms apart), then the catchlight pulses. Study: `double-blink.svg` | Static |
+| **Target acquire** | Rounded rect 3 pt outside the element (corner = min(half the short side, 8 pt)): ink 1.5 pt over a 3.5 pt paper halo, `overlayInkFill`. Moves between targets with `.snappy(0.16 s)`. Study: `target-click.svg` | Jumps, no spring |
+| **Target follow** | Frame animates with the same snappy spring; the highlight never fades out between adjacent targets | Jumps |
+| **Armed** | Core 1.5→2 pt, fill → `overlayInkFillArmed`, 80 ms | Same |
+| **Click** | Fill flashes `overlayPaperFlash` and the mark presses to 0.96, recovering over 200 ms. Study: `target-click.svg` | Fill flash only |
+| **Right-click** | Same as click | Same |
+| **Uncertain** | Two dashed 1 pt `overlayUncertain` outlines (with halo) on the top two candidates, no fill | Same |
+| **Gaze dot** | 7 pt paper dot with a 1.5 pt ink ring, following the gaze with `spring.follow`. Shown only when nothing is locked or uncertain and the mouse is idle | Jumps |
+| **Scroll dwell** | 2 pt ink bar (1 pt paper halo) fills along the scroll area's bottom edge (top edge for scrolling up) during the dwell. Study: `glide-scroll.svg` | Same (functional) |
+| **Glide** | Content scrolls 40% with `ease.glide` over 520 ms (pixel scroll events at 120 Hz) | Same |
+| **Where was I** | `overlayLineHighlight` band behind the last-read line, 3 pt radius, holds 1.65 s, fades 140 ms. Study: `where-was-i.svg` | Same |
+| **Window focus** | 2 pt ink outline with halo on the window frame for one frame, fading 140 ms | Same |
+| **Calibration** | A white 9 pt dot inside a 1.25 pt ring that tightens from 40 to 12 pt as samples are collected; drifts between 13 anchors with `spring.calibration`. Study: `calibration.svg` | Dot moves with a short ease; ring still tightens |
+| **Live mark** | `SaccadeMark(.live)`: every 8 s the jump retracts and redraws from the dot to the ring (360 ms) while the dot dips to 0.8 | Static |
+| **Double blink** | `SaccadeMark(.doubleBlink)`: the ring squashes on its own center twice (80 ms close, 120 ms open, 180 ms apart), then the dot pulses to 1.35 | Static |
 | **HUD** | Enter y −8→0 + opacity (`spring.gentle`); exit 180 ms; auto-dismiss 2.4 s | Opacity only |
 
 **Choreography rules:** at most one overlay animation runs at a time (click beats progress bar beats acquire). The HUD never animates while a flare plays: it waits 260 ms. Staggers in lists use 30 ms per item, max 6 items.
@@ -168,21 +167,21 @@ Each overlay pattern has an animated SVG study in `Design/Motion/` (written by `
 | Callout | `exclamationmark.triangle.fill`, `info.circle.fill` |
 | Settings tabs | `slider.horizontal.3`, `eye`, `arrow.down.to.line`, `square.grid.2x2`, `hand.raised`, `gauge.with.dots.needle.33percent`, `info.circle` |
 
-**The mark** (`Design/Icons/mark.svg`): a ring (the eye) with a filled catchlight at its upper right. The ring takes `text`; the catchlight takes `accent`. Its parts (`ring`, `catchlight`) animate (§6.2).
+**The mark** (`Design/Icons/mark.svg`): a saccade drawn literally. A filled fixation `dot` at lower left, a short `path` (the jump) and the `ring` it lands in at upper right, 1.75 pt strokes on a 24 pt grid. Every part takes `text`; there is no accent. The parts animate (§6.2).
 
-**Menu bar glyphs** (`Design/MenuBar/menubar-<state>.svg`, 18 pt template images): the same ring with the state inside it.
+**Menu bar glyphs** (`Design/MenuBar/menubar-<state>.svg`, 18 pt template images):
 
 | State | Glyph |
 |---|---|
-| Tracking | ring + catchlight |
+| Tracking | the mark (dot, jump, ring) |
+| Off | the mark at 50% opacity |
 | Paused | ring + two bars |
-| Off | ring only, 50% opacity |
 | Away | ring + a closed-lid line |
 | Needs attention | ring + `!` |
 
 `scripts/icons/build_icons.py` compiles the mark and menu bar SVGs into Swift vector data (`SaccadeIconData.swift`, CI `--check`).
 
-**App icon** (`Design/AppIcon/saccade-app-icon.svg`, rasterized by `scripts/icons/render-app-icon.mjs`): the mark at 30× on a flat near-black tile, with a 1.5 pt 9% white edge. Light/dark/tinted variants for Icon Composer are P5.T8.
+**App icon** (`Design/AppIcon/saccade-app-icon.svg`, rasterized by `scripts/icons/render-app-icon.mjs`): the white mark on a flat `#0A0A0A` tile. Light/dark/tinted variants for Icon Composer are P5.T8.
 
 ## 8. Components
 
@@ -202,7 +201,7 @@ All components live in `SaccadeUI/Components/`. Each has a snapshot test in ligh
 | `AccuracyReadout` | excellent, good, fair, poor, notCalibrated | — | "Accuracy: Good, 2.1 degrees" | `StatusDot` + level word + degrees in tabular digits. No pill. |
 | `StatusDot` | any semantic color | — | Hidden; always paired with text | 6 pt circle. |
 | `SaccadeButtonStyle` | `.primary` (accent fill), `.secondary` (hairline), `.ghostAccent` (text) | default, pressed, disabled 40% | Visible label | 28 pt tall, 6 pt corners, no shadow. |
-| `StepIndicator` | 5 steps | upcoming, current (accent capsule 20 pt wide), done | "Step 3 of 5, Calibrate" | |
+| `StepIndicator` | 5 steps | upcoming (`border`), current (`text` capsule 20 pt wide), done (`text`) | "Step 3 of 5, Calibrate" | |
 | `ProgressRing` | 24, 64 | indeterminate, determinate | Value as percent | Calibration uses a white 1.25 pt ring (§6.2). |
 | `HUDCapsule` | info, warning, success | entering, visible, replacing, exiting | Posted as an announcement (`NSAccessibility.post(… .announcementRequested)`) | ≤ 6 words + optional symbol. |
 | `StatusBanner` | warning, danger, info | with action | Combined element | Inline callout on `subtle`, 6 pt corners, SF Symbol in the severity color, `.ghostAccent` action. One at a time. |
@@ -211,8 +210,7 @@ All components live in `SaccadeUI/Components/`. Each has a snapshot test in ligh
 | `PopoverRow` | symbol + title + shortcut/chevron | default, hover (`subtle` fill), pressed, disabled (40%) | Button with identifier `saccade.popover.<id>` | 28 pt tall, 6 pt corners, no scaling. |
 | `AppRuleRow` | off, scrollOnly | default, hover (shows remove), default-rule badge text "Default" | Row reads app name + mode | App icon 20 pt + name; mode `Picker`. |
 | `PayloadViewer` | — | loading, empty ("Nothing sent yet"), list | Monospaced text selectable | JSON pretty-printed, SF Mono. |
-| **Overlay:** `SaccadeRing` | locked, acquiring, armed, uncertain, flare, reject, highContrast | per §6 | Hidden from AX | Never draw a ring smaller than 28×28. |
-| **Overlay:** `GazeAura`, `EdgeGlow`, `LineMarker`, `WindowFlash`, `DebugDot` | per §2.1 / §6 | per §6 | Hidden from AX | `DebugDot` is only available with Advanced → Debug gaze dot. |
+| **Overlay:** `GazeOverlayView` | lock (locked, armed, pressed), uncertain pair, gaze dot, scroll bar, line marker, window flash | per §6.2 | Hidden from AX | Renders `OverlayState` from the intent engine verbatim; draws nothing the engine didn't decide. |
 
 ## 9. Patterns & Screen Specs
 
@@ -234,18 +232,17 @@ All components live in `SaccadeUI/Components/`. Each has a snapshot test in ligh
 └──────────────────────────────────┘
 ```
 
-Status dot: green tracking, indigo starting, amber paused/away/low light/not calibrated, red blocked, faint off. The popover itself is the system menu-bar window (system material), so it has no custom background.
+Status dot: green tracking, ink starting, amber paused/away/low light/not calibrated, red blocked, faint off. The popover itself is the system menu-bar window (system material), so it has no custom background.
 
 ### 9.2 Onboarding window (F-01)
 
-720×520 glass card on the desktop, StepIndicator at the top and the primary button bottom-right.
+720×520 standard window with a transparent title bar. Left-aligned content with a 48 pt margin; a StepIndicator (5 capsules, the current one 20 pt wide, done ones in `text`) at the top; actions bottom-right with the primary on the right. The resume point persists in `settings.onboarding`; it shows at every launch until "Done".
 
-1. **Welcome:** a large hero saccade drifting over a stylized paragraph that "glides". Title "Your Mac, at a glance." Body: "Saccade follows your eyes to scroll and click — no hands needed. Everything stays on this Mac." Primary: "Get started".
-2. **Camera:** PermissionCard (`camera` symbol; a `checkmark` replaces it when granted). Copy: "Saccade uses your camera to see where you're looking. Video never leaves your Mac and is never saved." States per PermissionCard. No-camera state: "Connect a camera or turn on Continuity Camera."
-3. **Accessibility:** PermissionCard. Copy: "To scroll and click for you, Saccade needs Accessibility access. Turn on Saccade in the list, then come back." Buttons: "Open System Settings" (primary) and "I've turned it on". The relaunch-required state shows "Restart Saccade".
-4. **Calibrate:** a preview card ("20 seconds. Follow the highlight with your eyes.") + primary "Start calibration" → full-screen calibration (§9.3).
-5. **Playground:** a scrollable practice article (lorem-free: a short real explainer of how Saccade works) with 3 buttons ("Shuffle color", "Like", "Next tip"). Live checklist: ☐ Glide down ☐ Double-blink a button ☐ Right-click (blink + long blink). It completes when the first two are done, then shows the opt-in metrics card (F-12): "Help improve Saccade?" with "Share anonymous stats" and "No thanks" given equal weight, plus a "What's shared" link → PayloadViewer sample.
-- Global states: quit/resume (re-enters at the persisted step); VoiceOver (each step's title + body announced on appear).
+1. **Welcome:** `SaccadeMark(.doubleBlink)` 36 pt. Title "Control your Mac with your eyes". Three plain rows (SF Symbol + sentence): click by blinking twice, scroll by resting at the bottom, focus by looking at another window. Primary "Get Started".
+2. **Camera:** title "Let Saccade see your eyes", one sentence on what happens to frames, a permission row (`camera` symbol, "Allowed ✓" / "Not allowed"). Primary "Allow Camera" → system prompt; "Open System Settings" when denied; "Continue" once granted (auto-advances on grant).
+3. **Accessibility:** permission row and instructions. The first "Open System Settings" shows the system prompt (which also adds Saccade to the list); later presses open the pane. The window polls every 1.5 s and flips to "Continue" by itself. "Skip for Now" is secondary.
+4. **Calibrate:** one sentence ("about 20 seconds… light in front of you") + "Start Calibration". The window steps aside during calibration and returns with "Last result" (AccuracyReadout), "Calibrate Again" and "Continue".
+5. **Done:** `SaccadeMark(.live)`, "You're set", and a 4-row gesture table on `subtle` (Blink twice → Click · Blink, then hold → Right-click · Rest at the bottom of a page → Scroll · ⌃⌥S → Turn Saccade on or off). Primary "Done".
 
 ### 9.3 Calibration (F-03)
 
@@ -254,7 +251,7 @@ Full-screen scrim (`overlayScrim` + glass blur of the desktop) on the gaze displ
 | Step | Visual | Copy |
 |---|---|---|
 | Intro / waiting | Large saccade at center, breathing | "Double-blink when you're ready." Subtext: "Sit like you normally do. Esc to cancel." |
-| Collecting | The highlight drifts to each anchor and its progress ring fills; completed anchors leave a faint dot | "Follow the highlight." (count "3 of 9" in `caption`) |
+| Collecting | The highlight drifts to each anchor and its progress ring fills; completed anchors leave a faint dot | "Follow the highlight." (count "3 of 13" in `caption`) |
 | Face lost | The highlight freezes and dims; the card shows a warning | "Look back at the screen to continue." |
 | Validating | 5 quick saccades, no ring | "Almost there — just look at each saccade." |
 | Result | `numeric` "1.8°" + AccuracyChip + one-line meaning ("Great for buttons and links.") + "Done" (primary) / "Try again" | Poor: "Let's try again with more light in front of you." with "Try again" as primary |
@@ -262,21 +259,19 @@ Full-screen scrim (`overlayScrim` + glass blur of the desktop) on the gaze displ
 
 ### 9.4 Settings (F-11, F-12)
 
-Tabbed `Settings` scene with SF Symbol tabs (§7). About shows the live `SaccadeMark` (48 pt), the name and the version.
+Tabbed `Settings` scene with SF Symbol tabs (§7); every pane is a native `Form` with `.formStyle(.grouped)`, controls tinted `accent` (ink / paper). Each section has at most one plain-language footer. Every edit is saved immediately.
 
-- **General:** Launch at login (Toggle) · Shortcut (ShortcutRow) · Gaze display (Picker) · Camera (Picker; "Recalibrate for this camera" hint when changed).
-- **Gestures:** Double-blink click (Toggle) · Blink sensitivity (Slider: "Fewer accidental clicks" ↔ "More responsive") · Right-click with blink + long blink (Toggle) · Focus follows gaze (Toggle) + Dwell (Slider 600–1500 ms) · Precise targets only (Toggle; footer explains).
-- **Scrolling:** Glide scroll (Toggle) · Bottom zone size (10–25%) · Top zone size (5–20%) · Glide distance (25–60%) · Dwell (200–600 ms) · Live mini-preview (a small article mock with the zones tinted).
-- **Apps:** table of AppRuleRows + "Add current app" + "Add app…" (NSOpenPanel for /Applications) + "Reset to defaults". Empty state (if all removed): "Saccade works in every app."
-- **Privacy:** Silent learning (Toggle) + "Reset learning" · Anonymous stats (Toggle) + "Show me exactly what's sent" (PayloadViewer sheet) · "Delete all Saccade data…" (destructive with confirm dialog: "This removes your calibration and settings. Saccade will start fresh.").
-- **Advanced:** Diagnostics (live table in `mono`: fps, provider, latency p50/p95, sigma, confidence, AX timeouts/min) · Debug gaze dot (Toggle) · Demo capture mode (Toggle; footer: "Shows the highlight in screenshots and recordings until Saccade restarts.") · Export diagnostics… · Run setup again.
-- **About:** icon, version (build), "Check for Updates…", acknowledgements (licenses list).
-
-States: not calibrated (Gestures/Scrolling show an info banner "Calibrate to use gestures" + button); permission revoked (banner on every tab); camera missing (General shows the warning in the picker row).
+- **General:** Saccade is on · Open at login (`SMAppService`) · Turn on or off: `⌃⌥S` (mono) · Accuracy (AccuracyReadout) + "Recalibrate…" · Accessibility: "Allowed" or "Allow…".
+- **Gestures:** Double blink to click · Blink, then hold, to right-click · Blink sensitivity (Firm ↔ Light) · Focus follows gaze + Look for (600–1500 ms) · Mark where I was reading.
+- **Scrolling:** Scroll by looking · Bottom zone (10–25%) · Top zone (5–20%) · Glide distance (25–60%) · Rest for (200–600 ms). Values show in tabular digits beside each slider.
+- **Apps:** one row per rule (app name, bundle ID in `caption`, mode picker Off / Scroll only, remove button) + "Add App…" (NSOpenPanel on /Applications) + "Restore Defaults".
+- **Privacy:** Camera: "Processed on this Mac, never stored" · Learn from my clicks · Share anonymous usage metrics · Calibration data: "Delete…" (destructive, confirmation dialog).
+- **Advanced:** Only click real controls · Show gaze point · Setup: "Show Welcome…".
+- **About:** live `SaccadeMark` (48 pt), name, version, one line.
 
 ### 9.5 Overlay (F-05–F-09)
 
-Render-only states per §6.2. Order of precedence when several apply: flare > reject > armed > locked > uncertain > aura; edge glow and line marker can coexist with a ring; window flash suppresses the ring for its 300 ms.
+Render-only states per §6.2. The intent engine decides precedence: a lock and an uncertain pair are exclusive; the gaze dot shows only with neither (or always with Advanced → Show gaze point); the line marker and window flash can coexist with a lock. Moving the mouse hides everything gaze-related for 1.2 s.
 
 ### 9.6 Playground article
 

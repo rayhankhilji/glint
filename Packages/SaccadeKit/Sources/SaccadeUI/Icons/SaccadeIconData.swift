@@ -36,8 +36,9 @@ extension MenuBarGlyphState {
 
 enum SaccadeIconArtworks {
     static let mark = SaccadeIconArtwork(grid: 24, strokeWidth: 1.75, parts: [
-        SaccadeIconPart(id: "ring", style: .stroke, commands: [.move(20.25, 12), .curve(20.25, 16.556, 16.556, 20.25, 12, 20.25), .curve(7.444, 20.25, 3.75, 16.556, 3.75, 12), .curve(3.75, 7.444, 7.444, 3.75, 12, 3.75), .curve(16.556, 3.75, 20.25, 7.444, 20.25, 12), .close]),
-        SaccadeIconPart(id: "catchlight", style: .fill, commands: [.move(17, 9.25), .curve(17, 10.493, 15.993, 11.5, 14.75, 11.5), .curve(13.507, 11.5, 12.5, 10.493, 12.5, 9.25), .curve(12.5, 8.007, 13.507, 7, 14.75, 7), .curve(15.993, 7, 17, 8.007, 17, 9.25), .close]),
+        SaccadeIconPart(id: "dot", style: .fill, commands: [.move(9.1, 17.5), .curve(9.1, 18.936, 7.936, 20.1, 6.5, 20.1), .curve(5.064, 20.1, 3.9, 18.936, 3.9, 17.5), .curve(3.9, 16.064, 5.064, 14.9, 6.5, 14.9), .curve(7.936, 14.9, 9.1, 16.064, 9.1, 17.5), .close]),
+        SaccadeIconPart(id: "path", style: .stroke, commands: [.move(9.33, 14.67), .line(10.55, 13.45)]),
+        SaccadeIconPart(id: "ring", style: .stroke, commands: [.move(20.5, 8.75), .curve(20.5, 11.649, 18.149, 14, 15.25, 14), .curve(12.351, 14, 10, 11.649, 10, 8.75), .curve(10, 5.851, 12.351, 3.5, 15.25, 3.5), .curve(18.149, 3.5, 20.5, 5.851, 20.5, 8.75), .close]),
     ])
     static let menuBarAway = SaccadeIconArtwork(grid: 18, strokeWidth: 1.5, parts: [
         SaccadeIconPart(id: "ring", style: .stroke, commands: [.move(15.75, 9), .curve(15.75, 12.728, 12.728, 15.75, 9, 15.75), .curve(5.272, 15.75, 2.25, 12.728, 2.25, 9), .curve(2.25, 5.272, 5.272, 2.25, 9, 2.25), .curve(12.728, 2.25, 15.75, 5.272, 15.75, 9), .close]),
@@ -49,7 +50,9 @@ enum SaccadeIconArtworks {
         SaccadeIconPart(id: "dot", style: .fill, commands: [.move(9.95, 12.1), .curve(9.95, 12.625, 9.525, 13.05, 9, 13.05), .curve(8.475, 13.05, 8.05, 12.625, 8.05, 12.1), .curve(8.05, 11.575, 8.475, 11.15, 9, 11.15), .curve(9.525, 11.15, 9.95, 11.575, 9.95, 12.1), .close]),
     ])
     static let menuBarOff = SaccadeIconArtwork(grid: 18, strokeWidth: 1.5, parts: [
-        SaccadeIconPart(id: "ring", style: .stroke, commands: [.move(15.75, 9), .curve(15.75, 12.728, 12.728, 15.75, 9, 15.75), .curve(5.272, 15.75, 2.25, 12.728, 2.25, 9), .curve(2.25, 5.272, 5.272, 2.25, 9, 2.25), .curve(12.728, 2.25, 15.75, 5.272, 15.75, 9), .close]),
+        SaccadeIconPart(id: "dot", style: .fill, commands: [.move(6.6, 13.4), .curve(6.6, 14.505, 5.705, 15.4, 4.6, 15.4), .curve(3.495, 15.4, 2.6, 14.505, 2.6, 13.4), .curve(2.6, 12.295, 3.495, 11.4, 4.6, 11.4), .curve(5.705, 11.4, 6.6, 12.295, 6.6, 13.4), .close]),
+        SaccadeIconPart(id: "path", style: .stroke, commands: [.move(6.79, 11.21), .line(8.05, 9.95)]),
+        SaccadeIconPart(id: "ring", style: .stroke, commands: [.move(16, 6.2), .curve(16, 8.52, 14.12, 10.4, 11.8, 10.4), .curve(9.48, 10.4, 7.6, 8.52, 7.6, 6.2), .curve(7.6, 3.88, 9.48, 2, 11.8, 2), .curve(14.12, 2, 16, 3.88, 16, 6.2), .close]),
     ])
     static let menuBarPaused = SaccadeIconArtwork(grid: 18, strokeWidth: 1.5, parts: [
         SaccadeIconPart(id: "ring", style: .stroke, commands: [.move(15.75, 9), .curve(15.75, 12.728, 12.728, 15.75, 9, 15.75), .curve(5.272, 15.75, 2.25, 12.728, 2.25, 9), .curve(2.25, 5.272, 5.272, 2.25, 9, 2.25), .curve(12.728, 2.25, 15.75, 5.272, 15.75, 9), .close]),
@@ -57,7 +60,8 @@ enum SaccadeIconArtworks {
         SaccadeIconPart(id: "barR", style: .fill, commands: [.move(10.6, 6), .line(10.6, 6), .curve(11.042, 6, 11.4, 6.358, 11.4, 6.8), .line(11.4, 11.2), .curve(11.4, 11.642, 11.042, 12, 10.6, 12), .line(10.6, 12), .curve(10.158, 12, 9.8, 11.642, 9.8, 11.2), .line(9.8, 6.8), .curve(9.8, 6.358, 10.158, 6, 10.6, 6), .close]),
     ])
     static let menuBarTracking = SaccadeIconArtwork(grid: 18, strokeWidth: 1.5, parts: [
-        SaccadeIconPart(id: "ring", style: .stroke, commands: [.move(15.75, 9), .curve(15.75, 12.728, 12.728, 15.75, 9, 15.75), .curve(5.272, 15.75, 2.25, 12.728, 2.25, 9), .curve(2.25, 5.272, 5.272, 2.25, 9, 2.25), .curve(12.728, 2.25, 15.75, 5.272, 15.75, 9), .close]),
-        SaccadeIconPart(id: "catchlight", style: .fill, commands: [.move(12.95, 6.9), .curve(12.95, 7.922, 12.122, 8.75, 11.1, 8.75), .curve(10.078, 8.75, 9.25, 7.922, 9.25, 6.9), .curve(9.25, 5.878, 10.078, 5.05, 11.1, 5.05), .curve(12.122, 5.05, 12.95, 5.878, 12.95, 6.9), .close]),
+        SaccadeIconPart(id: "dot", style: .fill, commands: [.move(6.6, 13.4), .curve(6.6, 14.505, 5.705, 15.4, 4.6, 15.4), .curve(3.495, 15.4, 2.6, 14.505, 2.6, 13.4), .curve(2.6, 12.295, 3.495, 11.4, 4.6, 11.4), .curve(5.705, 11.4, 6.6, 12.295, 6.6, 13.4), .close]),
+        SaccadeIconPart(id: "path", style: .stroke, commands: [.move(6.79, 11.21), .line(8.05, 9.95)]),
+        SaccadeIconPart(id: "ring", style: .stroke, commands: [.move(16, 6.2), .curve(16, 8.52, 14.12, 10.4, 11.8, 10.4), .curve(9.48, 10.4, 7.6, 8.52, 7.6, 6.2), .curve(7.6, 3.88, 9.48, 2, 11.8, 2), .curve(14.12, 2, 16, 3.88, 16, 6.2), .close]),
     ])
 }

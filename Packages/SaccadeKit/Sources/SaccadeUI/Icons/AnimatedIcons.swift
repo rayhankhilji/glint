@@ -1,14 +1,15 @@
 import SwiftUI
 
-/// The Saccade mark: a ring (the eye) with an accent catchlight (DESIGN_SYSTEM §7). Its motions are quiet and
-/// brief; every one has a static Reduce Motion fallback.
+/// The Saccade mark: a fixation dot, the jump, and the ring it lands in (DESIGN_SYSTEM §7). Pure monochrome:
+/// every part draws in the current text color. Motions are quiet and brief; each has a static Reduce Motion
+/// fallback.
 public struct SaccadeMark: View {
     public enum Motion: Sendable {
         /// No motion.
         case still
-        /// Live: every 8 s the catchlight brightens and swells slightly (popover header while tracking).
+        /// Live: every 8 s the jump redraws from the dot to the ring (popover header while tracking).
         case live
-        /// Teaching loop: the ring blinks twice, then the catchlight pulses (onboarding, Playground).
+        /// Teaching loop: the ring blinks twice, then the dot pulses (onboarding).
         case doubleBlink
     }
 
@@ -39,42 +40,38 @@ public struct SaccadeMark: View {
                 }
             }
         }
+        .foregroundStyle(SaccadeColor.text)
         .accessibilityHidden(true)
     }
 
     private func draw(_ pose: MarkPose) -> some View {
-        let art = SaccadeIconName.mark.artwork
-        return ZStack {
-            SaccadeArtworkView(artwork: art, size: size) { part in
-                part.id == "ring" ? PartAppearance(scaleY: pose.lid, squashAnchor: .center) : PartAppearance(opacity: 0)
+        SaccadeArtworkView(artwork: SaccadeIconName.mark.artwork, size: size) { part in
+            switch part.id {
+            case "ring": PartAppearance(scaleY: pose.lid)
+            case "dot": PartAppearance(scale: pose.dotScale)
+            case "path": PartAppearance(drawProgress: pose.jump)
+            default: PartAppearance()
             }
-            .foregroundStyle(SaccadeColor.text)
-            SaccadeArtworkView(artwork: art, size: size) { part in
-                part.id == "catchlight"
-                    // Squashes with the lid toward the eye's center, then swells on its own center.
-                    ? PartAppearance(
-                        opacity: pose.catchlightOpacity,
-                        scale: pose.catchlightScale,
-                        scaleY: pose.lid,
-                        squashAnchor: .center
-                    )
-                    : PartAppearance(opacity: 0)
-            }
-            .foregroundStyle(SaccadeColor.accent)
         }
     }
 
-    /// 8 s cycle: rest, then a 500 ms swell (scale 1 → 1.3 → 1) with the opacity dipping and returning.
+    /// 8 s cycle: rest, then the jump retracts and redraws in 360 ms while the dot dips and recovers.
     @KeyframesBuilder<MarkPose>
     private static var live: some Keyframes<MarkPose> {
-        KeyframeTrack(\.catchlightScale) {
-            LinearKeyframe(1, duration: 7.5)
-            CubicKeyframe(1.3, duration: 0.2)
-            SpringKeyframe(1, duration: 0.3, spring: .snappy)
+        KeyframeTrack(\.jump) {
+            LinearKeyframe(1, duration: 7.4)
+            CubicKeyframe(0, duration: 0.14)
+            CubicKeyframe(1, duration: 0.22)
+            LinearKeyframe(1, duration: 0.24)
+        }
+        KeyframeTrack(\.dotScale) {
+            LinearKeyframe(1, duration: 7.4)
+            CubicKeyframe(0.8, duration: 0.14)
+            SpringKeyframe(1, duration: 0.46, spring: .snappy)
         }
     }
 
-    /// 2.6 s loop: open → blink (80 ms close, 120 ms open) → 180 ms gap → blink → catchlight pulse → rest.
+    /// 2.6 s loop: open → blink (80 ms close, 120 ms open) → 180 ms gap → blink → dot pulse → rest.
     @KeyframesBuilder<MarkPose>
     private static var doubleBlink: some Keyframes<MarkPose> {
         KeyframeTrack(\.lid) {
@@ -86,9 +83,9 @@ public struct SaccadeMark: View {
             CubicKeyframe(1, duration: 0.12)
             LinearKeyframe(1, duration: 1.42)
         }
-        KeyframeTrack(\.catchlightScale) {
+        KeyframeTrack(\.dotScale) {
             LinearKeyframe(1, duration: 1.18)
-            CubicKeyframe(1.5, duration: 0.14)
+            CubicKeyframe(1.35, duration: 0.14)
             SpringKeyframe(1, duration: 0.4, spring: .snappy)
             LinearKeyframe(1, duration: 0.88)
         }
@@ -98,6 +95,6 @@ public struct SaccadeMark: View {
 /// Animatable pose of the mark's parts.
 struct MarkPose {
     var lid: CGFloat = 1
-    var catchlightScale: CGFloat = 1
-    var catchlightOpacity: Double = 1
+    var dotScale: CGFloat = 1
+    var jump: CGFloat = 1
 }

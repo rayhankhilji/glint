@@ -1,5 +1,6 @@
 import AppKit
 import SaccadeCore
+import SaccadeCoreTestSupport
 import SwiftUI
 import Testing
 @testable import SaccadeUI
@@ -79,7 +80,7 @@ struct PopoverSnapshotTests {
     @Test("Settings window snapshot")
     func settingsWindow() {
         assertSaccadeSnapshot(
-            SettingsRootView(version: "0.1.0 (1)"),
+            SettingsRootView(model: SettingsModel(settings: Fixtures.settings()), version: "0.1.0 (1)"),
             size: CGSize(width: 640, height: 480),
             named: "settings"
         )

@@ -51,7 +51,7 @@ public struct GazeFeatures: Sendable, Equatable, Codable {
     /// eye outlines, or an empty image).
     public static func extract(from obs: FaceObservation) -> GazeFeatures? {
         guard obs.imageSize.width > 0, obs.imageSize.height > 0,
-              let leftPupil = obs.leftPupil, let rightPupil = obs.rightPupil,
+              let leftPupil = obs.leftIris ?? obs.leftPupil, let rightPupil = obs.rightIris ?? obs.rightPupil,
               let left = EyeFrame(outline: obs.leftEye), let right = EyeFrame(outline: obs.rightEye)
         else { return nil }
         let (lu, lv) = left.project(leftPupil)

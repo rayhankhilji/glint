@@ -4,6 +4,7 @@ import SaccadePerception
 import SaccadePlatform
 import SaccadeRuntime
 import SaccadeServices
+import SaccadeSystem
 import SaccadeUI
 
 /// The composition root (ARCHITECTURE §3): builds the object graph and wires streams and windows together.
@@ -13,83 +14,141 @@ final class AppEnvironment {
     let paths: AppPaths
     let settingsStore: SettingsStore
     let tracking: TrackingController
+    let coordinator: IntentCoordinator
     let appModel: AppModel
+    let settingsModel: SettingsModel
     let overlayModel = GazeOverlayModel()
     let calibrationModel = CalibrationModel()
+    let onboardingModel: OnboardingModel
     let updater: Updater?
     let versionString: String
-    private let overlay: GazeOverlayWindowController
-    private let calibrationWindow: CalibrationWindowController
-    private var settingsTask: Task<Void, Never>?
-    private var calibrationOpen = false
+    let input = InputMonitor()
+    let overlay: GazeOverlayWindowController
+    let calibrationWindow: CalibrationWindowController
+    let onboardingWindow: OnboardingWindowController
+    var hotKey: HotKey?
+    var settings: Settings
+    var settingsTask: Task<Void, Never>?
+    var permissionTask: Task<Void, Never>?
+    var calibrationOpen = false
+    var resumeOnboarding = false
+    var accessibilityTrusted = AXService.isTrusted()
+    var accessibilityPrompted = false
+
+    /// Weight of a gaze click as a drift label: lower than a physical click, because the snap chose the target.
+    static let gazeClickLabelWeight = 0.3
 
     static func makeLive() -> AppEnvironment {
         let isUITest = UserDefaults.standard.bool(forKey: "SaccadeUITestMode")
-        return AppEnvironment(paths: .live(), bundle: .main, startUpdater: !isUITest, startTracking: !isUITest)
+        return AppEnvironment(paths: .live(), bundle: .main, live: !isUITest)
     }
 
-    init(paths: AppPaths, bundle: Bundle, startUpdater: Bool, startTracking: Bool) {
+    init(paths: AppPaths, bundle: Bundle, live: Bool) {
         let launch = SaccadeSignposts.shared.begin(.appLaunch)
         self.paths = paths
         settingsStore = SettingsStore(paths: paths)
         let settings = settingsStore.load()
+        self.settings = settings
         tracking = TrackingController(
             tracker: FaceTracker(),
             profiles: ProfileStore(paths: paths),
             settings: settings,
             pointsPerDegree: Self.pointsPerDegree()
         )
+        let ax = AXService()
+        coordinator = IntentCoordinator(
+            settings: settings,
+            targets: AccessibilityTargets(ax: ax),
+            performer: SystemActuator(actuation: ActuationService(ax: ax)),
+            system: LiveSystemState(input: input)
+        )
         appModel = AppModel(status: .starting, accuracy: nil)
+        settingsModel = SettingsModel(settings: settings, hotKeyDisplay: HotKey.defaultDisplay)
+        onboardingModel = OnboardingModel(step: OnboardingModel.Step(resuming: settings.onboarding))
+        onboardingModel.hotKeyDisplay = HotKey.defaultDisplay
         overlay = GazeOverlayWindowController(model: overlayModel)
         calibrationWindow = CalibrationWindowController(model: calibrationModel)
-        updater = startUpdater ? Updater(bundle: bundle) : nil
+        onboardingWindow = OnboardingWindowController(model: onboardingModel)
+        updater = live ? Updater(bundle: bundle) : nil
         versionString = Self.version(of: bundle)
 
         appModel.actions = makeActions()
+        settingsModel.actions = makeSettingsActions()
+        onboardingModel.actions = makeOnboardingActions()
         wireCalibration()
+        wireIntent()
         tracking.onUpdate = { [weak self] in self?.sync() }
-        tracking.onGesture = { [weak self] gesture, _ in
-            if gesture == .doubleBlink {
-                self?.overlayModel.pulse += 1
-            }
-        }
         observeSettings()
-        if startTracking {
-            tracking.apply(settings: settings)
+        if live {
+            start()
         }
         sync()
         SaccadeSignposts.shared.end(.appLaunch, launch)
     }
 
+    /// Starts the camera, input monitoring, the shortcut and permission polling; shows onboarding if unfinished.
+    private func start() {
+        tracking.apply(settings: settings)
+        input.start()
+        hotKey = HotKey { [weak self] in self?.toggleEnabled() }
+        watchPermissions()
+        if settings.onboarding != .completed {
+            showOnboarding()
+        }
+    }
+
+    // MARK: Intent
+
+    func wireIntent() {
+        tracking.onSample = { [weak self] sample in self?.coordinator.handle(sample) }
+        coordinator.onOverlay = { [weak self] state in
+            guard let self, overlayModel.state != state else { return }
+            overlayModel.state = state
+        }
+        // Silent learning (F-04): every confirmed look-and-click is a free calibration label.
+        coordinator.onTargetClicked = { [weak self] center in
+            guard let self, settings.silentLearningEnabled else { return }
+            tracking.learn(truth: center, weight: Self.gazeClickLabelWeight)
+        }
+        input.onPhysicalClick = { [weak self] point in
+            guard let self, settings.silentLearningEnabled else { return }
+            tracking.learn(truth: point)
+        }
+        coordinator.canAct = accessibilityTrusted
+    }
+
     // MARK: State → UI
 
-    private func sync() {
+    func sync() {
         // Assign only on change: this runs for every camera frame and the popover shouldn't re-render 30×/s.
-        if appModel.status != tracking.status {
-            appModel.status = tracking.status
+        var status = tracking.status
+        if status.allowsActions, !accessibilityTrusted {
+            status = .needsAttention(.accessibilityPermissionMissing)
+        }
+        if appModel.status != status {
+            appModel.status = status
         }
         let accuracy = tracking.accuracyDegrees.map { AccuracyReading(medianErrorDegrees: $0) }
         if appModel.accuracy != accuracy {
             appModel.accuracy = accuracy
+            settingsModel.accuracy = accuracy
+            onboardingModel.accuracy = accuracy
         }
         syncCalibration()
         syncOverlay()
     }
 
-    private func syncOverlay() {
-        guard !calibrationOpen, tracking.status.allowsActions, let sample = tracking.latest,
-              let point = sample.point else {
-            overlayModel.visible = false
-            return
+    func syncOverlay() {
+        let visible = !calibrationOpen && tracking.status.allowsActions && tracking.latest?.point != nil
+        if visible {
+            overlay.show()
         }
-        overlay.show()
-        overlayModel.visible = true
-        overlayModel.point = CGPoint(x: point.x, y: point.y)
-        overlayModel.radius = CGFloat(min(max(sample.sigma * 0.6, 24), 90))
-        overlayModel.armed = sample.armed
+        if overlayModel.visible != visible {
+            overlayModel.visible = visible
+        }
     }
 
-    private func syncCalibration() {
+    func syncCalibration() {
         guard calibrationOpen, let session = tracking.calibration else { return }
         calibrationModel.faceVisible = tracking.latest?.faceVisible ?? false
         switch session.phase {
@@ -110,106 +169,5 @@ final class AppEnvironment {
         case .failed:
             calibrationModel.phase = .failed
         }
-    }
-
-    // MARK: Calibration
-
-    private func wireCalibration() {
-        calibrationModel.onDone = { [weak self] in self?.closeCalibration() }
-        calibrationModel.onCancel = { [weak self] in self?.closeCalibration() }
-        calibrationModel.onRetry = { [weak self] in self?.openCalibration() }
-    }
-
-    private func openCalibration() {
-        calibrationOpen = true
-        overlayModel.visible = false
-        calibrationModel.phase = .intro
-        calibrationWindow.show()
-        let size = calibrationWindow.screenSize
-        tracking.beginCalibration(screenSize: Size(width: size.width, height: size.height))
-    }
-
-    private func closeCalibration() {
-        calibrationOpen = false
-        calibrationWindow.close()
-        tracking.endCalibration()
-    }
-
-    // MARK: Popover actions
-
-    private func makeActions() -> AppActions {
-        AppActions(
-            setEnabled: { [weak self] enabled in
-                self?.mutateSettings {
-                    $0.isEnabled = enabled
-                    $0.pausedUntil = nil
-                }
-            },
-            pause: { [weak self] duration in
-                self?.mutateSettings { $0.pausedUntil = duration.pausedUntil(from: Date()) }
-            },
-            resume: { [weak self] in self?.mutateSettings { $0.pausedUntil = nil } },
-            recalibrate: { [weak self] in self?.openCalibration() },
-            fixProblem: { [weak self] attention in self?.fix(attention) },
-            openSettings: { NSApplication.shared.activate() },
-            quit: { NSApplication.shared.terminate(nil) }
-        )
-    }
-
-    private func fix(_ attention: SaccadeStatus.Attention) {
-        switch attention {
-        case .cameraPermissionMissing:
-            open("x-apple.systempreferences:com.apple.preference.security?Privacy_Camera")
-        case .accessibilityPermissionMissing:
-            open("x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")
-        case .notCalibrated:
-            openCalibration()
-        case .cameraMissing, .lowLight:
-            break
-        }
-    }
-
-    private func open(_ url: String) {
-        if let url = URL(string: url) {
-            NSWorkspace.shared.open(url)
-        }
-    }
-
-    private func mutateSettings(_ change: (inout Settings) -> Void) {
-        var settings = settingsStore.load()
-        change(&settings)
-        do {
-            try settingsStore.save(settings)
-        } catch {
-            SaccadeLog.log(error, in: .storage)
-        }
-    }
-
-    private func observeSettings() {
-        let stream = settingsStore.changes()
-        settingsTask = Task { [weak self] in
-            for await settings in stream {
-                guard let self else { return }
-                tracking.apply(settings: settings)
-            }
-        }
-    }
-
-    // MARK: Helpers
-
-    /// Points per degree of visual angle on the main display at a typical 60 cm viewing distance, used to report
-    /// calibration accuracy in degrees. Falls back to a 14" MacBook Pro value if the display size is unknown.
-    private static func pointsPerDegree() -> Double {
-        let mm = CGDisplayScreenSize(CGMainDisplayID()).width
-        let points = NSScreen.main?.frame.width ?? 1512
-        guard mm > 0 else { return 47 }
-        let millimetersPerDegree = 2 * 600 * tan(0.5 * Double.pi / 180)
-        return Double(points) / Double(mm) * millimetersPerDegree
-    }
-
-    private static func version(of bundle: Bundle) -> String {
-        let short = bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.0.0"
-        let build = bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "0"
-        return "\(short) (\(build))"
     }
 }

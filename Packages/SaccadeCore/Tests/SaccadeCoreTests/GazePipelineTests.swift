@@ -69,7 +69,7 @@ struct MapperTests {
             Issue.record("calibration did not finish: \(session.phase)")
             return
         }
-        #expect(result.anchorsOK == 9)
+        #expect(result.anchorsOK == CalibrationSession.anchors.count)
         let errors = evaluate(result.model, face: &face, count: 200)
         #expect(GazeMapper.median(errors) < 25, "median \(GazeMapper.median(errors)) pt")
     }
@@ -115,7 +115,7 @@ struct MapperTests {
 
 @Suite("Calibration session")
 struct CalibrationSessionTests {
-    @Test("Intro, then 9 anchors in a snake, then a result")
+    @Test("Intro, then 13 anchors (outer snake, then inner), then a result")
     func flow() {
         var face = SyntheticFace(seed: 5)
         var session = CalibrationSession(screenSize: face.screenSize)
@@ -133,7 +133,7 @@ struct CalibrationSessionTests {
             }
             t += 1.0 / 30
         }
-        #expect(visited == Array(0 ..< 9))
+        #expect(visited == Array(0 ..< CalibrationSession.anchors.count))
         guard case .finished = session.phase else {
             Issue.record("not finished")
             return

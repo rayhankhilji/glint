@@ -8,54 +8,50 @@ import SwiftUI
 /// overlay sits on arbitrary content.
 public enum SaccadeColor {
     /// Window background
-    public static var background: Color { dynamic(light: rgba(0xFB, 0xFB, 0xFC, 1.000), dark: rgba(0x0B, 0x0C, 0x0D, 1.000)) }
-    /// Raised surfaces: banners, sheets, cards
-    public static var surface: Color { dynamic(light: rgba(0xFF, 0xFF, 0xFF, 1.000), dark: rgba(0x14, 0x15, 0x16, 1.000)) }
-    /// Hover rows, inset fields
-    public static var subtle: Color { dynamic(light: rgba(0xF3, 0xF4, 0xF6, 1.000), dark: rgba(0x1B, 0x1C, 0x1E, 1.000)) }
+    public static var background: Color { dynamic(light: rgba(0xFF, 0xFF, 0xFF, 1.000), dark: rgba(0x0A, 0x0A, 0x0A, 1.000)) }
+    /// Raised surfaces: cards, sheets
+    public static var surface: Color { dynamic(light: rgba(0xFF, 0xFF, 0xFF, 1.000), dark: rgba(0x14, 0x14, 0x14, 1.000)) }
+    /// Row hover, inline callouts
+    public static var subtle: Color { dynamic(light: rgba(0xF4, 0xF4, 0xF5, 1.000), dark: rgba(0x1C, 0x1C, 0x1E, 1.000)) }
     /// Hairlines (alpha in the last two hex digits)
-    public static var border: Color { dynamic(light: rgba(0x0F, 0x10, 0x11, 0.059), dark: rgba(0xFF, 0xFF, 0xFF, 0.078)) }
+    public static var border: Color { dynamic(light: rgba(0x0A, 0x0A, 0x0A, 0.078), dark: rgba(0xFF, 0xFF, 0xFF, 0.090)) }
     /// Primary text
-    public static var text: Color { dynamic(light: rgba(0x0F, 0x10, 0x11, 1.000), dark: rgba(0xED, 0xEE, 0xF0, 1.000)) }
+    public static var text: Color { dynamic(light: rgba(0x0A, 0x0A, 0x0A, 1.000), dark: rgba(0xFA, 0xFA, 0xFA, 1.000)) }
     /// Secondary text and icons
-    public static var textMuted: Color { dynamic(light: rgba(0x6B, 0x6F, 0x76, 1.000), dark: rgba(0x8A, 0x8F, 0x98, 1.000)) }
+    public static var textMuted: Color { dynamic(light: rgba(0x63, 0x63, 0x66, 1.000), dark: rgba(0x8E, 0x8E, 0x93, 1.000)) }
     /// Shortcuts, placeholders (non-essential text only)
-    public static var textFaint: Color { dynamic(light: rgba(0x9A, 0x9D, 0xA3, 1.000), dark: rgba(0x5E, 0x63, 0x6B, 1.000)) }
-    /// Primary buttons, switch, links, selection, the mark's catchlight
-    public static var accent: Color { dynamic(light: rgba(0x57, 0x53, 0xD9, 1.000), dark: rgba(0x8B, 0x8D, 0xF8, 1.000)) }
+    public static var textFaint: Color { dynamic(light: rgba(0xA1, 0xA1, 0xA6, 1.000), dark: rgba(0x5A, 0x5A, 0x5F, 1.000)) }
+    /// Primary buttons, switch: ink on paper, paper on ink
+    public static var accent: Color { dynamic(light: rgba(0x0A, 0x0A, 0x0A, 1.000), dark: rgba(0xFA, 0xFA, 0xFA, 1.000)) }
     /// Text on accent
-    public static var onAccent: Color { dynamic(light: rgba(0xFF, 0xFF, 0xFF, 1.000), dark: rgba(0x0B, 0x0C, 0x0D, 1.000)) }
-    /// Selected rows, accent-tinted fills
-    public static var accentSoft: Color { dynamic(light: rgba(0x57, 0x53, 0xD9, 0.102), dark: rgba(0x8B, 0x8D, 0xF8, 0.122)) }
-    /// Good accuracy, granted
-    public static var success: Color { dynamic(light: rgba(0x16, 0x79, 0x4A, 1.000), dark: rgba(0x4C, 0xC3, 0x8A, 1.000)) }
-    /// Fair accuracy, low light
-    public static var warning: Color { dynamic(light: rgba(0x9A, 0x5B, 0x00, 1.000), dark: rgba(0xF1, 0xA3, 0x3C, 1.000)) }
-    /// Denied, poor accuracy, destructive
-    public static var danger: Color { dynamic(light: rgba(0xC4, 0x2B, 0x1C, 1.000), dark: rgba(0xFF, 0x6B, 0x5E, 1.000)) }
+    public static var onAccent: Color { dynamic(light: rgba(0xFF, 0xFF, 0xFF, 1.000), dark: rgba(0x0A, 0x0A, 0x0A, 1.000)) }
+    /// Selected rows
+    public static var accentSoft: Color { dynamic(light: rgba(0x0A, 0x0A, 0x0A, 0.059), dark: rgba(0xFA, 0xFA, 0xFA, 0.078)) }
+    /// Tracking, good accuracy
+    public static var success: Color { dynamic(light: rgba(0x1F, 0x7A, 0x45, 1.000), dark: rgba(0x5B, 0xC9, 0x8A, 1.000)) }
+    /// Paused, fair accuracy, low light
+    public static var warning: Color { dynamic(light: rgba(0x94, 0x60, 0x0A, 1.000), dark: rgba(0xE9, 0xA9, 0x49, 1.000)) }
+    /// Blocked, poor accuracy
+    public static var danger: Color { dynamic(light: rgba(0xC0, 0x36, 0x2C, 1.000), dark: rgba(0xFF, 0x6F, 0x61, 1.000)) }
     /// Keyboard focus
-    public static var focusRing: Color { dynamic(light: rgba(0x57, 0x53, 0xD9, 1.000), dark: rgba(0x8B, 0x8D, 0xF8, 1.000)) }
+    public static var focusRing: Color { dynamic(light: rgba(0x0A, 0x0A, 0x0A, 1.000), dark: rgba(0xFA, 0xFA, 0xFA, 1.000)) }
     /// Calibration backdrop
     public static var scrim: Color { dynamic(light: rgba(0x00, 0x00, 0x00, 0.349), dark: rgba(0x00, 0x00, 0x00, 0.549)) }
 
-    /// Target highlight ring, 1.5 pt (4.5:1 on white, 4.7:1 on black)
-    public static var overlayRing: Color { Color(nsColor: rgba(0x63, 0x66, 0xF1, 1.000)) }
-    /// Armed ring, 2 pt
-    public static var overlayRingArmed: Color { Color(nsColor: rgba(0x63, 0x66, 0xF1, 1.000)) }
-    /// Target highlight fill, 8%
-    public static var overlayFill: Color { Color(nsColor: rgba(0x63, 0x66, 0xF1, 0.078)) }
-    /// Armed fill, 14%
-    public static var overlayFillArmed: Color { Color(nsColor: rgba(0x63, 0x66, 0xF1, 0.141)) }
-    /// Click flash fill, 24%
-    public static var overlayFillPress: Color { Color(nsColor: rgba(0x63, 0x66, 0xF1, 0.239)) }
-    /// 1 pt inner hairline so the ring separates from dark accent-colored UI
-    public static var overlayHairline: Color { Color(nsColor: rgba(0xFF, 0xFF, 0xFF, 0.702)) }
-    /// Two candidate rings, 1 pt, 45%
-    public static var overlayUncertain: Color { Color(nsColor: rgba(0x63, 0x66, 0xF1, 0.451)) }
-    /// Scroll-dwell progress bar, 2 pt
-    public static var overlayProgress: Color { Color(nsColor: rgba(0x63, 0x66, 0xF1, 1.000)) }
-    /// Where-was-I line highlight, 18%
-    public static var overlayLineHighlight: Color { Color(nsColor: rgba(0x63, 0x66, 0xF1, 0.180)) }
+    /// Core stroke of every overlay mark (reads on light content)
+    public static var overlayInk: Color { Color(nsColor: rgba(0x00, 0x00, 0x00, 1.000)) }
+    /// Halo stroke around the core (reads on dark content)
+    public static var overlayPaper: Color { Color(nsColor: rgba(0xFF, 0xFF, 0xFF, 1.000)) }
+    /// Locked target fill, 7%
+    public static var overlayInkFill: Color { Color(nsColor: rgba(0x00, 0x00, 0x00, 0.071)) }
+    /// Armed target fill, 13%
+    public static var overlayInkFillArmed: Color { Color(nsColor: rgba(0x00, 0x00, 0x00, 0.129)) }
+    /// Click flash, 45% paper over the target
+    public static var overlayPaperFlash: Color { Color(nsColor: rgba(0xFF, 0xFF, 0xFF, 0.451)) }
+    /// Candidate outlines when two targets tie, 45%
+    public static var overlayUncertain: Color { Color(nsColor: rgba(0x00, 0x00, 0x00, 0.451)) }
+    /// Where-was-I line band, 10%
+    public static var overlayLineHighlight: Color { Color(nsColor: rgba(0x00, 0x00, 0x00, 0.102)) }
     /// Debug gaze dot (Advanced only)
     public static var overlayDebugDot: Color { Color(nsColor: rgba(0xFF, 0x3B, 0x6B, 0.800)) }
 

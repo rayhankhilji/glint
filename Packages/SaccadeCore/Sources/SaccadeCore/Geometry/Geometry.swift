@@ -33,6 +33,10 @@ public struct Point: Hashable, Sendable, Codable {
         Point(x: lhs.x - rhs.x, y: lhs.y - rhs.y)
     }
 
+    public static func += (lhs: inout Point, rhs: Point) {
+        lhs = lhs + rhs
+    }
+
     public static func * (lhs: Point, rhs: Double) -> Point {
         Point(x: lhs.x * rhs, y: lhs.y * rhs)
     }

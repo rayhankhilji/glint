@@ -6,12 +6,13 @@ import Testing
 
 @Suite("Brand artwork and symbols")
 struct IconTests {
-    @Test("The mark has the ring and catchlight parts the motion code animates")
+    @Test("The mark has the dot, path and ring parts the motion code animates")
     func markParts() {
         let art = SaccadeIconName.mark.artwork
         #expect(art.grid == 24)
         #expect(art.part("ring") != nil)
-        #expect(art.part("catchlight") != nil)
+        #expect(art.part("dot") != nil)
+        #expect(art.part("path") != nil)
     }
 
     @Test("Menu bar glyphs exist for every state on an 18 pt grid", arguments: MenuBarGlyphState.allCases)

@@ -11,18 +11,19 @@ public struct CalibrationSession: Sendable {
         case failed(anchorsOK: Int)
     }
 
-    /// Anchors as fractions of the screen, visited in a snake so the dot never jumps across the screen.
+    /// Anchors as fractions of the screen: an outer 3×3 snake, then four inner points where most reading happens.
     public static let anchors: [Point] = [
-        Point(x: 0.1, y: 0.1), Point(x: 0.5, y: 0.1), Point(x: 0.9, y: 0.1),
-        Point(x: 0.9, y: 0.5), Point(x: 0.5, y: 0.5), Point(x: 0.1, y: 0.5),
-        Point(x: 0.1, y: 0.9), Point(x: 0.5, y: 0.9), Point(x: 0.9, y: 0.9),
+        Point(x: 0.06, y: 0.08), Point(x: 0.5, y: 0.08), Point(x: 0.94, y: 0.08),
+        Point(x: 0.94, y: 0.5), Point(x: 0.5, y: 0.5), Point(x: 0.06, y: 0.5),
+        Point(x: 0.06, y: 0.92), Point(x: 0.5, y: 0.92), Point(x: 0.94, y: 0.92),
+        Point(x: 0.72, y: 0.72), Point(x: 0.28, y: 0.72), Point(x: 0.28, y: 0.28), Point(x: 0.72, y: 0.28),
     ]
     public static let introDuration = 1.2
     /// Eyes need time to land on a new dot (saccade + provider latency); those frames are ignored.
     public static let settleDuration = 0.45
     public static let collectDuration = 1.0
     public static let minimumSamplesPerAnchor = 8
-    public static let minimumAnchors = 6
+    public static let minimumAnchors = 8
 
     public let screenSize: Size
     public private(set) var phase: Phase = .intro

@@ -1,3 +1,4 @@
+import SaccadeCore
 import SwiftUI
 
 /// Settings window tabs (DESIGN_SYSTEM §9.4).
@@ -31,12 +32,14 @@ public enum SettingsTab: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
-/// The Settings scene root. P0 skeleton: every tab exists and is navigable; controls arrive in P4.T5–P4.T7.
+/// The Settings scene root: native grouped forms, monochrome, every control live.
 public struct SettingsRootView: View {
+    @Bindable private var model: SettingsModel
     @State private var selection: SettingsTab = .general
     private let version: String
 
-    public init(version: String) {
+    public init(model: SettingsModel, version: String) {
+        self.model = model
         self.version = version
     }
 
@@ -44,39 +47,28 @@ public struct SettingsRootView: View {
         TabView(selection: $selection) {
             ForEach(SettingsTab.allCases) { tab in
                 content(for: tab)
-                    .background(SaccadeColor.background)
                     .tabItem { Label(tab.title, systemImage: tab.symbol.rawValue) }
                     .tag(tab)
                     .accessibilityIdentifier("saccade.settings.\(tab.rawValue)")
             }
         }
+        .tint(SaccadeColor.accent)
         .frame(minWidth: SaccadeLayout.settingsMinSize.width, minHeight: SaccadeLayout.settingsMinSize.height)
+        .onChange(of: model.settings) { _, settings in model.actions.commit(settings) }
     }
 
     @ViewBuilder
     private func content(for tab: SettingsTab) -> some View {
-        if tab == .about {
-            VStack(spacing: SaccadeSpacing.m) {
-                SaccadeMark(size: 48, motion: .live)
-                VStack(spacing: SaccadeSpacing.xxs) {
-                    Text("Saccade")
-                        .saccadeText(.title2)
-                        .foregroundStyle(SaccadeColor.text)
-                    Text(String(localized: "Version \(version)"))
-                        .saccadeText(.callout)
-                        .monospacedDigit()
-                        .foregroundStyle(SaccadeColor.textMuted)
-                }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-        } else {
-            EmptyState(
-                symbol: tab.symbol,
-                title: tab.title,
-                message: String(localized: "These settings arrive with the features they control.")
-            )
+        switch tab {
+        case .general: GeneralPane(model: model)
+        case .gestures: GesturesPane(model: model)
+        case .scrolling: ScrollingPane(model: model)
+        case .apps: AppsPane(model: model)
+        case .privacy: PrivacyPane(model: model)
+        case .advanced: AdvancedPane(model: model)
+        case .about: AboutPane(version: version)
         }
     }
 }
 
-#Preview { SettingsRootView(version: "0.1.0 (1)") }
+#Preview { SettingsRootView(model: SettingsModel(settings: .defaults()), version: "0.1.0 (1)") }

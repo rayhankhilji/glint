@@ -24,7 +24,7 @@ targets:
       - path: App
     dependencies:
       - package: SaccadeKit
-        products: [SaccadePlatform, SaccadePerception, SaccadeServices, SaccadeUI, SaccadeRuntime]
+        products: [SaccadePlatform, SaccadePerception, SaccadeSystem, SaccadeServices, SaccadeUI, SaccadeRuntime]
       - package: Sparkle
     settings:
       base:

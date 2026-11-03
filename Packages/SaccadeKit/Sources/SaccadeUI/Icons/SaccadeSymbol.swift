@@ -21,6 +21,7 @@ public enum SaccadeSymbol: String, CaseIterable, Sendable {
     case advanced = "gauge.with.dots.needle.33percent"
     case about = "info.circle"
     case check = "checkmark"
+    case remove = "minus.circle"
 }
 
 /// An SF Symbol at Saccade's icon sizes, in the current foreground style.

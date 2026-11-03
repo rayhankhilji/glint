@@ -22,7 +22,7 @@ public final class CalibrationModel {
     public init() {}
 }
 
-/// Full-screen calibration: a dot visits nine points while its ring tightens, then the accuracy result.
+/// Full-screen calibration: a dot visits thirteen points while its ring tightens, then the accuracy result.
 public struct CalibrationView: View {
     @Bindable private var model: CalibrationModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -38,7 +38,7 @@ public struct CalibrationView: View {
             case .intro:
                 prompt(
                     String(localized: "Look at the dot and follow it"),
-                    String(localized: "Sit as you normally do. Calibration takes about 15 seconds. Esc to cancel.")
+                    String(localized: "Sit as you normally do. Calibration takes about 20 seconds. Esc to cancel.")
                 )
             case let .target(point, progress, index):
                 target(progress: progress)
@@ -47,7 +47,7 @@ public struct CalibrationView: View {
                         reduceMotion ? .easeOut(duration: SaccadeMotion.reducedMax) : SaccadeMotion.springCalibration,
                         value: point
                     )
-                    .accessibilityLabel(Text("Calibration point \(index + 1) of 9"))
+                    .accessibilityLabel(Text("Calibration point \(index + 1) of \(CalibrationSession.anchors.count)"))
                 VStack {
                     Text(model
                         .faceVisible ? String(localized: "Follow the dot") :
@@ -94,7 +94,7 @@ public struct CalibrationView: View {
             }
             Text(reading.level.recommendsRetry
                 ? String(localized: "Accuracy is low. More light in front of you usually helps.")
-                : String(localized: "Look around: the ring follows your eyes. Blink twice to see it pulse."))
+                : String(localized: "Look at any button: it locks on. Blink twice to click it."))
                 .saccadeText(.callout)
                 .foregroundStyle(SaccadeColor.textMuted)
             HStack(spacing: SaccadeSpacing.s) {
@@ -131,7 +131,7 @@ public struct CalibrationView: View {
     }
 }
 
-/// Full-screen key window on the main display; Esc cancels.
+/// Full-screen key window on the primary display (the gaze coordinate origin); Esc cancels.
 @MainActor
 public final class CalibrationWindowController {
     private let window: CalibrationWindow
@@ -139,7 +139,7 @@ public final class CalibrationWindowController {
 
     public init(model: CalibrationModel) {
         self.model = model
-        let frame = NSScreen.main?.frame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
+        let frame = GazeOverlayWindowController.primaryFrame
         window = CalibrationWindow(contentRect: frame, styleMask: [.borderless], backing: .buffered, defer: false)
         window.level = .screenSaver
         window.isOpaque = true
@@ -150,11 +150,11 @@ public final class CalibrationWindowController {
         window.onCancel = { [weak model] in model?.onCancel() }
     }
 
-    /// Calibration targets are laid out in this size (main display, points).
+    /// Calibration targets are laid out in this size (primary display, points).
     public var screenSize: CGSize { window.frame.size }
 
     public func show() {
-        window.setFrame(NSScreen.main?.frame ?? window.frame, display: true)
+        window.setFrame(GazeOverlayWindowController.primaryFrame, display: true)
         NSApplication.shared.activate()
         window.makeKeyAndOrderFront(nil)
     }

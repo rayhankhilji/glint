@@ -40,7 +40,7 @@ Never start the next phase until the current phase's exit criteria in `ROADMAP.m
 | UI | SwiftUI (+ AppKit only for `NSPanel`, `NSStatusItem` geometry, window levels) |
 | Camera | AVFoundation |
 | Landmarks | MediaPipe Face Landmarker models via ONNX Runtime 1.24.2 (Core ML EP); Apple Vision fallback |
-| Global hotkey | KeyboardShortcuts 3.1.0 |
+| Global hotkey | Carbon `RegisterEventHotKey` (⌃⌥S, `SaccadeSystem/Input/HotKey.swift`); KeyboardShortcuts 3.1.0 planned for a rebindable recorder |
 | Updates | Sparkle 2.10.0 |
 | Opt-in metrics / crashes | TelemetryDeck SwiftSDK 2.14.2 / Sentry Cocoa 9.30.2 |
 | Tests | Swift Testing, XCTest/XCUITest, swift-snapshot-testing 1.19.6 |

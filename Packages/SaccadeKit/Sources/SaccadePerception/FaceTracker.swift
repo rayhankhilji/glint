@@ -88,8 +88,12 @@ public final class FaceTracker: NSObject, FaceTracking, AVCaptureVideoDataOutput
     private func configure(_ device: AVCaptureDevice) {
         session.beginConfiguration()
         defer { session.commitConfiguration() }
-        // 640×480 is plenty for landmarks and keeps Vision fast on Intel Macs too.
-        session.sessionPreset = session.canSetSessionPreset(.vga640x480) ? .vga640x480 : .high
+        // 720p puts ~2× more pixels on each iris than 640×480, which IrisLocator turns into precision.
+        if session.canSetSessionPreset(.hd1280x720) {
+            session.sessionPreset = .hd1280x720
+        } else {
+            session.sessionPreset = session.canSetSessionPreset(.vga640x480) ? .vga640x480 : .high
+        }
         guard let input = try? AVCaptureDeviceInput(device: device), session.canAddInput(input) else {
             SaccadeLog.log(.cameraNotFound, in: .perception)
             return
@@ -141,23 +145,40 @@ public final class FaceTracker: NSObject, FaceTracking, AVCaptureVideoDataOutput
             region.pointsInImage(imageSize: imageSize).map { SaccadeCore.Point(x: Double($0.x), y: h - Double($0.y)) }
         }
         let box = VNImageRectForNormalizedRect(face.boundingBox, width, height)
+        let leftOutline = points(leftEye)
+        let rightOutline = points(rightEye)
         return SaccadeCore.FaceObservation(
             timestamp: clock.now(),
             imageSize: SaccadeCore.Size(width: Double(width), height: h),
-            leftEye: points(leftEye),
-            rightEye: points(rightEye),
+            leftEye: leftOutline,
+            rightEye: rightOutline,
             leftPupil: landmarks.leftPupil.flatMap { points($0).first },
             rightPupil: landmarks.rightPupil.flatMap { points($0).first },
+            leftIris: Self.iris(in: pixelBuffer, outline: leftOutline),
+            rightIris: Self.iris(in: pixelBuffer, outline: rightOutline),
             faceBounds: SaccadeCore.Rect(
-                x: Double(box.minX),
-                y: h - Double(box.maxY),
-                width: Double(box.width),
-                height: Double(box.height)
+                x: Double(box.minX), y: h - Double(box.maxY), width: Double(box.width), height: Double(box.height)
             ),
             yaw: face.yaw?.doubleValue,
             pitch: face.pitch?.doubleValue,
             roll: face.roll?.doubleValue,
             confidence: Double(landmarks.confidence)
         )
+    }
+
+    /// Sub-pixel iris center for one eye (image pixels), measured from the eye patch around its outline.
+    static func iris(in buffer: CVPixelBuffer, outline: [SaccadeCore.Point]) -> SaccadeCore.Point? {
+        guard outline.count >= 4,
+              let minX = outline.map(\.x).min(), let maxX = outline.map(\.x).max(),
+              let minY = outline.map(\.y).min(), let maxY = outline.map(\.y).max()
+        else { return nil }
+        let w = maxX - minX, h = max(maxY - minY, w * 0.25)
+        let rect = SaccadeCore.Rect(x: minX - w * 0.15, y: minY - h * 0.5, width: w * 1.3, height: h * 2)
+        guard let patch = FramePreprocessor.eyePatch(from: buffer, rect: rect) else { return nil }
+        let origin = SaccadeCore.Point(x: max(0, rect.minX.rounded(.down)), y: max(0, rect.minY.rounded(.down)))
+        let opening = outline.map { $0 - origin }
+        guard let result = IrisLocator.locate(in: patch, opening: opening),
+              result.confidence >= 0.12 else { return nil }
+        return result.center + origin
     }
 }

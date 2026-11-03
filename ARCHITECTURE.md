@@ -101,7 +101,7 @@ erDiagram
 | schemaVersion | Int | = 1 | |
 | isEnabled | Bool | default true | last on/off state (F-10) |
 | onboarding | `OnboardingProgress` enum: `notStarted`,`camera`,`accessibility`,`calibrate`,`playground`,`completed` | default `notStarted` | F-01.AC4 resume |
-| (hotkey) | — | — | not in `Settings`: KeyboardShortcuts stores `toggleSaccade` (default ⌃⌥G) in UserDefaults; one source of truth |
+| (hotkey) | — | — | not in `Settings`: fixed ⌃⌥S via Carbon `RegisterEventHotKey`; a rebindable KeyboardShortcuts recorder is planned |
 | launchAtLogin | Bool | default false | `SMAppService` state is the source of truth; this mirrors the user's intent |
 | gazeDisplayUUID | String? | nil = display containing camera / main display | `CGDisplayCreateUUIDFromDisplayID` |
 | cameraUniqueID | String? | nil = first front-facing / built-in | `AVCaptureDevice.uniqueID` |
@@ -446,7 +446,7 @@ sequenceDiagram
   CC->>P: raw features stream (mapper bypassed)
   CC-->>CV: .waitingForDoubleBlink
   P-->>CC: blink events → BlinkSignature (open/closed EAR, gaps)
-  loop 9 anchors
+  loop 13 anchors
     CC-->>CV: .anchor(i) (saccade glides there, pauses 1.2 s)
     P-->>CC: features (skip first 300 ms; discard if faceVisible=false)
   end
@@ -583,6 +583,20 @@ Sub-machines are stepped in this order on every sample: `PauseMachine` → `AppR
 - Trace format `saccade-trace/v1` (JSONL): header `{version, provider, fps, display: {sizePt, mmPerPt}, camera: {model}, participant: {id(pseudonymous), glasses: Bool, lighting: enum}}`. Then one line per frame `{t, landmarks?: [[x,y,z]] (478), blend?: {eyeBlinkLeft, eyeBlinkRight}, pose: [yaw,pitch,roll], conf}`, plus label lines `{t, label: {kind: "target"|"intendedDoubleBlink"|"intendedRightClick"|"readingLine"|"scrollIntent", rect?, id?}}`.
 - Replays use `ManualClock`, so outputs are bit-identical (F-15.AC1).
 
+### 10.7 Precision pipeline (as built, ADR-012)
+
+Per frame, in order:
+
+1. **Iris pixels** (`FaceTracker` → `FramePreprocessor.eyePatch` → `IrisLocator`, SaccadeCore). Vision runs at 1280×720. For each eye a patch around the lid contour (1.3× wide, 2× tall) is copied from the luma plane, resampled to 48 px wide, and has its corneal highlights removed (morphological opening, radius 2). Gradient-field voting (Timm & Barth 2011), restricted to the eye opening and weighted by blurred darkness, finds the center, then a parabolic fit refines it to sub-pixel precision. Results with confidence < 0.12 fall back to Vision's pupil point. Synthetic-eye tests: median error < 0.5 px with highlights and noise. The patch is a transient local buffer (G-SEC-01).
+2. **Features** (§10.2): the iris center in the eye-corner frame plus head terms.
+3. **Mapper** (§10.3), fitted from 13 anchors (outer 3×3 at 6/50/94% × 8/50/92%, plus 4 inner points at 28/72%). At least 8 anchors must succeed.
+4. **One Euro** (`minCutoff 1.2`, `beta 0.004`).
+5. **FixationStabilizer**: inside a 1.2 s window, while samples stay within a radius of max(55 pt, 0.6·sigma), the output is a robust mean (the 75% of samples nearest the median). Two consecutive outliers count as a saccade, and the window restarts at once, so stabilization never adds lag to real jumps.
+6. **DriftCorrector** (silent learning, F-04): residuals (truth − uncorrected estimate) from physical clicks (weight 1) and gaze clicks (weight 0.3, center of the clicked target), learned only while fixating. The correction at a point is a kernel-weighted (σ 260 pt), recency-weighted (half-life 15 min) mean, with shrinkage 0.6 and a cap of 220 pt. 80 residuals are kept, in memory only. Calibration resets it.
+7. **Intent engine** (§10.5): `SnapMachine` scores candidates with a Gaussian in distance-to-rect (σ from the stabilized uncertainty, 14–90 pt) times a mild size prior, requires a 1.3× margin held for 120 ms to switch, and reports "uncertain" when the runner-up is within 1.18×. Clicks need a lock that has been stable for 250 ms.
+
+**Ports.** `IntentCoordinator` (SaccadeRuntime) depends only on `TargetProviding`, `ActionPerforming` and `SystemStateReading`. The app target adapts `AXService`, `ActuationService`, `WindowService`, `FrontmostApp` and `InputMonitor` (SaccadeSystem) to them in `App/SystemAdapters.swift`, so the runtime is testable with fakes and builds on Linux. AX snapshots are taken off the main thread at most every 80 ms (or after 24 pt of movement) from a 9-point ring of `AXUIElementCopyElementAtPosition` probes within the snap reach, walking up to the nearest actionable ancestor. Secure text fields are never reported.
+
 ## 11. Security Architecture
 
 - **No authN/authZ:** single-user local app, no accounts. The trust boundary is the user's macOS session.
@@ -697,3 +711,9 @@ Context: logging, signposts, the production clock and storage paths are needed b
 
 **ADR-009 — XcodeGen-generated project**
 Context: agents corrupt `project.pbxproj`. Decision: `project.yml` is the source; `*.xcodeproj` is gitignored. Consequences: `xcodegen generate` is step one of every build.
+
+**ADR-012 — Precision from pixels, stabilization and labels, not a bigger model**
+Context: Vision's 76-point pupil estimate is too coarse ("accuracy is dogshit"), and the first overlay ring was sized to that uncertainty ("the target is so massive"). Decision: measure the iris from camera pixels with gradient voting (§10.7), stabilize fixations instead of smoothing harder, learn a local drift field from clicks, and let Accessibility geometry make the final call (magnetic snapping with hysteresis and an explicit uncertain state). The overlay then outlines the element itself, 3 pt outside its frame. Consequences: eye patches leave the preprocessing function as `GrayImage` values that are dropped after the locator runs (G-SEC-01 wording updated); precision no longer depends on the landmark provider, so ADR-002 stays open; every stage is pure and unit-tested in SaccadeCore.
+
+**ADR-013 — Runtime ports for the system layer**
+Context: SaccadeRuntime must stay testable without Accessibility or event posting. Decision: the runtime defines three small protocols (§10.7 Ports) and the app target adapts SaccadeSystem to them; SaccadeRuntime does not depend on SaccadeSystem. Consequences: one extra file of adapters; the coordinator is covered by fake-backed tests on every platform.

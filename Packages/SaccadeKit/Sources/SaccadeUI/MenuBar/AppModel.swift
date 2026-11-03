@@ -57,12 +57,10 @@ public final class AppModel {
         status != .off
     }
 
-    /// The switch can't turn Saccade on while a permission is missing.
+    /// The switch can't turn Saccade on without the camera. Missing Accessibility only limits what Saccade can do,
+    /// so the switch stays usable.
     public var canToggle: Bool {
-        switch status {
-        case .needsAttention(.cameraPermissionMissing), .needsAttention(.accessibilityPermissionMissing): false
-        default: true
-        }
+        status != .needsAttention(.cameraPermissionMissing)
     }
 
     public var glyph: MenuBarGlyphState { status.glyph }

@@ -61,7 +61,7 @@ struct PartAppearance {
     var rotation: Angle = .zero
     var drawProgress: CGFloat = 1
     /// Anchor for `scaleY` only (e.g. `.center` to squash parts toward the icon center like a closing lid).
-    /// `scale` and `rotation` always use the part's own center, so a catchlight swells in place.
+    /// `scale` and `rotation` always use the part's own center, so a dot swells in place.
     var squashAnchor: UnitPoint?
 
     func anchor(part: SaccadeIconPart, grid: CGFloat) -> UnitPoint {

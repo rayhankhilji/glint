@@ -20,6 +20,8 @@ public final class TrackingController {
     @ObservationIgnored public var onUpdate: @MainActor () -> Void = {}
     /// Called once per recognized gesture.
     @ObservationIgnored public var onGesture: @MainActor (BlinkGrammar.Gesture, GazeSample) -> Void = { _, _ in }
+    /// Called with every live sample outside calibration (feeds the intent coordinator).
+    @ObservationIgnored public var onSample: @MainActor (GazeSample) -> Void = { _ in }
 
     @ObservationIgnored private let tracker: any FaceTracking
     @ObservationIgnored private let profiles: ProfileStore
@@ -104,6 +106,30 @@ public final class TrackingController {
         onUpdate()
     }
 
+    /// Camera permission, for onboarding.
+    public var cameraAuthorization: CameraAuthorization { tracker.cameraAuthorization() }
+
+    /// Asks for camera access (the system prompt shows once), then re-evaluates the camera.
+    public func requestCameraAccess() async -> Bool {
+        let granted = await tracker.requestCameraAccess()
+        refresh()
+        return granted
+    }
+
+    /// Forgets the saved calibration and every learned drift correction (Settings → Privacy).
+    public func deleteCalibration() {
+        profiles.delete()
+        stored = nil
+        estimator.setModel(nil)
+        refresh()
+    }
+
+    /// Drift-correction label: the user was looking at `truth` (a click location or a clicked target's center).
+    public func learn(truth: Point, weight: Double = 1) {
+        guard calibration == nil, latest?.fixating == true else { return }
+        estimator.learn(truth: truth, at: clock.now(), weight: weight)
+    }
+
     // MARK: Camera
 
     private func startCamera() {
@@ -155,8 +181,11 @@ public final class TrackingController {
             if case let .finished(result) = session.phase, stored?.result != result {
                 save(result)
             }
-        } else if let gesture = sample.gesture {
-            onGesture(gesture, sample)
+        } else {
+            if let gesture = sample.gesture {
+                onGesture(gesture, sample)
+            }
+            onSample(sample)
         }
         status = liveStatus(at: t)
         onUpdate()

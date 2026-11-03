@@ -1,5 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
   <title>Saccade</title>
-  <circle data-part="ring" cx="12" cy="12" r="8.25"/>
-  <circle data-part="catchlight" cx="14.75" cy="9.25" r="2.25" fill="currentColor" stroke="none"/>
+  <circle data-part="dot" cx="6.5" cy="17.5" r="2.6" fill="currentColor" stroke="none"/>
+  <path data-part="path" d="M9.33 14.67 L10.55 13.45"/>
+  <circle data-part="ring" cx="15.25" cy="8.75" r="5.25"/>
 </svg>

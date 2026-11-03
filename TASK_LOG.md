@@ -6,9 +6,9 @@
 
 - **Current phase:** P0 — Foundation (exit criteria not met: CI blocked) · P1/P2 core pulled forward at the user's request
 - **Current focus:** P0.T6 — get CI running (blocked: GitHub Actions jobs never get a runner, BLK-1)
-- **Next action:** Human: run `scripts/build-app.sh --install --open` on a Mac, calibrate, and report build errors or how the gaze ring behaves. Then: fix build issues; Phase 3 (AX target snapping, double-blink click, glide scroll).
+- **Next action:** Human: `git pull`, then `scripts/build-app.sh --install --open` on the Mac; go through onboarding (camera, Accessibility, 13-point calibration) and report build errors or how snapping, clicking and scrolling behave. Then: fix build issues; real-camera tuning of the iris locator and snap thresholds; trace recorder + saccade-eval replay.
 - **Blocked:** BLK-1 (CI runners), BLK-2 (Developer ID / notary credentials, PRD Q2), BLK-3 (snapshot references must be recorded on a Mac)
-- **Last updated:** 2026-11-03 by agent (session 4: eye tracking, calibration, gaze overlay)
+- **Last updated:** 2026-11-03 by agent (session 5: precision pipeline, full intent features, monochrome rebrand)
 
 ## Current Phase Checklist
 
@@ -56,6 +56,11 @@ Note: the design system v2 rows (2026-11-03, session 3) supersede the v1.1 rows 
 
 | Date | Decision | Reason | Docs updated |
 |---|---|---|---|
+| 2026-11-03 | **Rebrand to Saccade, pure monochrome** (user: name "Saccade", identity "Pure monochrome"): black/white/grey chrome, accent = ink/paper, semantic colors only in status dots; new mark (fixation dot → jump → ring); overlay marks are ink cores on paper halos; bundle ID `com.example.saccade` | User choice | DESIGN_SYSTEM §1, §2, §6.2, §7; tokens.json; contrast.py (22/22) |
+| 2026-11-03 | **Precision pipeline** (user: "accuracy is dogshit… the target is so massive… has to be hyper precise"): 720p capture; Timm & Barth iris localization on eye patches (highlight suppression, sub-pixel refinement); FixationStabilizer; DriftCorrector learning from physical and gaze clicks; 13-point calibration; the overlay outlines the AX element 3 pt outside its frame instead of drawing an uncertainty-sized ring | Vision's pupil points are too coarse; snapping to real geometry turns degrees of error into exact clicks | ADR-012, ARCHITECTURE §10.7, EVAL_GUARDRAILS G-SEC-01 |
+| 2026-11-03 | Full intent feature set pulled forward (P3/P4): SnapMachine, gated click / right-click, scroll-zone glide, focus follows gaze, where-was-I, app rules, "Only click real controls" (free click at a fixation when off), debug gaze point | User: "build all the features"; "Full control" | PRD F-05–F-10; IntentConstants |
+| 2026-11-03 | SaccadeRuntime talks to the system through ports (`TargetProviding`, `ActionPerforming`, `SystemStateReading`); App adapts SaccadeSystem | Testable runtime on Linux; SaccadeRuntime no longer depends on SaccadeSystem | ADR-013 |
+| 2026-11-03 | Onboarding (5 steps, resumable), real Settings (grouped forms, 7 tabs), global shortcut ⌃⌥S via Carbon `RegisterEventHotKey` instead of KeyboardShortcuts | Carbon hot keys need no permission and no dependency; not user-rebindable yet | DESIGN_SYSTEM §9.2, §9.4 |
 | 2026-11-03 | Native macOS app instead of browser extension | User pivoted during planning: "works all across ur mac" | PRD §6, ADR-001 |
 | 2026-11-03 | Webcam-only; target "effective accuracy" via AX snapping + calibration, not raw angular parity with IR trackers | Physical limits of RGB webcams; user chose effective-accuracy goal | PRD A1, EVAL_GUARDRAILS §7.3 |
 | 2026-11-03 | Fully local; opt-in metrics via TelemetryDeck (+ Sentry crashes under same consent) | User choice: no BYOK/cloud features, opt-in anonymous metrics | ADR-008, G-SEC-05/06 |
@@ -77,7 +82,6 @@ Note: the design system v2 rows (2026-11-03, session 3) supersede the v1.1 rows 
 | 2026-11-03 | Motion spec as animated SVG studies (`Design/Motion/`, 6 studies, timings validated) mirrored by SwiftUI `KeyframeAnimator` views (`SaccadeMark` twinkle/double blink, `DrawOnIcon`); twinkle turns 90° (4-fold symmetric, seamless loop) | Motion reviewable without a Mac; one source of timing truth | DESIGN_SYSTEM §6.2 |
 | 2026-11-03 | Popover redesigned: live mark + switch, plain-text accuracy (`AccuracyReadout` replaces the chip), flat banner, custom-icon action rows with flat hover | Remove chip/dashboard clutter | DESIGN_SYSTEM §9.1 |
 | 2026-11-03 | App icon redrawn flat from `Design/AppIcon/saccade-app-icon.svg` (ink tile, paper eye, gold catchlight), rasterized with `scripts/icons/render-app-icon.mjs` (dev-only Node + Playwright tool, not shipped) | Replaces the PIL gradient placeholder; macOS 26 Icon Composer variants remain P5.T8 | DESIGN_SYSTEM §7 |
-
 | 2026-11-03 | **Design system v2** (user: "looks like shit… modern, clean, AI startup style, Linear, Notion; the icons, overlays and glows look bad"): neutral Linear/Notion chrome with one indigo accent (`#5753D9` / `#8B8DF8`); overlay is a precise `#6366F1` ring + 8% fill (4.5:1 on white and black); no gold, sparkles or glows | User direction | DESIGN_SYSTEM v2 §1, §2, §6.2, §9.1 |
 | 2026-11-03 | UI icons are SF Symbols via one `SaccadeSymbol` enum (guarded by check-architecture); the 28 hand-drawn icons are removed; custom artwork is only the mark (ring + catchlight) and 5 menu bar glyphs | Hand-drawn icons were the weak point; SF Symbols match SF Pro | DESIGN_SYSTEM §7, INSTRUCTIONS §7 |
 | 2026-11-03 | Colors move to `Design/tokens.json` → generated `SaccadeColorTokens.swift` (dynamic NSColor); SaccadeUI has no package resources (asset catalog and string catalog removed; strings use the main bundle) | One source of truth; removes the risk that `swift build`/`swift test` mis-handle Xcode-only resources | DESIGN_SYSTEM §2, §13 |
@@ -86,6 +90,13 @@ Note: the design system v2 rows (2026-11-03, session 3) supersede the v1.1 rows 
 | 2026-11-03 | Universal build (Apple Silicon + Intel) | User mentioned an Intel Mac | ADR-011, PRD §6, §8 |
 | 2026-11-03 | One Euro defaults retuned to minCutoff 0.6, beta 0.002 (gaze in points at 30 fps): jitter −65%, settles in ~4 frames | Measured on synthetic gaze; paper defaults let point-scale jitter through | OneEuroFilter docs |
 ## Session Log
+
+### 2026-11-03 — Session 5 (precision, features, rebrand)
+
+- Done: iris localization (`IrisLocator`, `GrayImage`, `FramePreprocessor.eyePatch`), `FixationStabilizer`, `DriftCorrector`, 13-point calibration; intent engine (`SnapMachine`, `IntentEngine`, `IntentConstants`); SaccadeSystem (`AXService`, `ActuationService`, `WindowService`, `InputMonitor`, `HotKey`); runtime ports + `IntentCoordinator`; monochrome tokens, mark, menu bar glyphs, app icon; dual-tone `GazeOverlayView`; onboarding; Settings panes; `AppEnvironment` wiring (silent learning, permission polling, launch at login).
+- Tests (Linux, Swift 6.4.2): SaccadeCore 91 pass (iris: median error < 0.5 px over 200 noisy renders; engine: snap, hysteresis, uncertain, click gating, free click, glide, focus, where-was-I, excluded apps). Linux harness: IntentCoordinator 3 + TrackingController 5 pass; Platform 4/5 (the known Linux-only path test). `swiftlint --strict`, `swiftformat`, check-architecture (+25 self-tests), check-licenses (+2), tokens/icons `--check`, contrast 22/22, icon converter 10: all clean.
+- Not verified: everything importing AppKit/SwiftUI/AVFoundation/ApplicationServices (FaceTracker, FramePreprocessor, SaccadeSystem, SaccadeUI, App) — no Mac reachable; real-camera accuracy.
+- Next: user build; fix compile errors; tune on real camera.
 
 ### 2026-11-03 — Session 4 (eye tracking)
 

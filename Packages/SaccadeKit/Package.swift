@@ -37,7 +37,7 @@ let package = Package(
         ),
         .target(name: "SaccadeRuntime", dependencies: [
             .product(name: "SaccadeCore", package: "SaccadeCore"),
-            "SaccadePlatform", "SaccadePerception", "SaccadeSystem", "SaccadeServices",
+            "SaccadePlatform", "SaccadePerception", "SaccadeServices",
         ]),
         .testTarget(name: "SaccadePlatformTests", dependencies: ["SaccadePlatform"]),
         .testTarget(name: "SaccadeServicesTests", dependencies: [

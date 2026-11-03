@@ -15,7 +15,7 @@ struct SaccadeApp: App {
         .menuBarExtraStyle(.window)
 
         Settings {
-            SettingsRootView(version: environment.versionString)
+            SettingsRootView(model: environment.settingsModel, version: environment.versionString)
         }
     }
 }

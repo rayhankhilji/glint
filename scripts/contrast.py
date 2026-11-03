@@ -46,13 +46,14 @@ def main():
             ok = r >= minimum
             failures += not ok
             print(f"{'✓' if ok else '✗'} {fg:10s} on {bg:10s} {mode:5s} {r:5.2f}:1 (min {minimum})")
-    ring = rgba(t["overlay"]["ring"]["value"])
-    for name, bg in (("white", (1, 1, 1, 1)), ("black", (0, 0, 0, 1))):
-        r = ratio(ring, bg)
+    # Overlay marks are dual-tone: the ink core must read on white, the paper halo on black.
+    ink, paper = rgba(t["overlay"]["ink"]["value"]), rgba(t["overlay"]["paper"]["value"])
+    for name, fg, bg in (("ink core on white", ink, (1, 1, 1, 1)), ("paper halo on black", paper, (0, 0, 0, 1))):
+        r = ratio(fg, bg)
         checks += 1
         ok = r >= 3.0
         failures += not ok
-        print(f"{'✓' if ok else '✗'} overlay ring on {name:5s} {r:5.2f}:1 (min 3.0)")
+        print(f"{'✓' if ok else '✗'} overlay {name:20s} {r:5.2f}:1 (min 3.0)")
     print(f"contrast: {checks - failures}/{checks} checks passed")
     return 1 if failures else 0
 
