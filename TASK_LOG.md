@@ -4,11 +4,11 @@
 
 ## Status
 
-- **Current phase:** P0 — Foundation (exit criteria **not** met yet)
+- **Current phase:** P0 — Foundation (exit criteria not met: CI blocked) · P1/P2 core pulled forward at the user's request
 - **Current focus:** P0.T6 — get CI running (blocked: GitHub Actions jobs never get a runner, BLK-1)
-- **Next action:** Human: run `scripts/build-app.sh --install --open` on a Mac (README) and send back any build errors; in parallel fix GitHub Actions (BLK-1). Then fix what the first macOS build reports (P0.T4, P0.T8, P0.T9).
+- **Next action:** Human: run `scripts/build-app.sh --install --open` on a Mac, calibrate, and report build errors or how the gaze ring behaves. Then: fix build issues; Phase 3 (AX target snapping, double-blink click, glide scroll).
 - **Blocked:** BLK-1 (CI runners), BLK-2 (Developer ID / notary credentials, PRD Q2), BLK-3 (snapshot references must be recorded on a Mac)
-- **Last updated:** 2026-11-03 by agent (session 3: design system v2 + local build script)
+- **Last updated:** 2026-11-03 by agent (session 4: eye tracking, calibration, gaze overlay)
 
 ## Current Phase Checklist
 
@@ -82,7 +82,17 @@ Note: the design system v2 rows (2026-11-03, session 3) supersede the v1.1 rows 
 | 2026-11-03 | UI icons are SF Symbols via one `GlintSymbol` enum (guarded by check-architecture); the 28 hand-drawn icons are removed; custom artwork is only the mark (ring + catchlight) and 5 menu bar glyphs | Hand-drawn icons were the weak point; SF Symbols match SF Pro | DESIGN_SYSTEM §7, INSTRUCTIONS §7 |
 | 2026-11-03 | Colors move to `Design/tokens.json` → generated `GlintColorTokens.swift` (dynamic NSColor); GlintUI has no package resources (asset catalog and string catalog removed; strings use the main bundle) | One source of truth; removes the risk that `swift build`/`swift test` mis-handle Xcode-only resources | DESIGN_SYSTEM §2, §13 |
 | 2026-11-03 | `scripts/build-app.sh` builds an ad-hoc-signed Release `Glint.app` locally (optional `--install`, `--open`, `--dmg`); hardened runtime off for local builds only; README documents the terminal steps | User wants to try it on their Mac; CI is blocked and this session can't reach their computer | README, INSTRUCTIONS §5 |
+| 2026-11-03 | Eye tracking pulled forward (user: "now build the actual eye tracking"): Apple Vision provider + GlintCore gaze engine (features, ridge mapper with leave-anchor-out CV, One Euro filter, blink detector + grammar, calibration session) + TrackingController + calibration screen + gaze overlay | User request; delivers a usable vertical slice of P1/P2 before CI exists | ADR-011, README |
+| 2026-11-03 | Universal build (Apple Silicon + Intel) | User mentioned an Intel Mac | ADR-011, PRD §6, §8 |
+| 2026-11-03 | One Euro defaults retuned to minCutoff 0.6, beta 0.002 (gaze in points at 30 fps): jitter −65%, settles in ~4 frames | Measured on synthetic gaze; paper defaults let point-scale jitter through | OneEuroFilter docs |
 ## Session Log
+
+### 2026-11-03 — Session 4 (eye tracking)
+
+- Done (ROADMAP refs): P1.T5 FeatureExtractor, P1.T6 One Euro filter, P1.T7 BlinkDetector + BlinkGrammar, P1.T8 GazeEstimator, P2.T1–T3 GazeMapper / CalibrationSession / ProfileStore, P2.T4 calibration UI, plus a Vision `FaceTracker` (P1.T1/P1.T4 with Vision per ADR-011), `TrackingController`, gaze overlay, popover wiring. Not done: fixation detector, trace recorder, glint-eval replay, silent learning, MediaPipe provider.
+- Tests (Linux, Swift 6.4.2): GlintCore 65 pass (coverage 94.5%), incl. synthetic-face end-to-end: smoothed median error < 45 pt (~1°), double blink / right-click / resting-eyes / natural-blink cases. TrackingController 5 tests pass via the Linux harness (calibrate → save → relaunch → live gaze → gesture → away; off; denied; no camera). Lint, format, architecture checks clean.
+- Not verified: FaceTracker (AVFoundation/Vision), overlay and calibration windows, real-camera accuracy. Needs a Mac.
+- Next: user builds and calibrates; fix reports; then Phase 3.
 
 ### 2026-11-03 — Session 3 (design system v2, local build)
 

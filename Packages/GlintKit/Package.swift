@@ -48,7 +48,9 @@ let package = Package(
             ],
             exclude: ["__Snapshots__"]
         ),
-        .testTarget(name: "GlintRuntimeTests", dependencies: ["GlintRuntime"]),
+        .testTarget(name: "GlintRuntimeTests", dependencies: [
+            "GlintRuntime", .product(name: "GlintCoreTestSupport", package: "GlintCore"),
+        ]),
     ],
     swiftLanguageModes: [.v6]
 )

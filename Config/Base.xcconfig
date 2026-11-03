@@ -11,7 +11,8 @@ GLINT_BUNDLE_ID = com.example.glint
 DEVELOPMENT_TEAM = $(GLINT_DEVELOPMENT_TEAM)
 
 MACOSX_DEPLOYMENT_TARGET = 14.0
-ARCHS = arm64
+// Universal: Apple Silicon and Intel (the Vision landmark provider runs on both).
+ARCHS = $(ARCHS_STANDARD)
 SWIFT_VERSION = 6.0
 SWIFT_STRICT_CONCURRENCY = complete
 ENABLE_HARDENED_RUNTIME = YES

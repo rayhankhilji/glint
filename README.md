@@ -4,18 +4,18 @@ Glint is a macOS menu-bar app that reads intent from your webcam. You look at a 
 
 ## Status
 
-Glint is early. The build plan has seven phases ([ROADMAP.md](ROADMAP.md)); only the foundation exists today.
+Glint is early. The build plan has seven phases ([ROADMAP.md](ROADMAP.md)).
 
 | Works now | Not built yet |
 |---|---|
-| Menu bar icon with on, off and pause states | Camera capture and eye tracking (Phase 1) |
-| Popover: on/off switch, pause, accuracy, Settings, Quit | Calibration (Phase 2) |
-| Settings window (tabs only) | Target highlight, double-blink click, glide scroll (Phase 3) |
-| Settings saved across launches | Onboarding, focus follows gaze, "where was I" (Phase 4) |
+| Eye tracking from your webcam (Apple Vision face landmarks) | Clicking and scrolling other apps (Phase 3, needs Accessibility) |
+| 15-second calibration with an accuracy result, saved across launches | Target snapping to real buttons (Phase 3) |
+| A ring that follows your gaze; it pulses when you double-blink | Onboarding, focus follows gaze, "where was I" (Phase 4) |
+| Menu bar app: on/off, pause, live status, Recalibrate, Settings shell | Settings controls (Phase 4) |
 
 ## Try it on your Mac
 
-You need an Apple Silicon Mac (M1 or later) with Xcode 26 or newer installed from the App Store. You don't need Homebrew or an Apple Developer account.
+You need a Mac (Apple Silicon or Intel) with Xcode 26 or newer installed from the App Store, and a webcam (the built-in one is fine). You don't need Homebrew or an Apple Developer account.
 
 1. Clone the repository and switch to the build branch:
 
@@ -34,6 +34,13 @@ You need an Apple Silicon Mac (M1 or later) with Xcode 26 or newer installed fro
    ```
 
    The first build downloads Swift packages and takes a few minutes. Glint then appears in the menu bar as a ring icon, top right; it has no Dock icon.
+
+3. Use it:
+   - macOS asks for camera access the first time. Allow it (if you miss it: System Settings → Privacy & Security → Camera → Glint).
+   - Click the ring in the menu bar, then **Calibrate**. Follow the white dot with your eyes for about 15 seconds, keeping your head still.
+   - After **Done**, an indigo ring follows your gaze. Blink twice quickly and it pulses. Turn Glint off from the menu bar switch; the camera light goes off.
+
+   Tips: face the screen, sit about an arm's length away, and have light in front of you rather than behind. Accuracy varies with camera and lighting; recalibrate if the ring drifts. Intel Macs run at a lower frame rate.
 
 If the build fails, it prints the errors and saves the full log to `build/build.log`. Send the end of that log to Claude:
 

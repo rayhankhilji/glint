@@ -252,7 +252,7 @@ Agents must not build these in v1.
 | Item | Reason |
 |---|---|
 | Browser extension, Windows, Linux, ChromeOS | v1 is a native macOS app (the user pivoted from extension to OS-wide Mac app). |
-| Intel Macs, macOS < 14 | Neural Engine needed for latency and energy budgets; modern SwiftUI APIs. |
+| macOS < 14 | Modern SwiftUI APIs. (Intel Macs are supported since 2026-11-03 via the Apple Vision provider, at a lower frame rate; ADR-011.) |
 | Dedicated IR eye-tracker support (Tobii) | Webcam-only product; keep the `LandmarkProvider` seam but no implementation. |
 | Multi-monitor gaze across displays | Needs per-display calibration and geometry; v2. Glint works on one chosen gaze display. |
 | Gaze typing, on-screen keyboard, drag-and-drop, dwell click | Full hands-free mode is v2 (accessibility foundations only in v1). |
@@ -284,7 +284,7 @@ Measured only for users who opted in (F-12) via TelemetryDeck, and in the intern
 
 ## 8. Non-Functional Requirements
 
-- **Platform:** macOS 14.0+ on Apple Silicon (M1+) only. Built with Xcode 27.1+ (Swift 6.4) in Swift 6 language mode.
+- **Platform:** macOS 14.0+, universal (Apple Silicon and Intel; Intel at a lower frame rate). Built with Xcode 27.1+ (Swift 6.4) in Swift 6 language mode.
 - **Performance:** frame→overlay p95 ≤ 50 ms; blink-2 end → click ≤ 120 ms; overlay render at the display refresh rate (60/120 Hz) with no dropped frames during glint motion; average CPU ≤ 15% of one core at 30 fps (M1); memory ≤ 250 MB resident; Energy Impact "Low" in Activity Monitor while tracking; away mode ≤ 3% CPU.
 - **Reliability:** crash-free sessions ≥ 99.5%; the camera pipeline self-heals from interruptions within 2 s; no action ever fires while confidence < 0.6 (fail safe: false negatives over false positives).
 - **Privacy:** frames are processed in memory and dropped; only numeric calibration features are persisted; metrics are opt-in; no network except Sparkle (daily) and opted-in telemetry.

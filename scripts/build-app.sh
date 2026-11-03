@@ -6,7 +6,7 @@
 #   scripts/build-app.sh --open     # …and launch it (look for the ring in the menu bar)
 #   scripts/build-app.sh --dmg      # …and make build/Glint.dmg to share
 #
-# Requires an Apple Silicon Mac with Xcode 26 or newer. Signed + notarized releases use scripts/release.sh.
+# Requires a Mac (Apple Silicon or Intel) with Xcode 26 or newer. Signed + notarized releases use scripts/release.sh.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -27,7 +27,6 @@ fail() { printf '\033[31m✗ %s\033[0m\n' "$1" >&2; exit 1; }
 
 say "Checking your Mac"
 [[ "$(uname -s)" == "Darwin" ]] || fail "This builds a macOS app; run it on a Mac."
-[[ "$(uname -m)" == "arm64" ]] || fail "Glint needs an Apple Silicon Mac (M1 or later)."
 DEV_DIR="$(xcode-select -p 2>/dev/null || true)"
 if [[ "$DEV_DIR" != *".app/Contents/Developer" ]]; then
   fail "Xcode isn't selected. Install Xcode from the App Store, then run: sudo xcode-select -s /Applications/Xcode.app"
@@ -50,7 +49,7 @@ say "Building Glint (Release, ad-hoc signed) — the first build fetches Swift p
 LOG="$ROOT/build/build.log"
 mkdir -p build
 if ! xcodebuild -project Glint.xcodeproj -scheme Glint -configuration Release \
-    -destination 'generic/platform=macOS,arch=arm64' -derivedDataPath build/DerivedData \
+    -destination 'generic/platform=macOS' -derivedDataPath build/DerivedData \
     CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= OTHER_CODE_SIGN_FLAGS= \
     ENABLE_HARDENED_RUNTIME=NO build >"$LOG" 2>&1; then
   echo

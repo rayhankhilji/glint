@@ -689,6 +689,9 @@ Context: tiny data (one settings file, a few profiles). Decision: Codable JSON w
 **ADR-008 — Opt-in metrics via TelemetryDeck; crashes via Sentry**
 Context: user chose opt-in anonymous metrics through a privacy-first service. Decision: both SDKs are initialized only after opt-in, with a closed signal schema. Consequences: two vendors; one consent toggle governs both.
 
+**ADR-011 — Apple Vision first; universal (Apple Silicon + Intel) builds**
+Context: the user may be on an Intel Mac, and the ADR-002 spike (MediaPipe via ONNX Runtime vs Vision) needs a Mac this project couldn't reach. Decision: ship the Apple Vision provider (`FaceTracker`, `VNDetectFaceLandmarksRequest` at 640×480) as the only provider for now; build universal (`ARCHS = $(ARCHS_STANDARD)`). Features are provider-agnostic (`FaceObservation` → `GazeFeatures`), so the MediaPipe/ORT provider can be added later behind the same `FaceTracking` protocol and chosen by the ADR-002 rule. Consequences: zero model downloads or conversion; lower pupil precision than iris landmarks; Intel frame rate is lower and the performance budgets in EVAL_GUARDRAILS §6 apply to Apple Silicon only.
+
 **ADR-010 — GlintPlatform shared macOS kernel**
 Context: logging, signposts, the production clock and storage paths are needed by every GlintKit module, but GlintCore can't import `os` and GlintUI must not depend on GlintSystem. Decision: a small `GlintPlatform` module that every GlintKit module may import; it holds no domain logic. Consequences: one more target; `check-architecture.sh` keeps SwiftUI/AppKit out of it by review.
 

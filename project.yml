@@ -24,7 +24,7 @@ targets:
       - path: App
     dependencies:
       - package: GlintKit
-        products: [GlintPlatform, GlintServices, GlintUI, GlintRuntime]
+        products: [GlintPlatform, GlintPerception, GlintServices, GlintUI, GlintRuntime]
       - package: Sparkle
     settings:
       base:
