@@ -27,7 +27,9 @@ public final class AXService: @unchecked Sendable {
 
     /// Whether Saccade may use Accessibility. With `prompt`, macOS shows its permission dialog.
     public static func isTrusted(prompt: Bool = false) -> Bool {
-        let key = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String
+        // The value of `kAXTrustedCheckOptionPrompt`, spelled out: that C global is imported as a mutable `var`,
+        // which Swift 6 rejects as shared mutable state.
+        let key = "AXTrustedCheckOptionPrompt"
         return AXIsProcessTrustedWithOptions([key: prompt] as CFDictionary)
     }
 

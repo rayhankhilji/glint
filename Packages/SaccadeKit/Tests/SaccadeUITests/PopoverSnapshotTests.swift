@@ -8,7 +8,8 @@ import Testing
 @MainActor
 @Suite("Popover and menu bar snapshots")
 struct PopoverSnapshotTests {
-    static let states: [(String, SaccadeStatus, AccuracyReading?)] = [
+    // nonisolated: `@Test(arguments:)` evaluates this outside the suite's main actor.
+    nonisolated static let states: [(String, SaccadeStatus, AccuracyReading?)] = [
         ("tracking", .tracking(fps: 30), AccuracyReading(medianErrorDegrees: 2.1)),
         ("starting", .starting, AccuracyReading(medianErrorDegrees: 1.4)),
         ("off", .off, AccuracyReading(medianErrorDegrees: 2.1)),
