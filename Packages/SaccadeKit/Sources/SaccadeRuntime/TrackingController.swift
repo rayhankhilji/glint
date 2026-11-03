@@ -22,6 +22,8 @@ public final class TrackingController {
     @ObservationIgnored public var onGesture: @MainActor (BlinkGrammar.Gesture, GazeSample) -> Void = { _, _ in }
     /// Called with every live sample outside calibration (feeds the intent coordinator).
     @ObservationIgnored public var onSample: @MainActor (GazeSample) -> Void = { _ in }
+    /// Receives a features-only trace of the session while recording (Settings → Advanced).
+    @ObservationIgnored public var traceSink: (@MainActor (TraceRecord) -> Void)?
 
     @ObservationIgnored private let tracker: any FaceTracking
     @ObservationIgnored private let profiles: ProfileStore
@@ -106,6 +108,23 @@ public final class TrackingController {
         onUpdate()
     }
 
+    /// Accuracy measured live from click labels (degrees), once there are enough of them.
+    public var liveAccuracyDegrees: Double? {
+        estimator.drift.liveErrorPoints.map { $0 / pointsPerDegree }
+    }
+
+    /// Click labels currently shaping the drift correction.
+    public var learnedLabels: Int { estimator.drift.residuals.count }
+
+    /// Starts a trace: header and current model, then frames and labels until `traceSink` is cleared.
+    public func beginTrace(screen: Size, sink: @escaping @MainActor (TraceRecord) -> Void) {
+        traceSink = sink
+        sink(.header(TraceHeader(screen: screen, pointsPerDegree: pointsPerDegree)))
+        if let model = estimator.model {
+            sink(.model(model))
+        }
+    }
+
     /// Camera permission, for onboarding.
     public var cameraAuthorization: CameraAuthorization { tracker.cameraAuthorization() }
 
@@ -127,7 +146,9 @@ public final class TrackingController {
     /// Drift-correction label: the user was looking at `truth` (a click location or a clicked target's center).
     public func learn(truth: Point, weight: Double = 1) {
         guard calibration == nil, latest?.fixating == true else { return }
-        estimator.learn(truth: truth, at: clock.now(), weight: weight)
+        let now = clock.now()
+        estimator.learn(truth: truth, at: now, weight: weight)
+        traceSink?(.label(TraceLabel(t: now, truth: truth, weight: weight)))
     }
 
     // MARK: Camera
@@ -186,6 +207,9 @@ public final class TrackingController {
                 onGesture(gesture, sample)
             }
             onSample(sample)
+            traceSink?(.frame(TraceFrame(
+                t: t, features: sample.features, confidence: sample.confidence, faceVisible: sample.faceVisible
+            )))
         }
         status = liveStatus(at: t)
         onUpdate()
@@ -201,6 +225,7 @@ public final class TrackingController {
         }
         stored = record
         estimator.setModel(result.model)
+        traceSink?(.model(result.model))
     }
 
     private func liveStatus(at t: TimeInterval) -> SaccadeStatus {

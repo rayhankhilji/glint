@@ -54,6 +54,45 @@ struct OverlayAndOnboardingTests {
         #expect(model.settings.metricsConsent.allowsSending)
     }
 
+    @Test("HUD copy: on shows the mark, off the slashed eye, advice is short and has a symbol")
+    func hudCopy() {
+        #expect(HUDMessage.make(for: .turnedOn, liveDegrees: nil).showsMark)
+        #expect(HUDMessage.make(for: .turnedOff, liveDegrees: nil).symbol == .off)
+        #expect(HUDMessage.make(for: .accuracyImproved, liveDegrees: 1.24).text.contains("1.2°"))
+        for event in HUDEvent.allCases {
+            let message = HUDMessage.make(for: event, liveDegrees: 1)
+            #expect(!message.text.isEmpty && message.text.count <= 60, "\(event)")
+        }
+    }
+
+    @Test("HUD snapshot")
+    func hudSnapshot() {
+        let model = HUDModel()
+        model.show(HUDMessage.make(for: .turnedOn, liveDegrees: nil))
+        assertSaccadeSnapshot(
+            ZStack {
+                SaccadeColor.background
+                HUDView(model: model)
+            },
+            size: CGSize(width: SaccadeLayout.hudMaxWidth, height: 60),
+            named: "hud"
+        )
+    }
+
+    @Test("Advanced diagnostics render with and without data")
+    func diagnosticsSnapshot() {
+        let model = SettingsModel(settings: Fixtures.settings())
+        model.diagnostics = LiveDiagnostics(
+            framesPerSecond: 30, sigmaPoints: 48, confidence: 0.92, learnedClicks: 14,
+            accessibilityP50: 6, accessibilityP95: 19
+        )
+        model.liveAccuracy = AccuracyReading(medianErrorDegrees: 1.1)
+        assertSaccadeSnapshot(
+            SettingsRootView(model: model, version: "0.1.0 (1)"), size: CGSize(width: 640, height: 640),
+            named: "settings-live"
+        )
+    }
+
     @Test("The lock corner follows the element: capsule for small controls, at most 8 pt")
     func lockCorner() {
         #expect(GazeOverlayView.corner(CGRect(x: 0, y: 0, width: 80, height: 10)) == 5)

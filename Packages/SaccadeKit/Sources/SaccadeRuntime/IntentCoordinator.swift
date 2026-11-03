@@ -15,6 +15,8 @@ public final class IntentCoordinator {
     public var canAct = true
     /// The most recent actions, for diagnostics and tests.
     public private(set) var lastActions: [IntentAction] = []
+    /// How long Accessibility snapshots take (milliseconds), for Settings → Advanced.
+    public private(set) var snapshotLatency = LatencyWindow(capacity: 120)
 
     private var engine: IntentEngine
     private let targets: any TargetProviding
@@ -66,7 +68,11 @@ public final class IntentCoordinator {
     /// Fetches a fresh snapshot now (tests and the first frame of a fixation use this directly).
     func refreshSnapshot(near point: Point, sigma: Double, at t: TimeInterval) async {
         let radius = SnapMachine.snapSigma(for: sigma) * IntentConstants.snapReachSigmas
+        let started = ContinuousClock.now
         let result = await targets.snapshot(around: point, radius: radius)
+        let elapsed = ContinuousClock.now - started
+        snapshotLatency
+            .append(Double(elapsed.components.attoseconds) / 1e15 + Double(elapsed.components.seconds) * 1000)
         snapshot = TargetSnapshot(point: point, t: t, candidates: result.candidates, scrollArea: result.scrollArea)
     }
 

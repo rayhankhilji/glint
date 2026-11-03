@@ -9,6 +9,8 @@ public struct SettingsActions {
     public var deleteCalibration: @MainActor () -> Void
     public var openAccessibilitySettings: @MainActor () -> Void
     public var openOnboarding: @MainActor () -> Void
+    /// Shows the recordings folder in Finder.
+    public var revealTraces: @MainActor () -> Void = {}
 
     public init(
         commit: @escaping @MainActor (Settings) -> Void,
@@ -43,6 +45,10 @@ public final class SettingsModel {
     public var accuracy: AccuracyReading?
     public var accessibilityGranted: Bool
     public var hotKeyDisplay: String
+    /// Accuracy measured from recent clicks, once there are enough.
+    public var liveAccuracy: AccuracyReading?
+    /// Live pipeline numbers for Advanced (refreshed twice a second while running).
+    public var diagnostics: LiveDiagnostics?
     @ObservationIgnored public var actions: SettingsActions
 
     public init(
@@ -94,5 +100,30 @@ public final class SettingsModel {
 
     public func restoreDefaultRules() {
         settings.appRules = AppRule.restoringDefaults(in: settings.appRules)
+    }
+}
+
+/// What Settings → Advanced shows about the running pipeline. Numbers only (G-SEC-14).
+public struct LiveDiagnostics: Equatable, Sendable {
+    public var framesPerSecond: Int
+    /// Gaze uncertainty (points).
+    public var sigmaPoints: Double
+    /// Face-tracking confidence, 0...1.
+    public var confidence: Double
+    public var learnedClicks: Int
+    /// Accessibility snapshot latency (milliseconds).
+    public var accessibilityP50: Double?
+    public var accessibilityP95: Double?
+
+    public init(
+        framesPerSecond: Int, sigmaPoints: Double, confidence: Double, learnedClicks: Int,
+        accessibilityP50: Double?, accessibilityP95: Double?
+    ) {
+        self.framesPerSecond = framesPerSecond
+        self.sigmaPoints = sigmaPoints
+        self.confidence = confidence
+        self.learnedClicks = learnedClicks
+        self.accessibilityP50 = accessibilityP50
+        self.accessibilityP95 = accessibilityP95
     }
 }

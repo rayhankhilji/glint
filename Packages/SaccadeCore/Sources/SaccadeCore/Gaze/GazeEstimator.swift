@@ -58,6 +58,7 @@ public struct GazeEstimator: Sendable {
     private var grammar = BlinkGrammar()
     private var lastPoint: Point?
     private var lastUncorrected: Point?
+    private var lastPose: HeadPose?
 
     public init(model: MapperModel? = nil) {
         self.model = model
@@ -70,31 +71,45 @@ public struct GazeEstimator: Sendable {
         drift.reset()
         lastPoint = nil
         lastUncorrected = nil
+        lastPose = nil
+    }
+
+    /// Replaces the drift corrector (trace replay tries different tunables).
+    public mutating func setDrift(_ drift: DriftCorrector) {
+        self.drift = drift
     }
 
     /// Teaches the drift corrector that the user was looking at `truth` (screen points) at time `t`, measured
     /// against the most recent uncorrected estimate. Call for mouse clicks and for targets the user confirmed.
     public mutating func learn(truth: Point, at t: TimeInterval, weight: Double = 1) {
         guard let estimate = lastUncorrected else { return }
-        drift.learn(estimate: estimate, truth: truth, at: t, weight: weight)
+        drift.learn(estimate: estimate, truth: truth, at: t, weight: weight, pose: lastPose)
     }
 
     public mutating func ingest(_ obs: FaceObservation?, at t: TimeInterval) -> GazeSample {
+        let features = obs.flatMap { $0.confidence >= minimumConfidence ? GazeFeatures.extract(from: $0) : nil }
+        return ingest(features: features, confidence: obs?.confidence ?? 0, faceVisible: obs != nil, at: t)
+    }
+
+    /// The pipeline from features on: used by `ingest(_:at:)` and by trace replay (`saccade-eval`).
+    public mutating func ingest(
+        features: GazeFeatures?, confidence: Double, faceVisible: Bool, at t: TimeInterval
+    ) -> GazeSample {
         grammar.expire(at: t, eyesClosed: blinks.isClosed)
-        guard let obs, obs.confidence >= minimumConfidence, let features = GazeFeatures.extract(from: obs) else {
+        guard let features, confidence >= minimumConfidence else {
             _ = blinks.ingest(openness: nil, at: t)
             filter.reset()
             stabilizer.reset()
             lastPoint = nil
             return GazeSample(
-                t: t, point: nil, raw: nil, uncorrected: nil, fixating: false, sigma: 0, faceVisible: obs != nil,
-                confidence: obs?.confidence ?? 0, closure: 0, features: nil, blink: nil, gesture: nil,
+                t: t, point: nil, raw: nil, uncorrected: nil, fixating: false, sigma: 0, faceVisible: faceVisible,
+                confidence: confidence, closure: 0, features: nil, blink: nil, gesture: nil,
                 armed: grammar.isArmed
             )
         }
         let (closure, blink) = blinks.ingest(openness: features.openness, at: t)
         let gesture = blink.flatMap { grammar.ingest($0) }
-        let sigma = model?.uncertainty(confidence: obs.confidence) ?? 0
+        let sigma = model?.uncertainty(confidence: confidence) ?? 0
 
         var raw: Point?
         var point = lastPoint
@@ -104,13 +119,14 @@ public struct GazeEstimator: Sendable {
             raw = predicted
             let stabilized = stabilizer.ingest(filter.filter(predicted, at: t), sigma: sigma, at: t)
             lastUncorrected = stabilized
-            point = stabilized + drift.correction(at: stabilized, now: t)
+            lastPose = features.pose
+            point = stabilized + drift.correction(at: stabilized, now: t, pose: features.pose)
             lastPoint = point
         }
         return GazeSample(
             t: t, point: model == nil ? nil : point, raw: raw, uncorrected: lastUncorrected,
             fixating: stabilizer.isFixating(at: t), sigma: sigma,
-            faceVisible: true, confidence: obs.confidence, closure: closure,
+            faceVisible: true, confidence: confidence, closure: closure,
             features: features, blink: blink, gesture: gesture, armed: grammar.isArmed
         )
     }

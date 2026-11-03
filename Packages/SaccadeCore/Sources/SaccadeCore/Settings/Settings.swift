@@ -31,6 +31,8 @@ public struct Settings: Equatable, Sendable, Codable {
     /// Timed pause end (F-10.AC6); `nil` = not paused by timer.
     public var pausedUntil: Date?
     public var debugGazeDot: Bool
+    /// Advanced: write a features-only session trace (no images) for offline tuning with `saccade-eval`.
+    public var recordTraces: Bool
 
     public init(
         schemaVersion: Int = Settings.currentSchemaVersion,
@@ -50,7 +52,8 @@ public struct Settings: Equatable, Sendable, Codable {
         appRules: [AppRule] = AppRule.defaults,
         metricsConsent: MetricsConsent,
         pausedUntil: Date? = nil,
-        debugGazeDot: Bool = false
+        debugGazeDot: Bool = false,
+        recordTraces: Bool = false
     ) {
         self.schemaVersion = schemaVersion
         self.isEnabled = isEnabled
@@ -70,6 +73,7 @@ public struct Settings: Equatable, Sendable, Codable {
         self.metricsConsent = metricsConsent
         self.pausedUntil = pausedUntil
         self.debugGazeDot = debugGazeDot
+        self.recordTraces = recordTraces
     }
 
     /// Factory defaults for a fresh install. `installID` is injectable so tests stay deterministic.
@@ -97,7 +101,7 @@ public struct Settings: Equatable, Sendable, Codable {
     private enum CodingKeys: String, CodingKey {
         case schemaVersion, isEnabled, onboarding, launchAtLogin, gazeDisplayUUID, cameraUniqueID
         case activeProfileKey, click, scroll, focusFollowsGaze, readingMarkerEnabled, silentLearningEnabled
-        case preciseTargetsOnly, clickSound, appRules, metricsConsent, pausedUntil, debugGazeDot
+        case preciseTargetsOnly, clickSound, appRules, metricsConsent, pausedUntil, debugGazeDot, recordTraces
     }
 
     public init(from decoder: any Decoder) throws {
@@ -123,6 +127,7 @@ public struct Settings: Equatable, Sendable, Codable {
         metricsConsent = try c.decode(MetricsConsent.self, forKey: .metricsConsent, default: d.metricsConsent)
         pausedUntil = try c.decodeIfPresent(Date.self, forKey: .pausedUntil)
         debugGazeDot = try c.decode(Bool.self, forKey: .debugGazeDot, default: d.debugGazeDot)
+        recordTraces = try c.decode(Bool.self, forKey: .recordTraces, default: d.recordTraces)
     }
 }
 

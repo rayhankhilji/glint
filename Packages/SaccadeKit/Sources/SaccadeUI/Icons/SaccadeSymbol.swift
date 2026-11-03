@@ -22,6 +22,9 @@ public enum SaccadeSymbol: String, CaseIterable, Sendable {
     case about = "info.circle"
     case check = "checkmark"
     case remove = "minus.circle"
+    case off = "eye.slash"
+    case record = "record.circle"
+    case folder
 }
 
 /// An SF Symbol at Saccade's icon sizes, in the current foreground style.

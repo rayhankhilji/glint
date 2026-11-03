@@ -44,7 +44,7 @@ struct StabilityTests {
         #expect(!s.isFixating(at: t))
     }
 
-    @Test("A few clicks remove a posture offset locally, but not on the other side of the screen")
+    @Test("A few clicks remove a posture offset where they happened and mostly everywhere else")
     func driftCorrection() {
         var d = DriftCorrector()
         let offset = Point(x: 60, y: -40)
@@ -53,9 +53,76 @@ struct StabilityTests {
             d.learn(estimate: truth - offset, truth: truth, at: Double(i))
         }
         let local = d.correction(at: Point(x: 330, y: 310), now: 5)
-        #expect(local.distance(to: offset) < 20, "\(local)")
+        #expect(local.distance(to: offset) < 8, "\(local)")
+        // The global shift carries to the far corner, shrunk until more labels agree.
         let far = d.correction(at: Point(x: 1400, y: 850), now: 5)
-        #expect(far.length < 5, "\(far)")
+        #expect(far.distance(to: offset) < offset.length * 0.45, "\(far)")
+        #expect(far.length < offset.length, "\(far)")
+    }
+
+    @Test("One shift after a head move: clicks in two corners fix the opposite corners too")
+    func globalShift() {
+        var d = DriftCorrector()
+        let offset = Point(x: -45, y: 35)
+        for (i, truth) in [
+            Point(x: 200, y: 150),
+            Point(x: 1300, y: 800),
+            Point(x: 220, y: 170),
+            Point(x: 1280, y: 780),
+            Point(x: 210, y: 160),
+            Point(x: 1290, y: 790),
+        ].enumerated() {
+            d.learn(estimate: truth - offset, truth: truth, at: Double(i))
+        }
+        let elsewhere = d.correction(at: Point(x: 1300, y: 150), now: 7)
+        #expect(elsewhere.distance(to: offset) < 15, "\(elsewhere)")
+    }
+
+    @Test("Position-dependent errors are kept local on top of the shift")
+    func localPattern() {
+        var d = DriftCorrector()
+        for i in 0 ..< 6 {
+            let left = Point(x: 150, y: 200 + Double(i) * 80)
+            let right = Point(x: 1350, y: 200 + Double(i) * 80)
+            d.learn(estimate: left - Point(x: 50, y: 0), truth: left, at: Double(i))
+            d.learn(estimate: right - Point(x: -50, y: 0), truth: right, at: Double(i))
+        }
+        #expect(d.correction(at: Point(x: 150, y: 400), now: 7).x > 35)
+        #expect(d.correction(at: Point(x: 1350, y: 400), now: 7).x < -35)
+        #expect(abs(d.correction(at: Point(x: 750, y: 400), now: 7).x) < 15)
+    }
+
+    @Test("Corrections learned in one sitting position don't apply in another")
+    func poseGating() {
+        var d = DriftCorrector()
+        let here = HeadPose(faceX: 0.5, faceY: 0.45, faceScale: 0.3)
+        let moved = HeadPose(faceX: 0.65, faceY: 0.45, faceScale: 0.3)
+        let offset = Point(x: 70, y: 0)
+        for i in 0 ..< 6 {
+            let truth = Point(x: 400 + Double(i) * 40, y: 400)
+            d.learn(estimate: truth - offset, truth: truth, at: Double(i), pose: here)
+        }
+        #expect(d.correction(at: Point(x: 500, y: 400), now: 7, pose: here).x > 55)
+        // 3 σ of head movement away: at most a small remnant applies.
+        #expect(d.correction(at: Point(x: 500, y: 400), now: 7, pose: moved).length < offset.length * 0.15)
+        #expect(here.similarity(to: here) == 1)
+    }
+
+    @Test("Live accuracy: the corrected error at each click, once there are five")
+    func liveAccuracy() {
+        var d = DriftCorrector()
+        let offset = Point(x: 30, y: 0)
+        for i in 0 ..< 4 {
+            let truth = Point(x: 500 + Double(i) * 10, y: 500)
+            d.learn(estimate: truth - offset, truth: truth, at: Double(i))
+        }
+        #expect(d.liveErrorPoints == nil)
+        for i in 4 ..< 10 {
+            let truth = Point(x: 500 + Double(i) * 10, y: 500)
+            d.learn(estimate: truth - offset, truth: truth, at: Double(i))
+        }
+        let live = d.liveErrorPoints ?? .infinity
+        #expect(live < 12, "\(live)") // the first click saw the full 30 pt; later ones see what's left
     }
 
     @Test("Implausible labels (looking elsewhere) are ignored; old labels fade")

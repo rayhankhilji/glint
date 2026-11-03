@@ -20,7 +20,8 @@ Precision comes from several layers working together:
 - **Iris localization from camera pixels.** A gradient-voting locator finds the iris center to sub-pixel precision inside each eye patch, rather than using the face model's coarse pupil points.
 - **Fixation stabilization.** Small eye tremor is averaged away while you hold your gaze, and real jumps are followed immediately.
 - **Magnetic snapping to real UI elements.** Accessibility reports where buttons actually are. Saccade picks the most likely one, holds it against jitter, and refuses to click when two targets are too close to call.
-- **Learning from your clicks.** Every mouse click you make, and every target you click by gaze, teaches Saccade the small offset it has at that spot on the screen. The calibration keeps improving after setup; nothing but those offsets is stored.
+- **Learning from your clicks.** Every mouse click you make, and every target you click by gaze, teaches Saccade its current error. One part is a whole-screen shift (what leaning or moving does), the other is a local correction at that spot; both are tied to where your head was, so they don't misfire after you move. Only those offsets are kept, in memory.
+- **Live accuracy.** The error at each click is measured before learning from it. The popover shows that live number once there are a few clicks, and Saccade suggests recalibrating only if it drifts well past the calibration result.
 
 ## Try it on your Mac
 
@@ -60,6 +61,16 @@ tail -40 build/build.log
 ```
 
 To make a disk image you can share, add `--dmg`; it's written to `build/Saccade.dmg`. To remove Saccade, quit it from its menu and delete `Saccade.app` from Applications. Its settings are in `~/Library/Application Support/Saccade`.
+
+## Tune it with your own sessions
+
+Settings → Advanced → **Record sessions for tuning** saves eye measurements and click positions (never images) to `~/Library/Application Support/Saccade/traces/`. Use Saccade normally for a few minutes, turn recording off, then replay the session:
+
+```bash
+swift run --package-path Packages/SaccadeCore saccade-eval --trace ~/Library/Application\ Support/Saccade/traces/<file>.jsonl
+```
+
+It prints the median and p90 error at your clicks for each stage (mapper, stabilized, corrected). Add `--kernel 320`, `--global-shrinkage 1`, `--half-life 600` or `--no-learning` to compare settings on the same recording.
 
 ## Develop
 

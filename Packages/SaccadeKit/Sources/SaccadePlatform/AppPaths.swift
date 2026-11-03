@@ -21,4 +21,6 @@ public struct AppPaths: Sendable, Equatable {
     public var settingsFile: URL { root.appendingPathComponent("settings.json") }
     public var profilesDirectory: URL { root.appendingPathComponent("profiles", isDirectory: true) }
     public var metricsDirectory: URL { root.appendingPathComponent("metrics", isDirectory: true) }
+    /// Features-only session traces for offline tuning (Settings → Advanced).
+    public var tracesDirectory: URL { root.appendingPathComponent("traces", isDirectory: true) }
 }

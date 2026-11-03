@@ -26,6 +26,12 @@ final class AppEnvironment {
     let overlay: GazeOverlayWindowController
     let calibrationWindow: CalibrationWindowController
     let onboardingWindow: OnboardingWindowController
+    let hudModel = HUDModel()
+    let hud: HUDWindowController
+    var hudPolicy = HUDPolicy()
+    var traceWriter: TraceWriter?
+    var lastDiagnostics: TimeInterval = 0
+    let clickSound = NSSound(named: "Tink")
     var hotKey: HotKey?
     var settings: Settings
     var settingsTask: Task<Void, Never>?
@@ -69,6 +75,7 @@ final class AppEnvironment {
         overlay = GazeOverlayWindowController(model: overlayModel)
         calibrationWindow = CalibrationWindowController(model: calibrationModel)
         onboardingWindow = OnboardingWindowController(model: onboardingModel)
+        hud = HUDWindowController(model: hudModel)
         updater = live ? Updater(bundle: bundle) : nil
         versionString = Self.version(of: bundle)
 
@@ -92,6 +99,7 @@ final class AppEnvironment {
         input.start()
         hotKey = HotKey { [weak self] in self?.toggleEnabled() }
         watchPermissions()
+        updateRecording()
         if settings.onboarding != .completed {
             showOnboarding()
         }
@@ -103,16 +111,21 @@ final class AppEnvironment {
         tracking.onSample = { [weak self] sample in self?.coordinator.handle(sample) }
         coordinator.onOverlay = { [weak self] state in
             guard let self, overlayModel.state != state else { return }
+            if state.clickCount > overlayModel.state.clickCount {
+                playClickSound()
+            }
             overlayModel.state = state
         }
         // Silent learning (F-04): every confirmed look-and-click is a free calibration label.
         coordinator.onTargetClicked = { [weak self] center in
             guard let self, settings.silentLearningEnabled else { return }
             tracking.learn(truth: center, weight: Self.gazeClickLabelWeight)
+            reviewAccuracy()
         }
         input.onPhysicalClick = { [weak self] point in
             guard let self, settings.silentLearningEnabled else { return }
             tracking.learn(truth: point)
+            reviewAccuracy()
         }
         coordinator.canAct = accessibilityTrusted
     }
@@ -128,14 +141,19 @@ final class AppEnvironment {
         if appModel.status != status {
             appModel.status = status
         }
-        let accuracy = tracking.accuracyDegrees.map { AccuracyReading(medianErrorDegrees: $0) }
-        if appModel.accuracy != accuracy {
-            appModel.accuracy = accuracy
-            settingsModel.accuracy = accuracy
-            onboardingModel.accuracy = accuracy
+        let calibrated = tracking.accuracyDegrees.map { AccuracyReading(medianErrorDegrees: $0) }
+        if settingsModel.accuracy != calibrated {
+            settingsModel.accuracy = calibrated
+            onboardingModel.accuracy = calibrated
+        }
+        // The popover shows the best current measurement: live accuracy from clicks once there is enough of it.
+        let current = tracking.liveAccuracyDegrees.map { AccuracyReading(medianErrorDegrees: $0) } ?? calibrated
+        if appModel.accuracy != current {
+            appModel.accuracy = current
         }
         syncCalibration()
         syncOverlay()
+        refreshDiagnostics()
     }
 
     func syncOverlay() {

@@ -121,31 +121,6 @@ struct PrivacyPane: View {
     }
 }
 
-struct AdvancedPane: View {
-    @Bindable var model: SettingsModel
-
-    var body: some View {
-        Form {
-            Section {
-                Toggle(String(localized: "Only click real controls"), isOn: $model.settings.preciseTargetsOnly)
-            } footer: {
-                FormFooter(String(localized: "When off, a double blink over empty space clicks at your gaze point."))
-            }
-            Section {
-                Toggle(String(localized: "Show gaze point"), isOn: $model.settings.debugGazeDot)
-            } footer: {
-                FormFooter(String(localized: "Always draws the estimated gaze point, even over a target."))
-            }
-            Section {
-                LabeledContent(String(localized: "Setup")) {
-                    Button(String(localized: "Show Welcome…")) { model.actions.openOnboarding() }
-                }
-            }
-        }
-        .formStyle(.grouped)
-    }
-}
-
 struct AboutPane: View {
     let version: String
 

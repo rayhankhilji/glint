@@ -8,7 +8,7 @@
 - **Current focus:** P0.T6 — get CI running (blocked: GitHub Actions jobs never get a runner, BLK-1)
 - **Next action:** Human: `git pull`, then `scripts/build-app.sh --install --open` on the Mac; go through onboarding (camera, Accessibility, 13-point calibration) and report build errors or how snapping, clicking and scrolling behave. Then: fix build issues; real-camera tuning of the iris locator and snap thresholds; trace recorder + saccade-eval replay.
 - **Blocked:** BLK-1 (CI runners), BLK-2 (Developer ID / notary credentials, PRD Q2), BLK-3 (snapshot references must be recorded on a Mac)
-- **Last updated:** 2026-11-03 by agent (session 5: precision pipeline, full intent features, monochrome rebrand)
+- **Last updated:** 2026-11-03 by agent (session 6: accuracy feedback loop, HUD, tuning tools)
 
 ## Current Phase Checklist
 
@@ -56,6 +56,9 @@ Note: the design system v2 rows (2026-11-03, session 3) supersede the v1.1 rows 
 
 | Date | Decision | Reason | Docs updated |
 |---|---|---|---|
+| 2026-11-03 | Drift correction is hierarchical (global shift + local field) and pose-gated; live accuracy = median corrected error at the last 15 click labels | Head movement shifts the whole map; local-only correction needed a click near every target. Pose gating keeps one sitting position's corrections out of another | ARCHITECTURE §10.7 |
+| 2026-11-03 | `saccade-trace/v2`: features-only session traces + `saccade-eval --trace` replay with drift tunables; `saccade-trace/v1` (landmarks) stays planned for provider evaluation | Tune on real sessions without storing images | ARCHITECTURE §10.6, README |
+| 2026-11-03 | HUD for shortcut confirmation and accuracy advice only, rate-limited by `HUDPolicy` | Quiet by default; the menu bar may be out of view when ⌃⌥S is pressed | DESIGN_SYSTEM §9.7 |
 | 2026-11-03 | **Rebrand to Saccade, pure monochrome** (user: name "Saccade", identity "Pure monochrome"): black/white/grey chrome, accent = ink/paper, semantic colors only in status dots; new mark (fixation dot → jump → ring); overlay marks are ink cores on paper halos; bundle ID `com.example.saccade` | User choice | DESIGN_SYSTEM §1, §2, §6.2, §7; tokens.json; contrast.py (22/22) |
 | 2026-11-03 | **Precision pipeline** (user: "accuracy is dogshit… the target is so massive… has to be hyper precise"): 720p capture; Timm & Barth iris localization on eye patches (highlight suppression, sub-pixel refinement); FixationStabilizer; DriftCorrector learning from physical and gaze clicks; 13-point calibration; the overlay outlines the AX element 3 pt outside its frame instead of drawing an uncertainty-sized ring | Vision's pupil points are too coarse; snapping to real geometry turns degrees of error into exact clicks | ADR-012, ARCHITECTURE §10.7, EVAL_GUARDRAILS G-SEC-01 |
 | 2026-11-03 | Full intent feature set pulled forward (P3/P4): SnapMachine, gated click / right-click, scroll-zone glide, focus follows gaze, where-was-I, app rules, "Only click real controls" (free click at a fixation when off), debug gaze point | User: "build all the features"; "Full control" | PRD F-05–F-10; IntentConstants |
@@ -90,6 +93,13 @@ Note: the design system v2 rows (2026-11-03, session 3) supersede the v1.1 rows 
 | 2026-11-03 | Universal build (Apple Silicon + Intel) | User mentioned an Intel Mac | ADR-011, PRD §6, §8 |
 | 2026-11-03 | One Euro defaults retuned to minCutoff 0.6, beta 0.002 (gaze in points at 30 fps): jitter −65%, settles in ~4 frames | Measured on synthetic gaze; paper defaults let point-scale jitter through | OneEuroFilter docs |
 ## Session Log
+
+### 2026-11-03 — Session 6 (accuracy feedback loop, HUD, tuning tools)
+
+- Done: pose-aware hierarchical `DriftCorrector` + `HeadPose`; live accuracy (`liveErrorPoints`) and `AccuracyAdvice`; `HUDPolicy`; `GazeEstimator.ingest(features:…)` + `setDrift`; `SessionTrace`/`TraceRecord`, `TraceReplay`, `saccade-eval --trace`; `TraceWriter`; TrackingController trace sink, live accuracy and label count; coordinator AX latency; HUD capsule + window; Settings: live accuracy, click sound, recording, live diagnostics; app wiring (shortcut HUD, accuracy advice, click sound, diagnostics at 2 Hz, recording lifecycle); popover shows live accuracy when available.
+- Tests (Linux): SaccadeCore 99 + SaccadeEval 3 pass (new: global shift, local pattern, pose gating, live accuracy, HUD policy, advice, trace round trip, replay); harness: Runtime 9 (new trace recording test), Services 8 (new TraceWriter), Platform 4/5 (known Linux path test). `swiftlint --strict`, SwiftFormat, check-architecture clean.
+- Not verified: AppKit/SwiftUI code (HUD, Settings panes, App wiring) — needs the user's build.
+- Next: user build + a recorded session → tune drift parameters with `saccade-eval --trace`.
 
 ### 2026-11-03 — Session 5 (precision, features, rebrand)
 

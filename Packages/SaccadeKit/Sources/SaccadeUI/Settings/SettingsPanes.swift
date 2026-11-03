@@ -17,8 +17,16 @@ struct GeneralPane: View {
                 }
             }
             Section {
-                LabeledContent(String(localized: "Accuracy")) { AccuracyReadout(reading: model.accuracy) }
-                LabeledContent(String(localized: "Calibration")) {
+                LabeledContent(String(localized: "Calibration")) { AccuracyReadout(reading: model.accuracy) }
+                LabeledContent(String(localized: "From your clicks")) {
+                    if let live = model.liveAccuracy {
+                        AccuracyReadout(reading: live)
+                    } else {
+                        Text(String(localized: "After a few clicks")).foregroundStyle(SaccadeColor.textMuted)
+                    }
+                }
+                HStack {
+                    Spacer()
                     Button(String(localized: "Recalibrate…")) { model.actions.recalibrate() }
                 }
             } footer: {
@@ -61,6 +69,8 @@ struct GesturesPane: View {
                     isOn: $model.settings.click.rightClickEnabled
                 )
                 .disabled(!model.settings.click.enabled)
+                Toggle(String(localized: "Click sound"), isOn: $model.settings.clickSound)
+                    .disabled(!model.settings.click.enabled)
                 LabeledContent(String(localized: "Blink sensitivity")) {
                     Slider(value: $model.settings.click.sensitivity, in: ClickSettings.sensitivityRange) {
                         EmptyView()

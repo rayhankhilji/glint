@@ -138,6 +138,34 @@ struct TrackingControllerTests {
         #expect(controller.status == .away)
     }
 
+    @Test("A trace records header, model, frames and click labels, and replays to the same accuracy picture")
+    func traceRecording() throws {
+        let root = try TestSupport.makeTempRoot()
+        defer { TestSupport.removeTempRoot(root) }
+        let clock = ManualClock()
+        let controller = makeController(FakeFaceTracker(), root: root, clock: clock)
+        var face = SyntheticFace(seed: 22)
+        face.pupilNoise = 0.02
+        try calibrate(controller, face: &face, clock: clock)
+        controller.endCalibration()
+
+        var records: [TraceRecord] = []
+        controller.beginTrace(screen: face.screenSize) { records.append($0) }
+        for target in [Point(x: 400, y: 300), Point(x: 900, y: 600), Point(x: 1100, y: 250)] {
+            feed(controller, face: &face, clock: clock, target: target, frames: 30)
+            controller.learn(truth: target)
+        }
+        controller.traceSink = nil
+        #expect(records.first?.header != nil)
+        #expect(records.dropFirst().first?.model != nil)
+        #expect(records.compactMap(\.frame).count == 90)
+        #expect(records.compactMap(\.label).count == 3)
+        #expect(controller.learnedLabels == 3)
+
+        let report = TraceReplay().run(records)
+        #expect(report.labels == 3 && report.unmatched == 0)
+    }
+
     private func calibrate(_ controller: TrackingController, face: inout SyntheticFace, clock: ManualClock) throws {
         controller.beginCalibration(screenSize: face.screenSize)
         for _ in 0 ..< 1200 {

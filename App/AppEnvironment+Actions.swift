@@ -31,7 +31,7 @@ extension AppEnvironment {
     }
 
     func makeSettingsActions() -> SettingsActions {
-        SettingsActions(
+        var actions = SettingsActions(
             commit: { [weak self] settings in self?.mutateSettings { $0 = settings } },
             recalibrate: { [weak self] in self?.openCalibration() },
             deleteCalibration: { [weak self] in
@@ -44,13 +44,17 @@ extension AppEnvironment {
                 self?.showOnboarding()
             }
         )
+        actions.revealTraces = { [weak self] in self?.revealTraces() }
+        return actions
     }
 
+    /// The global shortcut. The menu bar may be out of sight, so the HUD confirms the new state.
     func toggleEnabled() {
         mutateSettings {
             $0.isEnabled.toggle()
             $0.pausedUntil = nil
         }
+        announce(settingsStore.load().isEnabled ? .turnedOn : .turnedOff)
     }
 
     func fix(_ attention: SaccadeStatus.Attention) {
@@ -106,6 +110,9 @@ extension AppEnvironment {
         coordinator.update(settings: settings)
         if settingsModel.settings != settings {
             settingsModel.settings = settings
+        }
+        if settings.recordTraces != previous.recordTraces {
+            updateRecording()
         }
         if settings.launchAtLogin != previous.launchAtLogin {
             applyLaunchAtLogin(settings.launchAtLogin)

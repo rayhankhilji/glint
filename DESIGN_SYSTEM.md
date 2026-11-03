@@ -210,6 +210,7 @@ All components live in `SaccadeUI/Components/`. Each has a snapshot test in ligh
 | `PopoverRow` | symbol + title + shortcut/chevron | default, hover (`subtle` fill), pressed, disabled (40%) | Button with identifier `saccade.popover.<id>` | 28 pt tall, 6 pt corners, no scaling. |
 | `AppRuleRow` | off, scrollOnly | default, hover (shows remove), default-rule badge text "Default" | Row reads app name + mode | App icon 20 pt + name; mode `Picker`. |
 | `PayloadViewer` | — | loading, empty ("Nothing sent yet"), list | Monospaced text selectable | JSON pretty-printed, SF Mono. |
+| `HUDView` | mark, symbol | entering, visible, exiting | Announced (`announcementRequested`) | ≤ 60 characters, one line. Copy from `HUDMessage.make`. |
 | **Overlay:** `GazeOverlayView` | lock (locked, armed, pressed), uncertain pair, gaze dot, scroll bar, line marker, window flash | per §6.2 | Hidden from AX | Renders `OverlayState` from the intent engine verbatim; draws nothing the engine didn't decide. |
 
 ## 9. Patterns & Screen Specs
@@ -261,12 +262,12 @@ Full-screen scrim (`overlayScrim` + glass blur of the desktop) on the gaze displ
 
 Tabbed `Settings` scene with SF Symbol tabs (§7); every pane is a native `Form` with `.formStyle(.grouped)`, controls tinted `accent` (ink / paper). Each section has at most one plain-language footer. Every edit is saved immediately.
 
-- **General:** Saccade is on · Open at login (`SMAppService`) · Turn on or off: `⌃⌥S` (mono) · Accuracy (AccuracyReadout) + "Recalibrate…" · Accessibility: "Allowed" or "Allow…".
-- **Gestures:** Double blink to click · Blink, then hold, to right-click · Blink sensitivity (Firm ↔ Light) · Focus follows gaze + Look for (600–1500 ms) · Mark where I was reading.
+- **General:** Saccade is on · Open at login (`SMAppService`) · Turn on or off: `⌃⌥S` (mono) · Calibration and From your clicks (AccuracyReadout each; "After a few clicks" until live accuracy exists) + "Recalibrate…" · Accessibility: "Allowed" or "Allow…".
+- **Gestures:** Double blink to click · Blink, then hold, to right-click · Click sound (system "Tink" at 35%) · Blink sensitivity (Firm ↔ Light) · Focus follows gaze + Look for (600–1500 ms) · Mark where I was reading.
 - **Scrolling:** Scroll by looking · Bottom zone (10–25%) · Top zone (5–20%) · Glide distance (25–60%) · Rest for (200–600 ms). Values show in tabular digits beside each slider.
 - **Apps:** one row per rule (app name, bundle ID in `caption`, mode picker Off / Scroll only, remove button) + "Add App…" (NSOpenPanel on /Applications) + "Restore Defaults".
 - **Privacy:** Camera: "Processed on this Mac, never stored" · Learn from my clicks · Share anonymous usage metrics · Calibration data: "Delete…" (destructive, confirmation dialog).
-- **Advanced:** Only click real controls · Show gaze point · Setup: "Show Welcome…".
+- **Advanced:** Only click real controls · Show gaze point · Record sessions for tuning + "Show Recordings" · Live (tabular digits, "—" until tracking): frame rate, gaze uncertainty, face confidence, clicks learned, Accessibility lookup p50/p95 · Setup: "Show Welcome…".
 - **About:** live `SaccadeMark` (48 pt), name, version, one line.
 
 ### 9.5 Overlay (F-05–F-09)
@@ -279,18 +280,14 @@ A 900-word explainer, "How Saccade reads intent", set in `body` at 15 pt with a 
 
 ### 9.7 HUD message catalogue
 
-| Trigger | Style | Copy |
+An ink capsule (36 pt, 16 pt side padding, 1 pt paper hairline at 16%) with paper text in `hud` type, centered 8 pt below the menu bar on the primary display. Click-through, never takes focus, announced to VoiceOver. Enters with `spring.gentle` from the top (opacity only with Reduce Motion), dismisses after 2.4 s. `HUDPolicy` (SaccadeCore) decides what may show: confirmations always, advice at most once per 10 minutes per kind.
+
+| Trigger | Leading | Copy |
 |---|---|---|
-| Turned on (hotkey) | success | "Saccade on" |
-| Turned off | info | "Saccade off" |
-| Paused by gesture | info | "Paused — double-blink the ✦ to resume" |
-| Resumed | success | "Saccade resumed" |
-| Face lost > 3 s while on | info | "Waiting for you…" (only once per 10 min) |
-| Low light > 3 s | warning | "Too dark to see your eyes" |
-| Camera interrupted | warning | "Camera paused by macOS" |
-| Camera back | success | "Camera back" |
-| Settings reset (corrupt) | warning | "Settings were reset" |
-| Accuracy dropped (residual rise) | info | "Accuracy dipped — recalibrate?" (clickable → calibration) |
+| Turned on with ⌃⌥S | the mark | "Saccade on" |
+| Turned off with ⌃⌥S | `eye.slash` | "Saccade off" |
+| Live accuracy > 2.5° and > 1.8× calibration | `scope` | "Accuracy dipped · Recalibrate from the menu bar" |
+| Live accuracy ≤ 1.5° and ≥ 0.5° better than calibration | `checkmark` | "Accuracy now 1.2° from your clicks" |
 
 ## 10. Content & Voice
 
