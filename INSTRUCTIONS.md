@@ -62,7 +62,8 @@ glint/
 │   ├── Base.xcconfig Debug.xcconfig Release.xcconfig
 │   ├── Secrets.example.xcconfig    # committed fake values; copy to Secrets.xcconfig (gitignored)
 │   ├── Info.plist                  # LSUIElement, usage strings, Sparkle keys via $(VARS)
-│   └── Glint.entitlements          # camera only
+│   ├── ExportOptions.plist         # Developer ID export
+│   └── Glint.entitlements(.expected)  # camera only; .expected guards drift (G-SEC-07)
 ├── App/                            # app target = composition root ONLY
 │   ├── GlintApp.swift              # @main, MenuBarExtra, Settings scene
 │   ├── AppEnvironment.swift        # builds the object graph
@@ -73,12 +74,12 @@ glint/
 │   │   ├── Package.swift
 │   │   ├── Sources/GlintCore/{Geometry,Features,Mapping,Filters,Events,Calibration,Intent,Settings,Telemetry,Trace,Errors}/
 │   │   ├── Sources/GlintCoreTestSupport/   # fixtures, SyntheticEye, ManualClock helpers (test-only)
-│   │   ├── Sources/glint-eval/
+│   │   ├── Sources/GlintEval/ Sources/glint-eval/   # eval library + thin CLI
 │   │   └── Tests/GlintCoreTests/ Tests/GlintEvalTests/
 │   └── GlintKit/                   # macOS only
 │       ├── Package.swift
-│       ├── Sources/{GlintPerception,GlintSystem,GlintServices,GlintUI,GlintRuntime}/
-│       └── Tests/{GlintPerceptionTests,GlintSystemTests,GlintServicesTests,GlintUITests,GlintRuntimeTests}/   # GlintUITests = snapshot tests
+│       ├── Sources/{GlintPlatform,GlintPerception,GlintSystem,GlintServices,GlintUI,GlintRuntime}/
+│       └── Tests/{GlintPlatformTests,GlintServicesTests,GlintUITests,GlintRuntimeTests,…}/   # GlintUITests = snapshot tests
 ├── UITests/                        # XCUITest target (onboarding, settings) using GLINT_FAKE_CAMERA
 ├── Models/                         # *.onnx via Git LFS + checksums.sha256
 ├── Evals/
@@ -86,7 +87,9 @@ glint/
 │   ├── datasets/v1/                # full eval set (LFS)
 │   └── reports/                    # generated; only `baseline.json` is committed
 ├── scripts/
-│   ├── bootstrap.sh check-architecture.sh check-licenses.sh coverage.sh perf.sh contrast.py release.sh rollback.sh
+│   ├── bootstrap.sh install-tools.sh check-architecture.sh check-licenses.sh licenses.allowlist coverage.sh
+│   ├── contrast.py release.sh (perf.sh P1.T10, rollback.sh P6.T7)
+│   ├── tests/                      # self-tests for the guard scripts
 │   └── models/{manifest.json,fetch_and_convert.py}
 ├── .github/workflows/{ci.yml,release.yml}
 └── docs/archive/                   # archived TASK_LOG sections
@@ -99,6 +102,7 @@ Rules:
 - All thresholds go in `GlintCore/Intent/IntentConstants.swift` or the relevant `Settings` default, never as inline literals in logic.
 - Design tokens live only in `GlintUI/DesignSystem/` (`GlintColor`, `GlintFont`, `GlintSpacing`, `GlintRadius`, `GlintMotion`, `GlintShadow`).
 - No barrel files or `@_exported import`.
+- Logging, signposts, the production clock and storage paths come from `GlintPlatform` (ADR-010).
 - User-facing strings go in `Localizable.xcstrings` via `String(localized:)`, never as raw literals in views.
 
 ## 5. Commands
@@ -109,7 +113,7 @@ Run from the repo root. First-time setup:
 scripts/bootstrap.sh
 ```
 
-`bootstrap.sh` runs `brew install xcodegen swiftlint swiftformat create-dmg git-lfs uv`, then `git lfs install && git lfs pull`, copies `Config/Secrets.example.xcconfig` to `Config/Secrets.xcconfig` if it's missing, and runs `xcodegen generate`.
+`bootstrap.sh` installs git-lfs, uv, create-dmg and GNU grep with Homebrew, pulls LFS files, installs the pinned XcodeGen/SwiftLint/SwiftFormat into `.tools/bin` (`scripts/install-tools.sh`; add it to `PATH`), copies `Config/Secrets.example.xcconfig` to `Config/Secrets.xcconfig` if it's missing, and runs `xcodegen generate`. On Linux, run `scripts/install-tools.sh` only (SwiftLint + SwiftFormat).
 
 | Purpose | Command |
 |---|---|
@@ -117,15 +121,19 @@ scripts/bootstrap.sh
 | Build core (macOS or Linux) | `swift build --package-path Packages/GlintCore` |
 | Test core (macOS or Linux) | `swift test --package-path Packages/GlintCore` |
 | Test one core suite | `swift test --package-path Packages/GlintCore --filter BlinkGrammarTests` |
-| Test GlintKit (macOS) | `swift test --package-path Packages/GlintKit` |
+| Test GlintKit (macOS, unit + snapshot) | `swift test --package-path Packages/GlintKit` |
 | Build app | `xcodebuild -project Glint.xcodeproj -scheme Glint -configuration Debug -destination 'platform=macOS,arch=arm64' build` |
-| Test app (unit + snapshot + UI) | `xcodebuild -project Glint.xcodeproj -scheme Glint -destination 'platform=macOS,arch=arm64' test` |
+| Test app (build + UI tests) | `xcodebuild -project Glint.xcodeproj -scheme Glint -destination 'platform=macOS,arch=arm64' test` |
 | UI tests only | `xcodebuild -project Glint.xcodeproj -scheme Glint -destination 'platform=macOS,arch=arm64' test -only-testing:GlintUITestsApp` |
 | Record snapshots | `SNAPSHOT_RECORD=1 swift test --package-path Packages/GlintKit --filter GlintUITests` |
 | Lint | `swiftlint --strict` |
 | Format | `swiftformat .` |
 | Format check | `swiftformat --lint .` |
-| Architecture check | `scripts/check-architecture.sh` |
+| Architecture check (needs GNU grep) | `scripts/check-architecture.sh` (self-test: `scripts/tests/check-architecture.test.sh`) |
+| License check | `scripts/check-licenses.sh` |
+| Contrast check | `python3 -I scripts/contrast.py` |
+| Coverage gate | `swift test --package-path Packages/GlintCore --enable-code-coverage && scripts/coverage.sh core` |
+| Install pinned tools | `scripts/install-tools.sh` then `export PATH="$PWD/.tools/bin:$PATH"` |
 | Eval gate (CI set) | `swift run --package-path Packages/GlintCore glint-eval --dataset Evals/datasets/ci --check` |
 | Full eval report | `swift run --package-path Packages/GlintCore -c release glint-eval --dataset Evals/datasets/v1 --report Evals/reports/latest.md` |
 | Fetch/convert models | `uv run scripts/models/fetch_and_convert.py` |

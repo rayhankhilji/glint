@@ -47,6 +47,7 @@ GLINT_FAKE_CAMERA=Evals/datasets/ci/onboarding-happy.jsonl   # UI tests: replay 
 GLINT_FAKE_PERMISSIONS=camera:granted,ax:granted             # UI tests: FakePermissionsService states
 GLINT_PROVIDER=vision                                        # force fallback provider (DEBUG)
 SNAPSHOT_RECORD=1                                            # re-record snapshots (never in CI)
+GLINT_SNAPSHOT_BOOTSTRAP=1                                   # CI only, until Mac-recorded references are committed
 GLINT_STORAGE_ROOT=/tmp/glint-test-<uuid>                    # stores write here in tests (set automatically by TestSupport)
 ```
 
@@ -62,7 +63,7 @@ GLINT_STORAGE_ROOT=/tmp/glint-test-<uuid>                    # stores write here
 | `swift test --package-path Packages/GlintCore --enable-code-coverage` then `scripts/coverage.sh core` | Coverage report + gate (§7) | ~40 s | Before commit |
 | `swift test --package-path Packages/GlintKit` | Integration + snapshot tests | ~60 s | When GlintKit changes |
 | `SNAPSHOT_RECORD=1 swift test --package-path Packages/GlintKit --filter GlintUITests` | Re-record snapshots (review the PNG diffs!) | ~60 s | Intentional visual change |
-| `xcodebuild -project Glint.xcodeproj -scheme Glint -destination 'platform=macOS,arch=arm64' test` | Everything in the Glint test plan incl. XCUITest | ~5 min | Before PR / phase end |
+| `xcodebuild -project Glint.xcodeproj -scheme Glint -destination 'platform=macOS,arch=arm64' test` | App build + XCUITest (package tests run via `swift test`) | ~5 min | Before PR / phase end |
 | `xcodebuild … test -only-testing:GlintUITestsApp/OnboardingUITests` | One UI test class | ~90 s | Iterating UI flows |
 | `swift run --package-path Packages/GlintCore glint-eval --dataset Evals/datasets/ci --check` | CI eval gate (thresholds + baseline diff) | ~30 s | Any perception/intent change |
 | `swift run --package-path Packages/GlintCore -c release glint-eval --dataset Evals/datasets/v1 --report Evals/reports/latest.md --by-subgroup` | Full eval report | ~5 min | Phase end, release |
@@ -311,9 +312,9 @@ Then do the manual QA items for the phase (§10).
 
 | Job | Runner | Steps | Required for merge |
 |---|---|---|---|
-| `core-linux` | ubuntu-latest + Swift 6 | `swift test --package-path Packages/GlintCore`, coverage gate, `glint-eval --dataset Evals/datasets/ci --check` | yes |
-| `lint` | macos-latest | `swiftformat --lint .`, `swiftlint --strict`, `check-architecture.sh`, `check-licenses.sh` | yes |
-| `app-macos` | macos-latest | `xcodegen generate`, `swift test --package-path Packages/GlintKit`, `xcodebuild test` (unit + snapshot + UI, `CODE_SIGNING_ALLOWED=NO`), upload xcresult | yes |
+| `core-linux` | ubuntu-24.04, container `swift:6.4.1-noble` | `swift test --package-path Packages/GlintCore`, coverage gate; `glint-eval --dataset Evals/datasets/ci --check` from P2.T8 | yes |
+| `lint` | ubuntu-24.04 | pinned tools via `install-tools.sh`; `swiftformat --lint .`, `swiftlint --strict`, `check-architecture.sh` + self-test, `check-licenses.sh` + self-test, `contrast.py` | yes |
+| `app-macos` | macos-26 + Xcode 27.1+ | `swift test --package-path Packages/GlintKit` (unit + snapshot; uploads `__Snapshots__`), `xcodegen generate`, `xcodebuild test` (app + UI tests, ad-hoc signed), xcresult on failure | yes |
 | `nightly` (schedule 03:17 UTC) | both | full `v1` eval with `--by-subgroup`, quarantined tests, dependency audit (`swift package show-dependencies` vs advisories) | no (opens an issue on failure) |
 | `release` (tag `v*`) | macos-latest | ARCHITECTURE §13 release pipeline + `spctl --assess` (T-F14-AC1) + entitlement diff (G-SEC-07) | — |
 

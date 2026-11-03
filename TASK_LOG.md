@@ -4,27 +4,27 @@
 
 ## Status
 
-- **Current phase:** P0 — Foundation
-- **Current focus:** P0.T1 — Verify current stable versions and update ARCHITECTURE §2 / INSTRUCTIONS §3
-- **Next action:** Check the latest stable Xcode, Swift, ONNX Runtime SPM, Sparkle, TelemetryDeck SwiftSDK, Sentry Cocoa, KeyboardShortcuts, swift-snapshot-testing, XcodeGen, SwiftLint, SwiftFormat; edit the version column of ARCHITECTURE §2; add a Decisions row.
-- **Blocked:** none (Q2 Developer ID team is needed by P0.T11; ask the human early)
-- **Last updated:** 2026-11-03 by build-docs generator
+- **Current phase:** P0 — Foundation (exit criteria **not** met yet)
+- **Current focus:** P0.T6 — get CI running (blocked: GitHub Actions jobs never get a runner, BLK-1)
+- **Next action:** Human: check GitHub → Settings → Billing/Actions for `rayhankhilji/glint` (BLK-1). Then re-run CI and fix whatever the `app-macos` job reports for the macOS-only code (P0.T4, P0.T8, P0.T9).
+- **Blocked:** BLK-1 (CI runners), BLK-2 (Developer ID / notary credentials, PRD Q2), BLK-3 (snapshot references must be recorded on a Mac)
+- **Last updated:** 2026-11-03 by agent (session 1)
 
 ## Current Phase Checklist
 
 Legend: [ ] to do · [~] in progress · [x] done · [!] blocked
 
-- [ ] P0.T1 — Verify current stable versions of Xcode, Swift, ONNX Runtime SPM, Sparkle, TelemetryDeck SwiftSDK, Sentry Cocoa, KeyboardShortcuts, swift-snapshot-testing, XcodeGen, SwiftLint, SwiftFormat; update ARCHITECTURE §2 and INSTRUCTIONS §3 in place  (verify: doc diff reviewed; versions recorded in TASK_LOG Decisions)
-- [ ] P0.T2 — Create the repo skeleton: `project.yml`, `Config/*.xcconfig` (+ `Secrets.example.xcconfig`), `Info.plist` (LSUIElement, camera usage string), `Glint.entitlements` (camera only) + `Glint.entitlements.expected`, `.gitignore` (xcodeproj, build, Secrets.xcconfig), `.gitattributes` (LFS for `Models/**`, `Evals/datasets/**`), `scripts/bootstrap.sh`  (verify: `scripts/bootstrap.sh && xcodegen generate` succeeds on a clean clone)
-- [ ] P0.T3 — Create `Packages/GlintCore` (targets `GlintCore`, `GlintCoreTestSupport`, `glint-eval` stub, tests) with `Point/Size/Rect`, `Clock`/`ManualClock`/`SeededGenerator`, and the full `GlintError` catalogue  (verify: `swift test --package-path Packages/GlintCore` on macOS and in Docker `swift:6` (Linux))
-- [ ] P0.T4 — Create `Packages/GlintKit` (GlintPerception, GlintSystem, GlintServices, GlintUI, GlintRuntime + test targets, with an empty `IntentCoordinator`) and the `App/` target with `GlintApp` (`MenuBarExtra`) and `AppEnvironment`  (verify: `xcodebuild … build` and the app shows a menu bar icon)
-- [ ] P0.T5 — Add `.swiftlint.yml` (strict, complexity limits, custom `no_magic_thresholds` for `GlintCore/Intent`), `.swiftformat`, `scripts/check-architecture.sh` (import rules §3, network allowlist, banned APIs from G-SEC-01/02/04/05), `scripts/check-licenses.sh`, `scripts/coverage.sh`, `scripts/contrast.py`  (verify: scripts exit 0 on the skeleton and exit 1 on a planted violation (test fixtures in `scripts/tests/`))
-- [ ] P0.T6 — Add `.github/workflows/ci.yml` with `core-linux`, `lint`, `app-macos` jobs  (verify: all three jobs green on the PR)
-- [ ] P0.T7 — Implement `Settings` (+ nested types, defaults incl. default AppRules), `Settings.validated()`, `SettingsMigrator` v1, `SettingsStore` (atomic writes, corrupt-file backup + defaults, `changes` stream)  (verify: `SettingsStoreTests`, `SettingsDefaultsTests` (T-F11-AC1 store part))
-- [ ] P0.T8 — Implement design tokens (`GlintColor` + asset catalog light/dark, `GlintFont`, `GlintSpacing`, `GlintRadius`, `GlintShadow`, `GlintMotion`), `GlassSurface` with macOS 26/14 branches and reduce-transparency, and the snapshot test infrastructure  (verify: `swift test --package-path Packages/GlintKit --filter GlintUITests` with token swatch snapshots; `scripts/contrast.py` passes)
-- [ ] P0.T9 — Build the menu bar glyph (template images for 5 states) and popover skeleton bound to a static `AppModel`, plus a Settings scene with 7 empty tabs  (verify: snapshot tests for each popover state)
-- [ ] P0.T10 — Add logging categories (`Logger`), an `OSSignposter` wrapper, and a `Diagnostics` model skeleton  (verify: unit test that `GlintError` logging uses `.public` codes only; arch check for `print(`)
-- [ ] P0.T11 — Release pipeline skeleton: `scripts/release.sh --dry-run` (archive → export Developer ID → notarytool → staple → DMG) and Sparkle wired with `SPUStandardUpdaterController` against a local test appcast  (verify: (human-provided Developer ID) a notarized skeleton DMG passes `spctl --assess`; the local appcast update offer appears)
+- [x] P0.T1 — Verify current stable versions and update ARCHITECTURE §2 / INSTRUCTIONS §3  (evidence: Decisions row 2026-11-03 "Version pins")
+- [~] P0.T2 — Repo skeleton (`project.yml`, `Config/*`, Info.plist, entitlements + `.expected`, `.gitignore`, `.gitattributes`, `bootstrap.sh`, `install-tools.sh`)  (verified: plists/YAML parse, `install-tools.sh` works on Linux; pending: `scripts/bootstrap.sh && xcodegen generate` on a Mac)
+- [x] P0.T3 — `Packages/GlintCore` (+ TestSupport, GlintEval lib, `glint-eval` CLI): geometry, Clock/ManualClock/SeededGenerator, GlintError catalogue  (tests: `swift test --package-path Packages/GlintCore` → 46 tests (44 GlintCore + 2 GlintEval) pass on Linux, Swift 6.4.2; coverage 94% ≥ 90%)
+- [~] P0.T4 — `Packages/GlintKit` (6 modules incl. GlintPlatform, ADR-010) + `App/` (GlintApp, AppEnvironment, Updater) + launch UI test  (verified on Linux with an `os` stand-in: GlintPlatform/Services/Runtime compile and pass; pending: macOS build of GlintUI/App — BLK-1)
+- [x] P0.T5 — `.swiftlint.yml` (custom rules), `.swiftformat`, `check-architecture.sh`, `check-licenses.sh`, `coverage.sh`, `contrast.py`  (tests: `scripts/tests/check-architecture.test.sh` 22/22, `scripts/tests/check-licenses.test.sh` 2/2, `swiftlint --strict` + `swiftformat --lint .` clean, contrast 22/22)
+- [!] P0.T6 — `.github/workflows/ci.yml` (`core-linux`, `lint`, `app-macos`)  (workflow written; run 41621059219: all jobs failed in 3 s with no runner assigned — BLK-1)
+- [x] P0.T7 — `Settings` + defaults + `validated()` + `SettingsMigrator` v1 + `SettingsStore`  (tests: SettingsDefaultsTests, SettingsValidationTests, SettingsMigratorTests on Linux; SettingsStoreTests 7/7 on Linux via `os` stand-in; T-F11-AC1 store part; macOS re-run pending BLK-1)
+- [~] P0.T8 — Design tokens (asset catalog, GlintColor/Font/Spacing/Radius/Shadow/Motion), `GlassSurface`, snapshot infrastructure  (verified: `contrast.py` 22/22; pending: macOS compile + snapshot references — BLK-1, BLK-3)
+- [~] P0.T9 — Menu bar glyph (5 states, drawn in code), popover bound to `AppModel` (10 states), Settings scene with 7 tabs  (snapshot + unit tests written; pending macOS — BLK-1, BLK-3)
+- [x] P0.T10 — `GlintLog` categories, `GlintSignposts`, `Diagnostics` model  (tests: GlintPlatformTests log-text test on Linux; DiagnosticsTests incl. G-SEC-14 export check; arch check bans `print(`)
+- [!] P0.T11 — `scripts/release.sh --dry-run` + Sparkle `Updater` wrapper  (script written, `bash -n` clean; needs a Developer ID certificate, notary profile and a Mac — BLK-2)
 
 ## Up Next
 
@@ -46,8 +46,9 @@ Phase 1 — Gaze engine (do not start until the P0 exit criteria pass):
 
 | ID | Task | Description | Tried | Hypotheses | Needs | Opened |
 |---|---|---|---|---|---|---|
-
-No blockers.
+| BLK-1 | P0.T6 (and macOS verification of P0.T2/T4/T8/T9) | CI run 41621059219: all three jobs (`core-linux`, `lint`, `app-macos`) completed as failure 3 s after creation, `runner_id: 0`, no steps, logs 404, empty check-run output. | Read run, jobs, job logs and check run via the GitHub API. | Actions can't start jobs for this account/repo: billing problem or spending limit, Actions disabled for the repo, or no minutes for a private repo (macOS minutes are billed 10×). | Human: open the run page on GitHub and fix the Actions/billing setting it reports, then re-run. | 2026-11-03 |
+| BLK-2 | P0.T11 | Notarized dry run needs a Developer ID Application certificate, team ID and a `notarytool` keychain profile. | — | PRD Q2 is still open. | Human: decide Q2; on a Mac run `xcrun notarytool store-credentials glint-notary …`, set `GLINT_DEVELOPMENT_TEAM`, then `scripts/release.sh --dry-run`. | 2026-11-03 |
+| BLK-3 | P0.T8, P0.T9 | Snapshot reference PNGs can only be rendered on macOS. CI runs with `GLINT_SNAPSHOT_BOOTSTRAP=1` (records missing references, reports mismatches as known issues) and uploads them as the `snapshots` artifact. | — | — | Once CI runs: review the artifact PNGs, commit them under `Packages/GlintKit/Tests/GlintUITests/__Snapshots__/`, and delete `GLINT_SNAPSHOT_BOOTSTRAP` from `ci.yml`. | 2026-11-03 |
 
 ## Decisions & Deviations
 
@@ -59,8 +60,28 @@ No blockers.
 | 2026-11-03 | Click = double blink only; right-click = blink + long blink | User chose double blink; right-click needed for accessibility foundations | PRD F-06, A5 |
 | 2026-11-03 | Scroll = zone-triggered glide (bottom 15% / top 10%) | User choice | PRD F-07 |
 | 2026-11-03 | Apple Silicon + macOS 14+, notarized DMG + Sparkle + Homebrew, free | User choices | PRD §8, F-14 |
+| 2026-11-03 | Version pins (P0.T1): Xcode 27.1+, Swift 6.4 (CI `swift:6.4.1-noble`), ORT 1.24.2, Sparkle 2.10.0, TelemetryDeck 2.14.2, Sentry **9.30.2** (docs said 8.x), KeyboardShortcuts **3.1.0** (docs said 2.x), snapshot-testing 1.19.6, XcodeGen 2.46.0, SwiftLint 0.65.1, SwiftFormat 0.63.1 | Rule: newest release ≥ 14 days old (cutoff 2026-10-20); dates read from tag commits | ARCHITECTURE §2, INSTRUCTIONS §3, PRD §8, TESTING_GUIDE §2 |
+| 2026-11-03 | Added `GlintPlatform` module (logging, signposts, `SystemClock`, `AppPaths`) | Every GlintKit module needs logging; GlintCore can't import `os`; GlintUI can't depend on GlintSystem | ADR-010, ARCHITECTURE §3, INSTRUCTIONS §4 |
+| 2026-11-03 | `glint-eval` split into `GlintEval` library + thin executable; refuses `--check` until replay exists | Unit-testable; CI can't pass an empty gate | ARCHITECTURE §3 |
+| 2026-11-03 | Build config variables are `GLINT_`-prefixed (`GLINT_TELEMETRYDECK_APP_ID`, `GLINT_SENTRY_DSN`, `GLINT_SPARKLE_FEED_URL`, `GLINT_SPARKLE_PUBLIC_ED_KEY`, `GLINT_DEVELOPMENT_TEAM`, `GLINT_BUNDLE_ID`) | Avoid clashing with Xcode build settings | ARCHITECTURE §12 |
+| 2026-11-03 | The hotkey isn't mirrored in `Settings`; KeyboardShortcuts' UserDefaults entry is the single source | Avoid two sources of truth | ARCHITECTURE §4 |
+| 2026-11-03 | "Pause until I resume" is persisted as `pausedUntil = .distantFuture` | No schema change needed; `GlintStatus.resolve` maps it to `.paused(until: nil)` | — (covered by StatusResolutionTests) |
+| 2026-11-03 | Lint, architecture and license checks run on Linux CI; macOS runs only GlintKit tests and the app/UI tests; `xcodebuild test` covers UI tests, packages are tested with `swift test` | Saves macOS minutes (10× billing) | TESTING_GUIDE §3, §9; ARCHITECTURE §13; INSTRUCTIONS §5 |
+| 2026-11-03 | `check-architecture.sh` requires GNU grep (`ggrep` on macOS via Homebrew) | Needs Perl regexes (lookahead for `TODO(BLK-n)`) and consistent `\b`/`\s` | INSTRUCTIONS §5, bootstrap.sh |
+| 2026-11-03 | Temporary snapshot bootstrap mode in CI (`GLINT_SNAPSHOT_BOOTSTRAP=1`) | References can't be rendered on Linux; removed once BLK-3 closes | BLK-3 |
+| 2026-11-03 | Placeholder app icon (rendered with PIL: glass tile, eye, warm glint) | Asset catalog needs an AppIcon; final icon is P5.T8 | — |
 
 ## Session Log
+
+### 2026-11-03 — Session 1 (Phase 0)
+
+- Done: P0.T1, P0.T3, P0.T5, P0.T7, P0.T10; P0.T2, P0.T4, P0.T8, P0.T9 written but awaiting macOS verification; P0.T6 written but CI can't start (BLK-1); P0.T11 written, blocked on BLK-2.
+- Tests (Linux, Swift 6.4.2):
+  - `swift test --package-path Packages/GlintCore`: 46 tests pass (44 + 2); coverage 94% (`scripts/coverage.sh core`).
+  - GlintPlatform/Services/Runtime tests compiled against a throwaway `os` stand-in in the scratchpad (not committed): SettingsStore 7/7, IntentCoordinator 1/1, Platform 4/5. The one failure, "Default storage is Application Support/Glint", is expected on Linux, where Foundation maps Application Support to `~/.local/share`.
+  - `swiftformat --lint .`, `swiftlint --strict`, `scripts/check-architecture.sh` (+ 22 self-tests), `scripts/check-licenses.sh` (+ 2), `python3 -I scripts/contrast.py` (22/22): all clean.
+- Not verified: anything importing SwiftUI/AppKit/Sparkle (GlintUI, App), snapshot tests, UI tests, `xcodegen generate`, signing.
+- Next: resolve BLK-1, then fix whatever `app-macos` reports; commit snapshot references (BLK-3); P0.T11 once Q2 is decided.
 
 ### 2026-11-03 — Session 0 (planning)
 

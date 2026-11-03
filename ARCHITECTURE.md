@@ -55,7 +55,7 @@ Pinned versions, verified 2026-11-03 (P0.T1). Rule: pin the newest release that 
 
 ## 3. Component Boundaries
 
-Package layout: two local SwiftPM packages. `Packages/GlintCore` is cross-platform (macOS + Linux) and holds `GlintCore`, `glint-eval` and their tests. `Packages/GlintKit` is macOS-only, depends on GlintCore by path, and holds `GlintPerception`, `GlintSystem`, `GlintServices`, `GlintUI`, `GlintRuntime` and their tests. The Xcode app target `Glint` (`App/`) is the composition root.
+Package layout: two local SwiftPM packages. `Packages/GlintCore` is cross-platform (macOS + Linux) and holds `GlintCore`, `glint-eval` and their tests. `Packages/GlintKit` is macOS-only, depends on GlintCore by path, and holds `GlintPlatform`, `GlintPerception`, `GlintSystem`, `GlintServices`, `GlintUI`, `GlintRuntime` and their tests. The Xcode app target `Glint` (`App/`) is the composition root.
 
 | Component | Responsibility | Owns | Exposes | Depends on | Must NOT |
 |---|---|---|---|---|---|
@@ -64,8 +64,9 @@ Package layout: two local SwiftPM packages. `Packages/GlintCore` is cross-platfo
 | **GlintSystem** | Accessibility queries, window list, actuation (AX actions, CGEvents), input monitoring, permissions, system events (lock/sleep/display changes) | `AXUIElement` registry (`AXElementRef` ↔ `AXUIElement`), event taps/monitors | `AXService`, `WindowService`, `ActuationService`, `InputMonitor`, `PermissionsService`, `SystemEvents` | GlintCore, ApplicationServices, AppKit, CoreGraphics | Decide *whether* to act (only the IntentEngine decides); log AX string values at `.public`; read `AXValue` of secure text fields; post keyboard events. |
 | **GlintServices** | Persistence (settings, profiles, metrics queue), telemetry sending, crash reporter wrapper | Files under Application Support | `SettingsStore`, `ProfileStore`, `MetricsQueue`, `TelemetryClient`, `CrashReporter` | GlintCore, TelemetryDeck, Sentry | Send anything when `MetricsConsent.state != .optedIn`; send fields not in the schema allowlist (§8). |
 | **GlintUI** | All SwiftUI views & AppKit window controllers: overlay, menu bar popover, onboarding, calibration, settings, HUD, Eval Arena (DEBUG) | View state only | Window controllers + views; `DesignTokens` | GlintCore (models), SwiftUI, AppKit | Contain business rules (thresholds, gating); call AX/CGEvent directly; use raw colors/durations (tokens only). |
+| **GlintPlatform** | macOS shared kernel: `GlintLog` (os.Logger categories), `GlintSignposts`, `SystemClock`, `AppPaths` | — | those types | GlintCore, os | Contain domain logic; import SwiftUI/AppKit. |
 | **GlintRuntime** | Orchestration actors: `IntentCoordinator` (perception stream + AX snapshots + input → `IntentEngine` → actions/overlay), `CalibrationCoordinator` (drives the pure `CalibrationSession`, persists profiles), `TrackingController` (on/off, camera start/stop, pause, system events, frame-rate modes), `SilentLearnerService` | Runtime wiring state | Coordinators consumed by GlintUI models via protocols | GlintCore, GlintPerception, GlintSystem, GlintServices | Contain thresholds or decision logic (that's GlintCore); import SwiftUI. |
-| **glint-eval** (executable) | Replay traces through GlintCore and report metrics | — | CLI | GlintCore | Depend on macOS frameworks (must run on Linux CI). |
+| **GlintEval** (library) + **glint-eval** (thin executable) | Replay traces through GlintCore and report metrics; the library holds the logic so it is unit-testable | — | `GlintEval.run(arguments:output:)`, CLI | GlintCore | Depend on macOS frameworks (must run on Linux CI). |
 | **Glint** (app target) | Composition root: builds `AppEnvironment` (instantiates the GlintRuntime coordinators and GlintUI controllers), Sparkle `SPUStandardUpdaterController`, KeyboardShortcuts registration, app lifecycle | Object graph | `@main GlintApp` | All modules, Sparkle, KeyboardShortcuts | Contain algorithms, coordinators, or view code beyond wiring. |
 
 `IntentCoordinator` (GlintRuntime, an actor) is the only place that combines the async perception stream with async AX snapshots and calls `IntentEngine.step(...)`, then dispatches actions to `ActuationService` and overlay state to the UI.
@@ -100,7 +101,7 @@ erDiagram
 | schemaVersion | Int | = 1 | |
 | isEnabled | Bool | default true | last on/off state (F-10) |
 | onboarding | `OnboardingProgress` enum: `notStarted`,`camera`,`accessibility`,`calibrate`,`playground`,`completed` | default `notStarted` | F-01.AC4 resume |
-| toggleShortcut | KeyboardShortcuts.Name `"toggleGlint"` | default ⌃⌥G | stored by the library in UserDefaults; mirrored here as display string |
+| (hotkey) | — | — | not in `Settings`: KeyboardShortcuts stores `toggleGlint` (default ⌃⌥G) in UserDefaults; one source of truth |
 | launchAtLogin | Bool | default false | `SMAppService` state is the source of truth; this mirrors the user's intent |
 | gazeDisplayUUID | String? | nil = display containing camera / main display | `CGDisplayCreateUUIDFromDisplayID` |
 | cameraUniqueID | String? | nil = first front-facing / built-in | `AVCaptureDevice.uniqueID` |
@@ -512,9 +513,9 @@ All UI is in GlintUI; windows are created by controllers owned by `AppEnvironmen
 | **ONNX Runtime** | Run MediaPipe landmark models on ANE/GPU/CPU | `microsoft/onnxruntime-swift-package-manager` (product `onnxruntime`) | none | `Models/*.onnx` + `Models/checksums.sha256` | — | — | Load fails → Vision provider (`MODEL_LOAD_FAILED`) | Same models; `GLINT_PROVIDER=vision` env forces fallback |
 | **MediaPipe models** | face detector (short-range), face landmarks (478 incl. iris), blendshapes | Downloaded by `scripts/models/fetch_and_convert.py` from Google's MediaPipe model storage; converted with `tf2onnx` | — | Pinned URLs + SHA-256 in `scripts/models/manifest.json` | — | — | Checksum mismatch → refuse (G-SEC-08) | Converted ONNX committed via Git LFS |
 | **Apple Vision** | Fallback landmarks | system | — | — | — | — | — | — |
-| **Sparkle** | Auto-update (F-14) | `sparkle-project/Sparkle` 2.10.0 | EdDSA public key in Info.plist `SUPublicEDKey` | `SUFeedURL` (`SPARKLE_FEED_URL`), `SUEnableAutomaticChecks = YES`, `SUScheduledCheckInterval = 86400` | — | GitHub Releases | Silent retry; errors shown only on manual check | `SPARKLE_FEED_URL` → local `python3 -m http.server` serving a test appcast |
-| **TelemetryDeck** | Opt-in metrics | `TelemetryDeck/SwiftSDK` 2.14.2 | App ID | `TELEMETRYDECK_APP_ID` | — | Free-tier signal quota; we send ≤ ~3 signals/user/day | Queue up to 7 days, then drop | `testMode` auto-enabled in DEBUG; or leave App ID empty → client is a no-op |
-| **Sentry** | Opt-in crash reports | `getsentry/sentry-cocoa` 9.30.2 | DSN | `SENTRY_DSN`; options: `sendDefaultPii = false`, `attachScreenshot = false`, `attachViewHierarchy = false`, `enableAutoBreadcrumbTracking = false`, `beforeSend` scrubber | — | Sentry plan quota | Never initialized unless opted in; init failure is ignored | Empty DSN → no-op |
+| **Sparkle** | Auto-update (F-14) | `sparkle-project/Sparkle` 2.10.0 | EdDSA public key in Info.plist `SUPublicEDKey` | `SUFeedURL` (`GLINT_SPARKLE_FEED_URL`), `SUEnableAutomaticChecks = YES`, `SUScheduledCheckInterval = 86400` | — | GitHub Releases | Silent retry; errors shown only on manual check | `GLINT_SPARKLE_FEED_URL` → local `python3 -m http.server` serving a test appcast |
+| **TelemetryDeck** | Opt-in metrics | `TelemetryDeck/SwiftSDK` 2.14.2 | App ID | `GLINT_TELEMETRYDECK_APP_ID` | — | Free-tier signal quota; we send ≤ ~3 signals/user/day | Queue up to 7 days, then drop | `testMode` auto-enabled in DEBUG; or leave App ID empty → client is a no-op |
+| **Sentry** | Opt-in crash reports | `getsentry/sentry-cocoa` 9.30.2 | DSN | `GLINT_SENTRY_DSN`; options: `sendDefaultPii = false`, `attachScreenshot = false`, `attachViewHierarchy = false`, `enableAutoBreadcrumbTracking = false`, `beforeSend` scrubber | — | Sentry plan quota | Never initialized unless opted in; init failure is ignored | Empty DSN → no-op |
 | **KeyboardShortcuts** | Global hotkey + recorder | `sindresorhus/KeyboardShortcuts` 3.1.0 | — | Name `toggleGlint` default ⌃⌥G | — | — | Registration conflict → Settings shows "Shortcut in use" | — |
 | **GitHub Releases** | Host DMG + `appcast.xml` | `gh` CLI in release workflow | `GITHUB_TOKEN` (CI) | — | — | — | Release job fails loudly | — |
 | **Homebrew tap** | `brew install --cask` | separate repo `homebrew-tap`, `Casks/glint.rb` | `HOMEBREW_TAP_TOKEN` (CI) | — | — | — | Manual PR if the bot fails | — |
@@ -590,7 +591,7 @@ Sub-machines are stepped in this order on every sample: `PauseMachine` → `AppR
 - **Not sandboxed** (ADR-003). Compensating controls: network allowlist (G-SEC-05), no file access outside Application Support and the user-chosen diagnostics export path.
 - **Event posting:** only mouse click (left/right), scroll-wheel, and AX actions (`AXPress`, `AXShowMenu`, `AXRaise`). Never keyboard events. Every posted CGEvent is tagged with `eventSourceUserData = 0x474C494E54` ("GLINT") so our own monitors ignore it.
 - **Data handling:** pixel buffers never leave GlintPerception and are released after one inference. AX string attributes (titles, values) are read only for role/subrole/action checks and are never logged at `.public`, stored, or sent. Secure text fields are filtered at the AXService level.
-- **Secrets:** `TELEMETRYDECK_APP_ID`, `SENTRY_DSN`, `SPARKLE_PUBLIC_ED_KEY` are public-by-design identifiers embedded at build time from `Config/Secrets.xcconfig` (gitignored). Private material (`SPARKLE_PRIVATE_ED_KEY`, Developer ID certificate `.p12` + password, notary credentials, tap token) exists only in GitHub Actions secrets and the release machine's keychain.
+- **Secrets:** `GLINT_TELEMETRYDECK_APP_ID`, `GLINT_SENTRY_DSN`, `GLINT_SPARKLE_PUBLIC_ED_KEY` are public-by-design identifiers embedded at build time from `Config/Secrets.xcconfig` (gitignored). Private material (`SPARKLE_PRIVATE_ED_KEY`, Developer ID certificate `.p12` + password, notary credentials, tap token) exists only in GitHub Actions secrets and the release machine's keychain.
 - **Update integrity:** Sparkle EdDSA + HTTPS + Developer ID code-signature check on the update.
 - **Model integrity:** SHA-256 verified at load.
 - **Input validation:** all persisted JSON is decoded with strict `Codable` (unknown keys ignored, missing required keys → migration/defaults); settings values are clamped to documented ranges in `Settings.validated()`.
@@ -606,28 +607,30 @@ Sub-machines are stepped in this order on every sample: `PauseMachine` → `AppR
 
 | Name | Required | Example (fake) | Used by | Secret? |
 |---|---|---|---|---|
-| `DEVELOPMENT_TEAM` | release | `ABCDE12345` | XcodeGen / codesign | no |
-| `PRODUCT_BUNDLE_IDENTIFIER` | yes | `com.example.glint` | project.yml | no |
-| `TELEMETRYDECK_APP_ID` | no (empty = disabled) | `00000000-0000-0000-0000-000000000000` | GlintServices via Info.plist `GlintTelemetryAppID` | no |
-| `SENTRY_DSN` | no (empty = disabled) | `https://abc@o0.ingest.sentry.io/0` | GlintServices via Info.plist `GlintSentryDSN` | no |
-| `SPARKLE_FEED_URL` | release | `https://github.com/<owner>/glint-releases/releases/latest/download/appcast.xml` | Info.plist `SUFeedURL` | no |
-| `SPARKLE_PUBLIC_ED_KEY` | release | `base64…=` | Info.plist `SUPublicEDKey` | no |
+| `GLINT_DEVELOPMENT_TEAM` | release | `ABCDE12345` | `Config/Base.xcconfig` → `DEVELOPMENT_TEAM`; `scripts/release.sh` | no |
+| `GLINT_BUNDLE_ID` | yes (default `com.example.glint`) | `com.example.glint` | `Config/Base.xcconfig` → `PRODUCT_BUNDLE_IDENTIFIER` | no |
+| `GLINT_TELEMETRYDECK_APP_ID` | no (empty = disabled) | `00000000-0000-0000-0000-000000000000` | GlintServices via Info.plist `GlintTelemetryAppID` | no |
+| `GLINT_SENTRY_DSN` | no (empty = disabled) | `https://abc@o0.ingest.sentry.io/0` | GlintServices via Info.plist `GlintSentryDSN` | no |
+| `GLINT_SPARKLE_FEED_URL` | release | `https://github.com/<owner>/glint-releases/releases/latest/download/appcast.xml` | Info.plist `SUFeedURL` | no |
+| `GLINT_SPARKLE_PUBLIC_ED_KEY` | release | `base64…=` | Info.plist `SUPublicEDKey` | no |
 | `SPARKLE_PRIVATE_ED_KEY` | release CI | — | `generate_appcast` / `sign_update` | **yes** |
 | `MACOS_CERT_P12_BASE64` / `MACOS_CERT_PASSWORD` | release CI | — | keychain import | **yes** |
 | `NOTARY_APPLE_ID` / `NOTARY_TEAM_ID` / `NOTARY_APP_PASSWORD` | release CI | — | `xcrun notarytool submit` | **yes** |
+| `NOTARY_PROFILE` | release (local) | `glint-notary` | `scripts/release.sh` (notarytool keychain profile) | no |
+| `GLINT_STORAGE_ROOT` | no (tests) | `/tmp/glint-test-x` | `AppPaths.live` | no |
 | `HOMEBREW_TAP_TOKEN` | release CI | — | cask bump | **yes** |
 | `GLINT_PROVIDER` | no (DEBUG) | `vision` | ModelLoader | no |
 | `GLINT_FAKE_CAMERA` | no (DEBUG) | `/path/to/trace.jsonl` | Replays a trace instead of the camera (UI tests) | no |
 
-Build-time values flow `Config/Secrets.xcconfig` → `Config/Base.xcconfig` → Info.plist keys. `Config/Secrets.example.xcconfig` is committed with the fake values above.
+Build-time values flow `Config/Secrets.xcconfig` → `Config/Base.xcconfig` → Info.plist keys. `Config/Secrets.example.xcconfig` is committed with the fake values above. xcconfig treats `//` as a comment, so URLs are written `https:/$()/host/...`.
 
 ## 13. Deployment & Infrastructure
 
 - **Hosting (F-14):** release artifacts (`Glint-<version>.dmg`, `Glint-<version>.zip` for Sparkle, `appcast.xml`) on GitHub Releases (repo per Q1). No servers.
 - **CI pipeline (`.github/workflows/ci.yml`, on every PR):**
-  1. `core-linux` (ubuntu): `swift build` and `swift test` for `GlintCore` and `glint-eval`; `swift run glint-eval --dataset Evals/datasets/ci --check` (thresholds gate).
-  2. `lint` (macos): `swiftlint --strict`, `swiftformat --lint .`, `scripts/check-architecture.sh` (forbidden imports per §3, network-call allowlist).
-  3. `app-macos`: `xcodegen generate`; `xcodebuild build-for-testing` + `test-without-building` (unit + snapshot + UI tests with `GLINT_FAKE_CAMERA`).
+  1. `core-linux` (ubuntu, `swift:6.4.1-noble`): `swift test` for GlintCore + GlintEval with the coverage gate; from P2.T8 also `glint-eval --dataset Evals/datasets/ci --check`.
+  2. `lint` (ubuntu): `swiftformat --lint .`, `swiftlint --strict`, `scripts/check-architecture.sh` (+ self-test), `scripts/check-licenses.sh` (+ self-test), `scripts/contrast.py`.
+  3. `app-macos` (macos-26, Xcode 27.1+): `swift test --package-path Packages/GlintKit` (unit + snapshot), `xcodegen generate`, `xcodebuild test` (app build + UI tests).
 - **Release pipeline (`.github/workflows/release.yml`, on tag `v*`):** import cert → `xcodebuild archive` (Release) → `xcodebuild -exportArchive` (Developer ID) → `xcrun notarytool submit --wait` → `xcrun stapler staple` → `create-dmg` → notarize + staple the DMG → `ditto -c -k` zip for Sparkle → `generate_appcast` with private key → `gh release create` → bump Homebrew cask → post-release smoke (`spctl --assess`).
 - **Versioning:** SemVer `MARKETING_VERSION`; `CURRENT_PROJECT_VERSION` = CI run number. The Sparkle `sparkle:version` is the build number.
 - **Rollback:** publish a new appcast entry pointing at the previous build with a higher build number (Sparkle never downgrades), e.g. `1.0.2 (build 210)` containing 1.0.0's code. A `scripts/rollback.sh <good-tag>` re-tags and reruns the release with a bumped build number.
@@ -685,6 +688,9 @@ Context: tiny data (one settings file, a few profiles). Decision: Codable JSON w
 
 **ADR-008 — Opt-in metrics via TelemetryDeck; crashes via Sentry**
 Context: user chose opt-in anonymous metrics through a privacy-first service. Decision: both SDKs are initialized only after opt-in, with a closed signal schema. Consequences: two vendors; one consent toggle governs both.
+
+**ADR-010 — GlintPlatform shared macOS kernel**
+Context: logging, signposts, the production clock and storage paths are needed by every GlintKit module, but GlintCore can't import `os` and GlintUI must not depend on GlintSystem. Decision: a small `GlintPlatform` module that every GlintKit module may import; it holds no domain logic. Consequences: one more target; `check-architecture.sh` keeps SwiftUI/AppKit out of it by review.
 
 **ADR-009 — XcodeGen-generated project**
 Context: agents corrupt `project.pbxproj`. Decision: `project.yml` is the source; `*.xcodeproj` is gitignored. Consequences: `xcodegen generate` is step one of every build.
