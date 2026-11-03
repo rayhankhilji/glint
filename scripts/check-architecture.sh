@@ -100,6 +100,10 @@ rule "Raw colors only in GlintUI/DesignSystem (use GlintColor tokens)" \
   'Color\(red:|Color\(hue:|Color\(white:|NSColor\(red:|NSColor\(srgbRed:|NSColor\(calibratedRed:|Color\(hex' \
   "$KIT/GlintUI" App -- "$KIT/GlintUI/DesignSystem/"
 
+rule "No decorative gradients or blur glows (DESIGN_SYSTEM §1): light is drawn as crisp geometry" \
+  'LinearGradient|RadialGradient|AngularGradient|EllipticalGradient|\.linearGradient\(|\.radialGradient\(|NSGradient|CAGradientLayer|\.blur\(radius' \
+  "$KIT/GlintUI" App
+
 # --- G-SEC-07: entitlements -------------------------------------------------------------------------------
 if [[ -f Config/Glint.entitlements && -f Config/Glint.entitlements.expected ]]; then
   if ! diff -q Config/Glint.entitlements Config/Glint.entitlements.expected >/dev/null; then

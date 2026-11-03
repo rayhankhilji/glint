@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  <title>Waiting for you</title>
+  <path data-part="cornerTL" d="M3.5 8 V5.5 Q3.5 3.5 5.5 3.5 H8"/>
+  <path data-part="cornerTR" d="M20.5 8 V5.5 Q20.5 3.5 18.5 3.5 H16"/>
+  <path data-part="cornerBR" d="M20.5 16 V18.5 Q20.5 20.5 18.5 20.5 H16"/>
+  <path data-part="cornerBL" d="M3.5 16 V18.5 Q3.5 20.5 5.5 20.5 H8"/>
+  <circle data-part="eyeL" cx="9.4" cy="10.4" r="1.05" fill="currentColor" stroke="none"/>
+  <circle data-part="eyeR" cx="14.6" cy="10.4" r="1.05" fill="currentColor" stroke="none"/>
+  <path data-part="mouth" d="M9.4 15 H14.6"/>
+</svg>

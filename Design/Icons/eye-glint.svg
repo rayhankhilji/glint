@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  <title>Glint mark</title>
+  <path data-part="outline" d="M2 14 C5.41 8.8 14.09 8.8 17.5 14 C14.09 19.2 5.41 19.2 2 14 Z"/>
+  <circle data-part="iris" cx="9.75" cy="14" r="2.4"/>
+  <path data-part="sparkle" d="M18.5 1 C19.09 2.93 21.07 4.91 23 5.5 C21.07 6.09 19.09 8.07 18.5 10 C17.91 8.07 15.93 6.09 14 5.5 C15.93 4.91 17.91 2.93 18.5 1 Z" fill="currentColor" stroke="none"/>
+</svg>

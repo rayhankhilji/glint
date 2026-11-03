@@ -8,6 +8,7 @@ included:
   - UITests
 excluded:
   - "**/.build"
+  - Packages/GlintKit/Sources/GlintUI/Icons/GlintIconData.swift   # generated (scripts/icons/build_icons.py)
   - .tools
   - build
 

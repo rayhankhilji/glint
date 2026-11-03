@@ -8,7 +8,7 @@
 - **Current focus:** P0.T6 — get CI running (blocked: GitHub Actions jobs never get a runner, BLK-1)
 - **Next action:** Human: check GitHub → Settings → Billing/Actions for `rayhankhilji/glint` (BLK-1). Then re-run CI and fix whatever the `app-macos` job reports for the macOS-only code (P0.T4, P0.T8, P0.T9).
 - **Blocked:** BLK-1 (CI runners), BLK-2 (Developer ID / notary credentials, PRD Q2), BLK-3 (snapshot references must be recorded on a Mac)
-- **Last updated:** 2026-11-03 by agent (session 1)
+- **Last updated:** 2026-11-03 by agent (session 2: design system v1.1)
 
 ## Current Phase Checklist
 
@@ -69,9 +69,21 @@ Phase 1 — Gaze engine (do not start until the P0 exit criteria pass):
 | 2026-11-03 | Lint, architecture and license checks run on Linux CI; macOS runs only GlintKit tests and the app/UI tests; `xcodebuild test` covers UI tests, packages are tested with `swift test` | Saves macOS minutes (10× billing) | TESTING_GUIDE §3, §9; ARCHITECTURE §13; INSTRUCTIONS §5 |
 | 2026-11-03 | `check-architecture.sh` requires GNU grep (`ggrep` on macOS via Homebrew) | Needs Perl regexes (lookahead for `TODO(BLK-n)`) and consistent `\b`/`\s` | INSTRUCTIONS §5, bootstrap.sh |
 | 2026-11-03 | Temporary snapshot bootstrap mode in CI (`GLINT_SNAPSHOT_BOOTSTRAP=1`) | References can't be rendered on Linux; removed once BLK-3 closes | BLK-3 |
-| 2026-11-03 | Placeholder app icon (rendered with PIL: glass tile, eye, warm glint) | Asset catalog needs an AppIcon; final icon is P5.T8 | — |
+| 2026-11-03 | Design system v1.1 (user request: "higher quality, modern, no gradients, no slop, custom icons, SVG motion"): cool ink-and-paper chrome replaces warm cream; gold reserved for light (glint, mark, focus); ink/paper primary actions | The warm-cream + gold palette read as a generic AI look; one-light principle | DESIGN_SYSTEM §1, §2; asset catalog; contrast.py (28/28) |
+| 2026-11-03 | No decorative gradients, glows or blur anywhere in GlintUI/App, enforced by `check-architecture.sh` (+ self-tests) | User request; light drawn as crisp vector geometry | DESIGN_SYSTEM §1 (principle 2), §2.1, §5, §6.2 |
+| 2026-11-03 | Custom icon system: 28 SVG icons (24 pt grid) + 5 menu bar glyphs (18 pt) in `Design/`, compiled to Swift vector data by `scripts/icons/build_icons.py` (CI `--check`, 10 Python tests, Chromium round-trip fidelity check); SF Symbols removed from Glint-owned UI | Brand-defining glyphs must be ours; vector parts enable part-level motion | DESIGN_SYSTEM §7, §8; INSTRUCTIONS §5, §7 |
+| 2026-11-03 | Motion spec as animated SVG studies (`Design/Motion/`, 6 studies, timings validated) mirrored by SwiftUI `KeyframeAnimator` views (`GlintMark` twinkle/double blink, `DrawOnIcon`); twinkle turns 90° (4-fold symmetric, seamless loop) | Motion reviewable without a Mac; one source of timing truth | DESIGN_SYSTEM §6.2 |
+| 2026-11-03 | Popover redesigned: live mark + switch, plain-text accuracy (`AccuracyReadout` replaces the chip), flat banner, custom-icon action rows with flat hover | Remove chip/dashboard clutter | DESIGN_SYSTEM §9.1 |
+| 2026-11-03 | App icon redrawn flat from `Design/AppIcon/glint-app-icon.svg` (ink tile, paper eye, gold catchlight), rasterized with `scripts/icons/render-app-icon.mjs` (dev-only Node + Playwright tool, not shipped) | Replaces the PIL gradient placeholder; macOS 26 Icon Composer variants remain P5.T8 | DESIGN_SYSTEM §7 |
 
 ## Session Log
+
+### 2026-11-03 — Session 2 (design system v1.1)
+
+- Done: custom icon system (SVG → Swift), motion studies, palette and no-gradient rule, popover/banner/empty-state/Settings-tab redesign, flat app icon. Not a ROADMAP task: user-requested quality pass, pulled forward from P5.T2/P5.T8.
+- Tests (Linux): GlintCore 46 pass; icon converter 10 pass; `build_icons.py --check` up to date; generated icon data compiles under Swift 6.4 against stub types (28 icons, 102 parts); check-architecture 24/24 self-tests; contrast 28/28; SwiftLint + SwiftFormat clean. Visual QA in Chromium: icon contact sheet (light/dark, 24/48 pt), round-trip render diff of compiled paths vs SVG sources (only sub-pixel arc antialiasing), app icon at 16–256 px, motion studies frame by frame (found and fixed a 45° twinkle snap and an invalid SMIL keyTimes set).
+- Not verified: SwiftUI rendering of the new views (BLK-1); snapshot references (BLK-3).
+- Next: unchanged (BLK-1 first).
 
 ### 2026-11-03 — Session 1 (Phase 0)
 

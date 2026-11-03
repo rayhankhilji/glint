@@ -1,26 +1,21 @@
 import SwiftUI
 
-/// Large symbol in a soft glass circle, a title and one sentence (DESIGN_SYSTEM §7, §8).
+/// A quiet empty state: one custom icon, a title and one sentence (DESIGN_SYSTEM §7, §8).
 public struct EmptyState: View {
-    private let symbol: String
+    private let icon: GlintIconName
     private let title: String
     private let message: String
 
-    public init(symbol: String, title: String, message: String) {
-        self.symbol = symbol
+    public init(icon: GlintIconName, title: String, message: String) {
+        self.icon = icon
         self.title = title
         self.message = message
     }
 
     public var body: some View {
         VStack(spacing: GlintSpacing.m) {
-            GlassSurface(shape: Circle()) {
-                Image(systemName: symbol)
-                    .font(.system(size: 20, weight: .medium))
-                    .foregroundStyle(GlintColor.textMuted)
-                    .frame(width: 56, height: 56)
-            }
-            .accessibilityHidden(true)
+            GlintIcon(icon, size: 28)
+                .foregroundStyle(GlintColor.textMuted)
             Text(title)
                 .glintText(.headline)
                 .foregroundStyle(GlintColor.text)

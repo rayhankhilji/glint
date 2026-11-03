@@ -66,8 +66,8 @@ struct PopoverSnapshotTests {
 
     @Test("Accuracy shows one decimal with a degree sign")
     func degreesFormat() {
-        #expect(AccuracyChip.degrees(2.14) == "2.1°")
-        #expect(AccuracyChip.degrees(1) == "1.0°")
+        #expect(AccuracyReadout.degrees(2.14) == "2.1°")
+        #expect(AccuracyReadout.degrees(1) == "1.0°")
     }
 
     @Test("Settings has the seven documented tabs in order")

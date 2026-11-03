@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  <title>Settings</title>
+  <path data-part="rail1" d="M4 8 H6.75 M11.25 8 H20"/>
+  <circle data-part="knob1" cx="9" cy="8" r="2.25"/>
+  <path data-part="rail2" d="M4 16 H12.75 M17.25 16 H20"/>
+  <circle data-part="knob2" cx="15" cy="16" r="2.25"/>
+</svg>

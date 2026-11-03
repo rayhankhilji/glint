@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 /// Settings window tabs (DESIGN_SYSTEM §9.4).
@@ -18,16 +19,22 @@ public enum SettingsTab: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
-    public var symbol: String {
+    /// Custom tab icon (DESIGN_SYSTEM §7).
+    public var icon: GlintIconName {
         switch self {
-        case .general: "gearshape"
-        case .gestures: "eye"
-        case .scrolling: "arrow.down.to.line"
-        case .apps: "square.grid.2x2"
-        case .privacy: "hand.raised"
-        case .advanced: "wrench.and.screwdriver"
-        case .about: "info.circle"
+        case .general: .tune
+        case .gestures: .eye
+        case .scrolling: .scrollGlide
+        case .apps: .grid
+        case .privacy: .shield
+        case .advanced: .gauge
+        case .about: .glint
         }
+    }
+
+    /// Template image for the Settings toolbar (which only accepts images, not custom views).
+    var tabImage: NSImage {
+        icon.artwork.templateImage(side: 20, accessibilityDescription: title)
     }
 }
 
@@ -45,7 +52,7 @@ public struct SettingsRootView: View {
         TabView(selection: $selection) {
             ForEach(SettingsTab.allCases) { tab in
                 content(for: tab)
-                    .tabItem { Label(tab.title, systemImage: tab.symbol) }
+                    .tabItem { Label { Text(tab.title) } icon: { Image(nsImage: tab.tabImage) } }
                     .tag(tab)
                     .accessibilityIdentifier("glint.settings.\(tab.rawValue)")
             }
@@ -56,14 +63,20 @@ public struct SettingsRootView: View {
     @ViewBuilder
     private func content(for tab: SettingsTab) -> some View {
         if tab == .about {
-            EmptyState(
-                symbol: "sparkle",
-                title: String(localized: "Glint", bundle: .module),
-                message: String(localized: "Version \(version)", bundle: .module)
-            )
+            VStack(spacing: GlintSpacing.m) {
+                GlintMark(size: 56, motion: .twinkle)
+                Text("Glint", bundle: .module)
+                    .glintText(.title1)
+                    .foregroundStyle(GlintColor.text)
+                Text(String(localized: "Version \(version)", bundle: .module))
+                    .glintText(.body)
+                    .monospacedDigit()
+                    .foregroundStyle(GlintColor.textMuted)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             EmptyState(
-                symbol: tab.symbol,
+                icon: tab.icon,
                 title: tab.title,
                 message: String(localized: "Nothing to change here yet.", bundle: .module)
             )

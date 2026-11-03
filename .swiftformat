@@ -10,5 +10,5 @@
 --importgrouping testable-last
 --stripunusedargs closure-only
 --header ignore
---exclude .build,.tools,build,**/.build,Packages/*/.build,DerivedData
+--exclude .build,.tools,build,**/.build,Packages/*/.build,DerivedData,Packages/GlintKit/Sources/GlintUI/Icons/GlintIconData.swift
 --disable redundantReturn,wrapMultilineStatementBraces,wrapPropertyBodies,blankLinesBetweenScopes

@@ -23,6 +23,9 @@ PAIRS = [
     ("text", "surfaceRaised", 4.5),
     ("textMuted", "surfaceRaised", 4.5),
     ("focusRing", "background", 3.0),
+    ("focusRing", "surfaceRaised", 3.0),
+    ("glintMark", "background", 3.0),
+    ("glintMark", "surfaceRaised", 3.0),
 ]
 
 

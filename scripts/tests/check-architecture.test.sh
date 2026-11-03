@@ -47,6 +47,8 @@ expect "bare TODO" 1 "$K/GlintServices/Bad.swift" "// TODO: later"
 expect "TODO with blocker id is allowed" 0 "$K/GlintServices/Ok2.swift" "// TODO(BLK-3): waiting on Q2"
 expect "raw color outside DesignSystem" 1 "$K/GlintUI/Bad.swift" "let c = Color(red: 1, green: 0, blue: 0)"
 expect "raw color in DesignSystem is allowed" 0 "$K/GlintUI/DesignSystem/GlintColor.swift" "let c = Color(red: 1, green: 0, blue: 0)"
+expect "gradient in GlintUI" 1 "$K/GlintUI/Bad.swift" "let g = LinearGradient(colors: [], startPoint: .top, endPoint: .bottom)"
+expect "blur glow in GlintUI" 1 "$K/GlintUI/Bad.swift" "view.blur(radius: 10)"
 expect "@_exported import" 1 "App/Bad.swift" "@_exported import Foundation"
 expect "entitlement drift" 1 "Config/Glint.entitlements" "<plist><dict><key>com.apple.security.app-sandbox</key><true/></dict></plist>"
 

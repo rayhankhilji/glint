@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// The only way to draw glass (INSTRUCTIONS §7, DESIGN_SYSTEM §5): Liquid Glass on macOS 26+, material plus a
-/// specular hairline on 14–15, and an opaque raised surface when Reduce Transparency is on.
+/// solid edge hairline on 14–15, and an opaque raised surface when Reduce Transparency is on.
 public struct GlassSurface<S: Shape, Content: View>: View {
     public enum Style: Sendable {
         case regular, clear
@@ -26,16 +26,7 @@ public struct GlassSurface<S: Shape, Content: View>: View {
         } else {
             content
                 .background(.ultraThinMaterial, in: shape)
-                .overlay(
-                    shape.stroke(
-                        LinearGradient(
-                            colors: [GlintColor.specularHairline, .clear],
-                            startPoint: .top,
-                            endPoint: .center
-                        ),
-                        lineWidth: GlintLayout.hairline
-                    )
-                )
+                .overlay(shape.stroke(GlintColor.glassEdge, lineWidth: GlintLayout.hairline))
         }
     }
 }

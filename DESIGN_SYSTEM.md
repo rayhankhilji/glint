@@ -1,71 +1,75 @@
 # Glint — Design System
 
-> Version: 1.0 · Updated: 2026-11-03 · Applies to GlintUI (overlay, menu bar, onboarding, calibration, settings, HUD). Tokens live in `Packages/GlintKit/Sources/GlintUI/DesignSystem/`.
+> Version: 1.1 · Updated: 2026-11-03 · Applies to GlintUI (overlay, menu bar, onboarding, calibration, settings, HUD). Tokens live in `Packages/GlintKit/Sources/GlintUI/DesignSystem/`.
 
 ## 1. Design Direction
 
-**Personality:** luminous, calm, precise, quietly delightful. **Not** gamer-neon, not sci-fi HUD, not clinical, not cute.
+**Personality:** precise, calm, luminous, quietly delightful. **Not** gamer-neon, not sci-fi HUD, not a dashboard, not cute.
 
-Glint should feel like Apple built it and then added a little magic. The product *is* a light: a warm glint that knows what you mean. Everything else (windows, settings, menu) is restrained Apple-native glass, so the glint is the only thing that glows.
+Glint is an optical instrument for your attention. Its chrome is ink on paper (and paper on ink): a cool, near-monochrome neutral with system typography and hairlines. Against that restraint there is exactly **one light**, the warm glint, which appears only where Glint is actually pointing at something or is itself the subject (the mark, the catchlight in the app icon). Light is drawn as crisp vector geometry, never as glows, blooms or gradients.
 
 | Reference | What we take | What we leave |
 |---|---|---|
-| visionOS eye-tracking hover effect | A target lights up softly when looked at; the highlight hugs the element's real shape; no cursor | Its 3D depth cues |
-| iPhone Dynamic Island | Fluid spring morphing between states; one living object that changes shape instead of separate popups | Black pill aesthetic |
-| macOS 26 Liquid Glass + Control Center | Translucent glass surfaces, specular edge highlights, system typography, density | Overly busy refraction on small elements |
-| A camera lens glint / sun on water | The click "flare": a brief warm star-burst | Literal lens-flare streaks across the screen |
+| visionOS eye-tracking hover | The target lights up when looked at, hugging the element's real shape; no cursor | Depth cues, soft blooms |
+| Precision instruments (camera viewfinders, rangefinder focus marks) | Corner brackets, thin rules, exact geometry that reads as measurement | Skeuomorphic texture |
+| iPhone Dynamic Island | One living object that morphs between states with springs | The black pill |
+| A catchlight in a portrait | The glint as a four-point star of light, crisp edged | Lens-flare streaks |
 
 **Principles**
 
-1. **One light.** Only the glint (and its relatives: aura, edge glow, line marker) is warm and luminous. Chrome is neutral glass. *Implication:* the accent gold appears in chrome only for primary actions and selected states, never as decoration.
-2. **Hug, don't point.** Feedback wraps the real element's shape. *Implication:* there's no cursor dot in production (the debug dot is Advanced-only), and the glint ring's corner radius matches the target.
-3. **Anticipate, then act.** Every action has a visible build-up (armed brightening, dwell edge glow) so the user can abort by looking away. *Implication:* no action fires without a preceding visible state for ≥ 120 ms.
-4. **Calm when uncertain.** Uncertainty is shown by softening (two faint rings, a wider aura), never by flicker. *Implication:* hysteresis and the uncertain state are part of the visual spec, not just the logic.
-5. **Disappear when not needed.** When nothing is targeted, nothing renders. *Implication:* zero idle overlay pixels; the menu bar glyph is the only persistent presence.
+1. **One light.** Gold (`glint.*`, `glintMark`) is reserved for light: the overlay glint, the brand mark's sparkle, the app icon's catchlight and the focus ring (focus is attention). Everything else is ink and paper. *Implication:* primary buttons and switches are ink (light mode) or paper (dark mode), never gold.
+2. **Light is geometry.** No decorative gradients, radial glows, blur halos or "AI shimmer". *Implication:* `LinearGradient`, `RadialGradient`, `AngularGradient`, `NSGradient`, `CAGradientLayer` and `.blur(radius:)` are banned in GlintUI and App by `scripts/check-architecture.sh`. Emphasis comes from stroke weight, opacity and motion.
+3. **Hug, don't point.** Feedback wraps the real element's shape; there's no cursor dot in production.
+4. **Anticipate, then act.** Every action has a visible build-up (armed brightening, dwell progress line) so the user can abort by looking away; no action fires without ≥ 80 ms of anticipation (G-ML-03).
+5. **Calm when uncertain.** Uncertainty is shown by softening (two faint rings, a dashed aura), never by flicker.
+6. **Own the details.** Brand-defining glyphs are custom (§7): menu bar, popover, Settings tabs, states. SF Symbols appear only inside system-provided controls.
+7. **Disappear when not needed.** When nothing is targeted, nothing renders.
 
 ## 2. Color Tokens
 
-Two token groups: **Light tokens** for the overlay, which are appearance-independent because they sit on arbitrary content, and **Chrome tokens** for Glint's own windows, which have light and dark values. Components use semantic tokens only (`GlintColor.*`). Raw hex values appear only in `GlintColor.swift` and the asset catalog.
+Two token groups: **Light tokens** for the overlay, which are appearance-independent because they sit on arbitrary content, and **Chrome tokens** for Glint's own windows, which have light and dark values. Components use semantic tokens only (`GlintColor.*`). Raw hex values appear only in `GlintColor.swift` and the asset catalog. All colors are solid (principle 2).
 
 ### 2.1 Light tokens (overlay)
 
-The glint must read on both pure white and pure black. It is built from two layers: a warm **core** (reads on dark) and a thin dark **edge** hairline outside it (reads on light). Each layer clears 3:1 against the background it's designed for.
+The glint must read on both pure white and pure black. It is built from two solid layers: a warm **core** stroke (reads on dark) and a thin dark **edge** hairline outside it (reads on light). Each layer clears 3:1 against the background it's designed for.
 
 | Token | Value | Use | Verified contrast |
 |---|---|---|---|
-| `glint.core` | `#FFD98A` | 1.5 pt ring stroke, line marker | 15.5:1 on `#000000` |
-| `glint.edge` | `#6B4300` @ 55% | 0.75 pt hairline outside the core | 8.65:1 (opaque) on `#FFFFFF` |
-| `glint.halo` | `#FFC45C` @ 35% → 0% | Outer bloom, 10 pt radial falloff | decorative |
-| `glint.armed` | `#FFE7B3` | Core when armed (brighter) | 16.9:1 on `#000000` |
-| `glint.flare` | `#FFF6E0` | Flare shader peak color | decorative |
+| `glint.core` | `#FFD98A` | 1.75 pt ring stroke, line marker, dwell progress line | 15.5:1 on `#000000` |
+| `glint.edge` | `#6B4300` @ 55% | 3.5 pt hairline under the core (0.875 pt shows on each side) | 8.65:1 (opaque) on `#FFFFFF` |
+| `glint.armed` | `#FFE7B3` | Core when armed (stroke 1.75 → 2.25 pt) | 16.9:1 on `#000000` |
+| `glint.flare` | `#FFF6E0` | Flare star fill (vector, 260 ms) | decorative |
 | `glint.uncertain` | `#FFD98A` @ 45% | Two faint rings | intentional low emphasis |
-| `glint.aura` | `#FFC45C` @ 18% → 0% | No-AX gaze aura, radial | decorative |
-| `glint.edgeGlow` | `#FFC45C` @ 0–40% | Scroll-zone dwell glow (alpha = progress × 0.4) | decorative |
+| `glint.aura` | `#FFD98A` @ 70% | No-AX aura: 1.5 pt **dashed** ring (3/4 pt), radius = sigma | decorative |
+| `glint.progress` | `#FFD98A` | 2 pt scroll-dwell progress line along the zone edge | 15.5:1 on `#000000` |
 | `glint.windowFlash` | `#FFD98A` @ 70% | Focus-switch window outline | 3:1+ via edge |
 | `glint.ring.highContrast` | core `#FFB800`, edge `#000000` 1 pt, inner `#FFFFFF` 1 pt | Increase Contrast mode | 12.1:1 on black; 4.18:1 for `#B36B00` variant on white |
 | `glint.debugDot` | `#FF3B6B` @ 80% | Debug gaze dot (Advanced only) | — |
 
 ### 2.2 Chrome tokens (Glint windows)
 
+A cool optical neutral (slight blue bias, never warm cream). Actions are ink on paper; gold is reserved for light.
+
 | Token | Light | Dark | Use |
 |---|---|---|---|
-| `background` | `#F7F5F1` | `#161513` | Window background behind glass (fallback when Reduce Transparency is on) |
-| `surface` | glass (`GlassSurface`) tint `#FFFFFF` @ 55% | glass tint `#2A2825` @ 55% | Cards, popover, HUD |
-| `surfaceRaised` | `#FFFFFF` | `#22201D` | Sheets, inner cards |
-| `border` | `#000000` @ 8% | `#FFFFFF` @ 10% | Hairlines (use sparingly) |
-| `text` | `#1D1B18` | `#F4F1EA` | Primary text |
-| `textMuted` | `#5E5A53` | `#A8A296` | Secondary text |
-| `accent` | `#F2B544` | `#FFC85C` | Primary button fill, selected states, switch on |
-| `onAccent` | `#241703` | `#241703` | Text/icon on accent |
-| `accentText` | `#8A5A0B` | `#FFC85C` | Links, accent-colored text |
-| `success` | `#1E7A3E` | `#6FD08C` | "Excellent/Good" accuracy, granted |
-| `warning` | `#8A5A0B` | `#FFB454` | "Fair", low light |
-| `danger` | `#B3261E` | `#FF8A80` | Denied, "Poor", destructive |
-| `info` | `#1F5FAF` | `#8AB8FF` | Neutral notices |
-| `focusRing` | `#B87503` | `#FFC85C` | Focus rings (3 pt, offset 2 pt); 3.45:1 / 11.9:1 |
-| `overlayScrim` | `#000000` @ 35% | `#000000` @ 55% | Calibration backdrop under glass |
+| `background` | `#F6F7F8` | `#0E0F11` | Window background (fallback when Reduce Transparency is on) |
+| `surfaceTint` | `#FFFFFF` @ 62% | `#1A1C1F` @ 62% | Glass tint |
+| `surfaceRaised` | `#FFFFFF` | `#17181B` | Banners, sheets |
+| `border` | `#0B0C0E` @ 9% | `#FFFFFF` @ 10% | Hairlines, row hover fill |
+| `text` | `#111214` | `#ECEDEF` | Primary text and icons |
+| `textMuted` | `#5B5F66` | `#9A9EA6` | Secondary text, row icons |
+| `accent` | `#111214` | `#ECEDEF` | Primary button fill, switch on (ink / paper) |
+| `onAccent` | `#FFFFFF` | `#0E0F11` | Text on accent |
+| `accentText` | `#111214` | `#ECEDEF` | Text actions (always underlined or medium weight) |
+| `success` | `#1B7A43` | `#5FD28A` | Excellent/Good accuracy, granted |
+| `warning` | `#8C5800` | `#F5B04A` | Fair, low light |
+| `danger` | `#BE2A20` | `#FF7A70` | Denied, Poor, destructive |
+| `info` | `#2457C5` | `#8AB1FF` | Neutral notices |
+| `focusRing` | `#A86A00` | `#FFC85C` | Focus rings (3 pt, offset 2 pt): attention is the glint's job |
+| `glintMark` | `#A86A00` | `#FFC85C` | The mark's sparkle in chrome |
+| `overlayScrim` | `#000000` @ 35% | `#000000` @ 55% | Calibration backdrop |
 
-**Verified pairs (WCAG):** text/background 15.8 (L) / 16.2 (D); textMuted/background 6.3 / 7.2; accentText/background 5.4 / 11.9; onAccent/accent 9.6 / 11.4; danger 6.0 / 8.0; success 4.9 / 9.6; warning 5.4 / 10.4. All text pairs ≥ 4.5:1; UI and focus ≥ 3:1. Re-verify with `scripts/contrast.py` when changing a token.
+**Verified pairs (WCAG, `scripts/contrast.py`, 28/28 pass):** text/background 17.5 (L) / 16.4 (D); textMuted/background 6.0 / 7.1; onAccent/accent 18.7 / 16.4; danger 5.5 / 7.6; success 5.0 / 10.1; warning 5.6 / 10.2; info 6.0 / 9.0; focusRing and glintMark on background 4.1 / 12.5 and on surfaceRaised 4.4 / 11.6. Text pairs ≥ 4.5:1; UI, focus and graphics ≥ 3:1.
 
 ## 3. Typography
 
@@ -107,15 +111,14 @@ Rules: use sentence case everywhere; tabular numerals for any changing number; m
 | `border.hairline` | 0.5 pt `border` |
 | `shadow.card` | L: `0 1 2 rgba(0,0,0,.06), 0 8 24 rgba(0,0,0,.08)` · D: `0 1 2 rgba(0,0,0,.4), 0 8 24 rgba(0,0,0,.35)` |
 | `shadow.hud` | L: `0 6 20 rgba(0,0,0,.16)` · D: `0 6 20 rgba(0,0,0,.5)` |
-| `glint.bloom` | Gaussian blur 10 pt on `glint.halo` layer + additive (`.plusLighter`) blend |
 
-**Glass rules:** use `GlassSurface(style: .regular | .clear)`. On macOS 26+ it uses `.glassEffect(.regular, in: shape)`; on 14–15 it uses `.background(.ultraThinMaterial, in: shape)` plus a 0.5 pt top specular hairline `#FFFFFF @ 35%`. With Reduce Transparency it's an opaque `surfaceRaised`. Glass is used only on the popover, HUD, onboarding card, calibration card, and Settings sidebar. Never nest glass in glass.
+**Glass rules:** use `GlassSurface(style: .regular | .clear)`. On macOS 26+ it uses `.glassEffect(.regular, in: shape)`; on 14–15 it uses `.background(.ultraThinMaterial, in: shape)` plus a solid 0.5 pt edge hairline (`glassEdge`, `#FFFFFF` @ 22%). With Reduce Transparency it's an opaque `surfaceRaised`. Glass is used only on the HUD, onboarding card and calibration card (the popover is already system glass). Never nest glass in glass.
 
 **Z / window levels:** overlay `.statusBar + 1` · HUD `.statusBar + 2` · calibration `.screenSaver` · onboarding/settings `.normal`.
 
 ## 6. Motion
 
-Motion communicates cause → effect and lets users abort. Animate `opacity`, `scale`, `offset`, and shader uniforms only. The overlay renders at the display refresh rate (ProMotion 120 Hz).
+Motion communicates cause → effect and lets users abort. Animate `opacity`, `scale`, `rotation`, `offset`, stroke trim and stroke weight only. Every pattern below has an animated SVG study in `Design/Motion/` whose timings match these tokens; the studies are the motion spec. The overlay renders at the display refresh rate (ProMotion 120 Hz).
 
 ### 6.1 Tokens (`GlintMotion`)
 
@@ -140,43 +143,64 @@ Motion communicates cause → effect and lets users abort. Animate `opacity`, `s
 
 | Pattern | Spec | Reduced motion |
 |---|---|---|
-| **Glint acquire** | Ring opacity 0→1 (`fast`, `ease.enter`) + scale 1.06→1 (`spring.acquire`); halo fades in 60 ms later; one specular sweep (shader uniform 0→1, 420 ms, left→right) on first lock only | Opacity 0→1, 120 ms; no sweep |
+| **Glint acquire** | Ring opacity 0→1 (`fast`, `ease.enter`) + scale 1.06→1 (`spring.acquire`); no halo, no sweep — the crisp ring is the event. Study: `Design/Motion/glint-acquire-click.svg` | Opacity 0→1, 120 ms |
 | **Glint follow** | Frame (origin + size + corner radius) animates with `spring.follow`; the ring never fades out between adjacent targets | Cross-fade old→new 100 ms |
-| **Armed** | Core → `glint.armed`, halo alpha +35%, `instant` | Same (color only) |
-| **Flare (click)** | t=0: flare shader star (4 soft rays, 0→1→0 over 260 ms) centered on the ring; ring scale 1→1.12 + opacity 1→0 (260 ms, `ease.exit`); optional "tink" | Ring opacity pulse 1→0.4→1 (150 ms) |
+| **Armed** | Core → `glint.armed`, stroke 1.75 → 2.25 pt, `instant` | Same (color + weight) |
+| **Flare (click)** | A vector four-point star (`glint.flare`) at the ring's top-right corner scales 0.2→1.3→0.6 and fades (260 ms); ring scales 1→1.12 + fades (`ease.exit`); optional "tink". Study: `glint-acquire-click.svg` | Ring opacity pulse 1→0.4→1 (150 ms) |
 | **Right-click** | Same as flare, but the rays rotate 45° and the ring contracts 1→0.94 before fading | Same as click (reduced) |
 | **Reject** | Horizontal shake ±2 pt, 2 cycles, 180 ms; core dims to 60% for 200 ms | Opacity dip 1→0.5→1 (150 ms) |
 | **Uncertain** | Two rings at the top-2 candidates, `glint.uncertain`, slow breathing opacity 0.35↔0.55 (1.6 s period) | Static 0.45 |
-| **Aura (no-AX)** | Radial disc radius = sigmaPt, follows filtered gaze with `spring.follow` | Static disc, repositions with 100 ms fade |
-| **Scroll dwell glow** | Edge gradient band 24 pt tall at the zone's edge, alpha = progress × 0.4, width = scroll area width, eased with `ease.enter` | Same (it's progress, not decoration) |
-| **Glide** | Content scroll with `ease.glide` over `deliberate` (520 ms); the glow fades out over 200 ms as the glide starts | Glide 300 ms `ease.standard` (functional motion kept) |
-| **At end nudge** | Glow pulses once, 4 pt band offset up/down (rubber band), 240 ms | Glow opacity pulse only |
-| **Line marker ("where was I")** | 2 pt `glint.core` underline + bloom along the line rect; sweep L→R 450 ms (`ease.standard`), hold 600 ms, fade 600 ms (`ease.exit`) | Fade in 150 ms, hold 900 ms, fade 150 ms |
+| **Aura (no-AX)** | Dashed ring (1.5 pt, 3/4 dash) of radius = sigmaPt, follows filtered gaze with `spring.follow`; never a filled disc | Static ring, repositions with 100 ms fade |
+| **Scroll dwell progress** | A 2 pt `glint.progress` line grows along the zone's bottom edge with dwell progress (0 → full width in 300 ms), then fades 200 ms as the glide starts. Study: `glide-scroll.svg` | Same (it's progress, not decoration) |
+| **Glide** | Content scroll with `ease.glide` over `deliberate` (520 ms) | Glide 300 ms `ease.standard` (functional motion kept) |
+| **At end nudge** | The progress line flashes once at full width and fades (240 ms); content doesn't move | Same |
+| **Line marker ("where was I")** | 2 pt `glint.core` underline along the line rect; sweep L→R 450 ms (`ease.standard`), hold 600 ms, fade 600 ms (`ease.exit`). Study: `where-was-i.svg` | Fade in 150 ms, hold 900 ms, fade 150 ms |
 | **Window focus flash** | Window outline ring (radius 12) at 70% → 0 over 300 ms (`ease.exit`) | 150 ms fade |
 | **HUD** | Enter: y −8→0 + opacity (`spring.gentle`); exit: opacity + scale 0.98 (180 ms, `ease.exit`); auto-dismiss 2.4 s; morphs width when replaced (`spring.snappy`) | Opacity only, 150 ms |
 | **Onboarding steps** | Content slides x 24→0 + fade (`slow`, `ease.enter`); the hero glint is a `matchedGeometryEffect` that travels between steps | Cross-fade 150 ms |
 | **Permission granted** | Checkmark draws (trim 0→1, 280 ms) + success tint; auto-advance after 600 ms | Instant check + fade |
-| **Calibration glint** | Drifts between anchors with `spring.calibration`; a progress ring fills around it during each 1.2 s pause; it pops (scale 1→1.25→1, 200 ms) on anchor complete | Glint jumps with a 120 ms fade; ring fills (functional) |
-| **Menu bar glyph** | Cross-fades between state glyphs (140 ms); when tracking, the glint dot "twinkles" once every 12 s (opacity 0.7→1→0.7, 600 ms) | No twinkle |
+| **Calibration glint** | The glint star drifts between anchors with `spring.calibration`; a 2 pt ring fills around it during each 1.2 s pause; it pops (scale 1→1.25→1, 200 ms) on anchor complete. Study: `calibration.svg` | Glint jumps with a 120 ms fade; ring fills (functional) |
+| **Menu bar glyph** | Swaps between state glyphs (§7) on status change; the menu bar itself doesn't animate | — |
+| **Mark twinkle** | `GlintMark(.twinkle)`: every 12 s the sparkle scales 1→1.25→1 and turns 90° in 600 ms. The glint is 4-fold symmetric, so the loop is seamless (a 45° turn would snap). Study: `twinkle.svg` | Static mark |
+| **Double-blink teaching loop** | `GlintMark(.doubleBlink)`: lids close 80 ms / open 120 ms, 180 ms gap, again, then the sparkle flares (1→1.45, overshoot 0.94, settle). Study: `double-blink.svg` | Static mark |
+| **Draw-on** | `DrawOnIcon`: strokes trim 0→1 in 280 ms (`ease.standard`) on appear (granted, done) | Drawn immediately |
 
-**Choreography rules:** at most one overlay animation family is "loud" at a time (flare beats sweep beats glow). The HUD never animates while a flare plays: it waits 260 ms. Staggers in lists use 30 ms per item, max 6 items.
+**Choreography rules:** at most one overlay animation family is "loud" at a time (flare beats progress line beats acquire). The HUD never animates while a flare plays: it waits 260 ms. Staggers in lists use 30 ms per item, max 6 items.
 
-**Performance:** shaders only on overlay layers ≤ the element ring bounds + 24 pt; no full-screen shader passes; the overlay must hold 120 fps on ProMotion with < 4 ms GPU per frame (check with the Metal HUD).
+**Performance:** the overlay draws vector paths only (no blur, no full-screen layers); the overlay must hold 120 fps on ProMotion with < 4 ms GPU per frame (check with the Metal HUD).
 
 ## 7. Iconography & Imagery
 
-- **Icons:** SF Symbols, hierarchical rendering, `.medium` weight; sizes 13 (inline), 16 (rows), 20 (cards), 44 (onboarding permission hero).
-- **App icon:** a rounded-square glass tile showing a stylized eye whose catchlight is a four-ray warm glint. Light and dark/tinted variants are required for macOS 26 icon styles (Icon Composer `.icon` file).
-- **Menu bar glyph:** a custom template image (16×16 @1x/@2x): an eye outline with a small four-point sparkle at the upper right. States:
-  | State | Glyph |
-  |---|---|
-  | Tracking | eye + filled sparkle (twinkles) |
-  | Paused | eye + sparkle outline + small pause bars |
-  | Off | eye outline only, 50% opacity |
-  | Face lost / away | eye half-closed + sparkle outline |
-  | Needs attention (permission/camera/calibration) | eye + small `!` badge (template, not colored) |
-- **Illustration:** none beyond the glint itself. Empty states use a large SF Symbol in a soft glass circle plus the glint sparkle.
-- **Imagery:** no stock photos. Onboarding visuals are live renders of the glint on sample UI (the Playground).
+**Custom icon system.** Glint draws its own icons. Sources are SVGs in `Design/Icons/` (24 pt grid) and `Design/MenuBar/` (18 pt grid); `scripts/icons/build_icons.py` compiles them into native Swift vector data (`GlintUI/Icons/GlintIconData.swift`, generated, checked in CI with `--check`). Nothing is rasterized, so icons are crisp at any size and individual parts can animate.
+
+| Rule | Value |
+|---|---|
+| Grid | 24 × 24 pt, 2 pt padding (live area 20 pt); menu bar 18 × 18 pt |
+| Stroke | 1.5 pt (menu bar 1.4 pt), round caps and joins, scales with size |
+| Geometry | circles, 45° angles, 1.75–3 pt corner radii; the four-point glint (concave sides, k = 0.22) is the only ornament |
+| Fill | stroke by default; `fill="currentColor"` only for the glint, dots and pupils |
+| Parts | every element has a `data-part` name; parts are what motion animates (`sparkle`, `outline`, `iris`, `lid`, `tick`, …) |
+| Color | icons take the current foreground (`text` / `textMuted`); only a `sparkle` part may be recolored to `glintMark` |
+| Sizes | 12 (chevrons), 16 (rows, banners), 20 (Settings tabs), 28 (empty states, popover mark), 56 (About) |
+| Accessibility | decorative by default; `GlintIcon(_, label:)` when the icon is the only content of a control; each SVG `<title>` is the icon's name |
+
+**Set (28):** camera, check, chevron-right, close, cursor-glint (act for you), display, eye, eye-closed, eye-glint (the mark), face-scan (waiting for you), focus-window, gauge (diagnostics), glint, grid (apps), info, keyboard (shortcut), low-light, pause, play, power, quit, reading (where was I), recalibrate, scroll-glide, shield (privacy), target (magnetic snap), tune (settings), warning.
+
+**Adding an icon:** draw it on the grid in `Design/Icons/<name>.svg` using `<path>`, `<circle>`, `<rect>` or `<line>`, name every part, run `python3 scripts/icons/build_icons.py`, and add it to the snapshot sheet. The converter rejects unnamed or duplicate parts and non-square view boxes.
+
+**Menu bar glyph** (template image, 18 pt). The eye is constant; the state lives in the glint's slot:
+
+| State | Glyph (`Design/MenuBar/menubar-<state>.svg`) |
+|---|---|
+| Tracking | eye + filled glint |
+| Paused | eye + two pause bars where the glint was |
+| Off | eye, no glint, 50% opacity |
+| Away | closed eye with lashes + outlined glint |
+| Needs attention | eye + `!` where the glint was |
+
+**App icon** (`Design/AppIcon/glint-app-icon.svg`, rasterized by Chromium to every size): flat ink tile, a paper eye centered on the tile, and the gold glint as its catchlight at the upper right. No gradients, no glass texture; a 2 pt 8% white inner edge separates the tile from dark docks. Light/dark/tinted variants for macOS 26 Icon Composer are P5.T8.
+
+**Illustration:** none beyond the mark and the motion studies. **Imagery:** no stock photos; onboarding visuals are live renders of the glint on sample UI (the Playground).
 
 ## 8. Components
 
@@ -193,12 +217,16 @@ All components live in `GlintUI/Components/`. Each has a snapshot test in light 
 | `KeyCap` | s, m | — | Reads as "Control Option G" | Display only |
 | `SettingsSection` | with header + footer text | — | Header is `.isHeader` | |
 | `PermissionCard` | camera, accessibility | notDetermined, requesting, granted (check draw), denied, restricted, relaunchRequired | Status announced via `.accessibilityValue` | Explain *why* in one sentence before the button. |
-| `AccuracyChip` | excellent, good, fair, poor, notCalibrated | — | "Accuracy: Good, 2.1 degrees" | Text + small dot; color is never the only signal (the text says the level). |
+| `AccuracyReadout` | excellent, good, fair, poor, notCalibrated | — | "Accuracy: Good, 2.1 degrees" | Plain text: the level word in its semantic color + degrees in tabular digits. No pill, no dot. |
 | `StepIndicator` | 5 steps | upcoming, current (accent capsule 20 pt wide), done | "Step 3 of 5, Calibrate" | |
 | `ProgressRing` | 24, 64 | indeterminate, determinate | Value as percent | Calibration uses `glint.core` ring. |
 | `HUDCapsule` | info, warning, success | entering, visible, replacing, exiting | Posted as an announcement (`NSAccessibility.post(… .announcementRequested)`) | ≤ 6 words + optional symbol. |
-| `Banner` | warning, danger, info | with action, dismissible | Role alert | Popover top; one at a time, highest severity wins. |
-| `EmptyState` | apps list empty, diagnostics empty | — | Title + description read | Symbol + one sentence + action. |
+| `StatusBanner` | warning, danger, info | with action | Combined element | Flat `surfaceRaised` + hairline; custom warning/info icon carries severity; underlined text action. One at a time. |
+| `EmptyState` | any custom icon | — | Title + description read | 28 pt custom icon in `textMuted`, title, one sentence. No glass circle. |
+| `GlintIcon` | any `GlintIconName`, any size | — | Decorative unless `label:` given | Use instead of SF Symbols everywhere Glint owns the visual. |
+| `GlintMark` | `.still`, `.twinkle`, `.doubleBlink` | Reduce Motion → still | Hidden (decorative) | Popover header (twinkle while tracking, 45% when off), About, onboarding. |
+| `DrawOnIcon` | any icon | draws once on appear | Hidden | Permission granted, calibration done. |
+| `PopoverRow` | icon + title + shortcut/chevron | default, hover (flat `border` fill), pressed, disabled (40%) | Button with identifier `glint.popover.<id>` | No scaling, no color shift on hover. |
 | `AppRuleRow` | off, scrollOnly | default, hover (shows remove), default-rule badge text "Default" | Row reads app name + mode | App icon 20 pt + name; mode `Picker`. |
 | `PayloadViewer` | — | loading, empty ("Nothing sent yet"), list | Monospaced text selectable | JSON pretty-printed, SF Mono. |
 | **Overlay:** `GlintRing` | locked, acquiring, armed, uncertain, flare, reject, highContrast | per §6 | Hidden from AX | Never draw a ring smaller than 28×28. |
@@ -210,25 +238,26 @@ All components live in `GlintUI/Components/`. Each has a snapshot test in light 
 
 ```text
 ┌──────────────────────────────── 320 ─┐
-│ [Banner: Accessibility is off  Fix ] │  ← only if a problem exists
-│ ✦ Glint                     [  ●  ]  │  ← title2 + main switch
-│ Tracking · 30 fps                    │  ← textMuted status line
-│ Accuracy  ● Good  2.1°   Recalibrate │  ← AccuracyChip + plain button
-│ ──────────────────────────────────── │
-│ Pause            15 min · 1 hr · ∞ ▸ │
-│ Settings…                        ⌘,  │
-│ Quit Glint                       ⌘Q  │
+│ ◉✦  Glint                   [  ●  ]  │  ← GlintMark 28 (twinkles while tracking) + title2 + switch
+│     Tracking · 30 fps                │  ← status line, textMuted (warning for low light)
+│ [⚠ Glint can't act — Accessibility…  Fix] │  ← StatusBanner, only for blocking problems
+│ Accuracy                Good  2.1°   │  ← AccuracyReadout, plain text
+│ ──────────────────────────────────── │  ← hairline
+│ ⏸  Pause                          ›  │  ← PopoverRow (menu: 15 min · 1 hour · until I resume)
+│ ⟳  Recalibrate                       │     ("Calibrate" when not calibrated)
+│ ⚙  Settings…                     ⌘,  │
+│ ⇥  Quit Glint                    ⌘Q  │
 └──────────────────────────────────────┘
 ```
 
-States: **on/tracking**; **off** (switch off, status "Off — camera is off"); **paused** (status "Paused · resumes 3:41 PM" + "Resume" button); **away** ("Waiting for you…"); **not calibrated** (chip "Not calibrated" + primary "Calibrate"); **permission missing** (danger banner + Fix; switch disabled); **camera missing** (warning banner "No camera found"); **low light** (warning status "Too dark to see your eyes"); **starting** (status "Starting…" with an inline spinner, ≤ 1.5 s). Keyboard: ⌘, settings, ⌘Q quit, Space toggles the switch when focused.
+Row icons are custom (`pause`/`play`, `recalibrate`, `tune`, `quit`), 16 pt in `textMuted`. States: **tracking** (mark twinkles); **off** (switch off, mark at 45%, "Off — camera is off"); **paused** ("Paused · resumes 3:41 PM", the Pause row becomes Resume); **away** ("Waiting for you…"); **not calibrated** ("Calibrate to start", row reads "Calibrate"); **permission missing** (danger banner + Fix; switch disabled); **camera missing** (banner "No camera found" + Help); **low light** (status in `warning`: "Too dark to see your eyes"); **starting** ("Starting…", ≤ 1.5 s). Keyboard: ⌘, settings, ⌘Q quit, Space toggles the focused switch.
 
 ### 9.2 Onboarding window (F-01)
 
 720×520 glass card on the desktop, StepIndicator at the top and the primary button bottom-right.
 
 1. **Welcome:** a large hero glint drifting over a stylized paragraph that "glides". Title "Your Mac, at a glance." Body: "Glint follows your eyes to scroll and click — no hands needed. Everything stays on this Mac." Primary: "Get started".
-2. **Camera:** PermissionCard (camera symbol). Copy: "Glint uses your camera to see where you're looking. Video never leaves your Mac and is never saved." States per PermissionCard. No-camera state: "Connect a camera or turn on Continuity Camera."
+2. **Camera:** PermissionCard (custom `camera` icon; `check` draws on when granted). Copy: "Glint uses your camera to see where you're looking. Video never leaves your Mac and is never saved." States per PermissionCard. No-camera state: "Connect a camera or turn on Continuity Camera."
 3. **Accessibility:** PermissionCard. Copy: "To scroll and click for you, Glint needs Accessibility access. Turn on Glint in the list, then come back." Buttons: "Open System Settings" (primary) and "I've turned it on". The relaunch-required state shows "Restart Glint".
 4. **Calibrate:** a preview card ("20 seconds. Follow the glint with your eyes.") + primary "Start calibration" → full-screen calibration (§9.3).
 5. **Playground:** a scrollable practice article (lorem-free: a short real explainer of how Glint works) with 3 buttons ("Shuffle color", "Like", "Next tip"). Live checklist: ☐ Glide down ☐ Double-blink a button ☐ Right-click (blink + long blink). It completes when the first two are done, then shows the opt-in metrics card (F-12): "Help improve Glint?" with "Share anonymous stats" and "No thanks" given equal weight, plus a "What's shared" link → PayloadViewer sample.
@@ -249,7 +278,7 @@ Full-screen scrim (`overlayScrim` + glass blur of the desktop) on the gaze displ
 
 ### 9.4 Settings (F-11, F-12)
 
-Tabbed `Settings` scene with SF Symbol tab icons: General (`gearshape`), Gestures (`eye`), Scrolling (`arrow.down.to.line`), Apps (`square.grid.2x2`), Privacy (`hand.raised`), Advanced (`wrench.and.screwdriver`), About (`info.circle`).
+Tabbed `Settings` scene with custom template tab icons (§7): General (`tune`), Gestures (`eye`), Scrolling (`scroll-glide`), Apps (`grid`), Privacy (`shield`), Advanced (`gauge`), About (`glint`). About shows the twinkling `GlintMark` (56 pt), the name and the version.
 
 - **General:** Launch at login (Toggle) · Shortcut (ShortcutRow) · Gaze display (Picker) · Camera (Picker; "Recalibrate for this camera" hint when changed).
 - **Gestures:** Double-blink click (Toggle) · Blink sensitivity (Slider: "Fewer accidental clicks" ↔ "More responsive") · Right-click with blink + long blink (Toggle) · Focus follows gaze (Toggle) + Dwell (Slider 600–1500 ms) · Precise targets only (Toggle; footer explains).
@@ -313,7 +342,7 @@ A 900-word explainer, "How Glint reads intent", set in `body` at 15 pt with a 64
 
 ## 13. Implementation
 
-- Tokens live in `Packages/GlintKit/Sources/GlintUI/DesignSystem/`: `GlintColor.swift` (with named colors in `Assets.xcassets` for light/dark), `GlintFont.swift`, `GlintSpacing.swift`, `GlintRadius.swift`, `GlintShadow.swift`, `GlintMotion.swift`, `GlassSurface.swift`. Shaders are in `App/Resources/Shaders/Glint.metal` (`glintSweep`, `glintFlare`, `glintBloom`), exposed through `ShaderLibrary` wrappers in GlintUI.
+- Tokens live in `Packages/GlintKit/Sources/GlintUI/DesignSystem/`: `GlintColor.swift` (with named colors in `Assets.xcassets` for light/dark), `GlintFont.swift`, `GlintSpacing.swift`, `GlintRadius.swift`, `GlintShadow.swift`, `GlintMotion.swift`, `GlassSurface.swift`. Icons: `Design/Icons/*.svg` → `scripts/icons/build_icons.py` → `GlintUI/Icons/GlintIconData.swift` (generated) rendered by `GlintIcon`, `GlintMark`, `DrawOnIcon` and `GlintIconArtwork.templateImage` (menu bar, tabs). Motion studies: `Design/Motion/*.svg` (authored by `scripts/icons/author_motion.py`). The overlay draws vector paths in SwiftUI; no Metal shaders are needed for crisp light.
 - **Adding a token:** add it to the Swift file + asset catalog, add a row to this doc's table in the same PR, verify contrast with `scripts/contrast.py` if it's a color, and update snapshots.
 - **Visual testing:** swift-snapshot-testing for every component and screen state, in light and dark, with Reduce Motion on (static frames) at 1× and 2× scale. Overlay states are snapshotted from `GlintRing` previews with fixed frames.
 - **Previews:** every view has `#Preview` blocks for each state, fed by fixture models in `GlintUI/PreviewFixtures/`.

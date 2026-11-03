@@ -20,25 +20,29 @@ public enum GlintColor {
     public static var info: Color { named("info") }
     public static var focusRing: Color { named("focusRing") }
     public static var overlayScrim: Color { named("overlayScrim") }
+    /// The brand glint in chrome (the mark's sparkle). The only warm color in Glint's own windows.
+    public static var glintMark: Color { named("glintMark") }
 
-    // MARK: Light tokens (overlay; appearance-independent, DESIGN_SYSTEM §2.1)
+    // MARK: Light tokens (overlay; appearance-independent, DESIGN_SYSTEM §2.1). Solid colors only: Glint draws
+
+    // light as crisp geometry, never as gradients or blur.
 
     public static var glintCore: Color { hex(0xFFD98A) }
     public static var glintEdge: Color { hex(0x6B4300, opacity: 0.55) }
-    public static var glintHalo: Color { hex(0xFFC45C, opacity: 0.35) }
     public static var glintArmed: Color { hex(0xFFE7B3) }
     public static var glintFlare: Color { hex(0xFFF6E0) }
     public static var glintUncertain: Color { hex(0xFFD98A, opacity: 0.45) }
-    public static var glintAura: Color { hex(0xFFC45C, opacity: 0.18) }
-    /// Scroll-zone dwell glow; multiply by progress (alpha = progress × 0.4).
-    public static var glintEdgeGlow: Color { hex(0xFFC45C, opacity: 0.40) }
+    /// No-AX gaze aura: a dashed ring, never a filled glow.
+    public static var glintAura: Color { hex(0xFFD98A, opacity: 0.70) }
+    /// Scroll-zone dwell progress line (2 pt) along the zone's edge.
+    public static var glintProgress: Color { hex(0xFFD98A) }
     public static var glintWindowFlash: Color { hex(0xFFD98A, opacity: 0.70) }
     public static var glintHighContrastCore: Color { hex(0xFFB800) }
     public static var glintHighContrastEdge: Color { hex(0x000000) }
     public static var glintHighContrastInner: Color { hex(0xFFFFFF) }
     public static var debugDot: Color { hex(0xFF3B6B, opacity: 0.80) }
-    /// Specular top hairline used by `GlassSurface` on macOS 14–15.
-    public static var specularHairline: Color { hex(0xFFFFFF, opacity: 0.35) }
+    /// Solid edge hairline used by `GlassSurface` on macOS 14–15 (no gradient).
+    public static var glassEdge: Color { hex(0xFFFFFF, opacity: 0.22) }
 
     /// A chrome token by asset-catalog name (for swatches and tests; features use the named properties).
     public static func chrome(_ name: String) -> Color {
@@ -65,6 +69,6 @@ public enum GlintColor {
     /// Names of every chrome token, for swatch snapshots and asset-catalog drift tests.
     public static let chromeTokenNames = [
         "background", "surfaceTint", "surfaceRaised", "border", "text", "textMuted", "accent", "onAccent",
-        "accentText", "success", "warning", "danger", "info", "focusRing", "overlayScrim",
+        "accentText", "success", "warning", "danger", "info", "focusRing", "glintMark", "overlayScrim",
     ]
 }

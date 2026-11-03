@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// A one-line problem banner with an optional fix action (DESIGN_SYSTEM §8 Banner).
+/// A problem that blocks Glint, with one fix action (DESIGN_SYSTEM §8 Banner). Flat raised surface and a
+/// hairline; the icon and its color carry the severity.
 public struct StatusBanner: View {
     public enum Kind: Sendable {
         case info, warning, danger
@@ -19,26 +20,29 @@ public struct StatusBanner: View {
     }
 
     public var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: GlintSpacing.s) {
-            Image(systemName: symbol)
+        HStack(alignment: .top, spacing: GlintSpacing.s) {
+            GlintIcon(kind == .info ? .info : .warning, size: 16)
                 .foregroundStyle(tint)
-                .accessibilityHidden(true)
             Text(message)
                 .glintText(.callout)
                 .foregroundStyle(GlintColor.text)
                 .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: GlintSpacing.s)
+                .frame(maxWidth: .infinity, alignment: .leading)
             if let actionTitle, let action {
                 Button(actionTitle, action: action)
                     .buttonStyle(.borderless)
-                    .foregroundStyle(GlintColor.accentText)
                     .glintText(.bodyEmphasis)
+                    .foregroundStyle(GlintColor.accentText)
+                    .underline()
             }
         }
         .padding(GlintSpacing.m)
-        .background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: GlintRadius.m, style: .continuous))
+        .background(GlintColor.surfaceRaised, in: RoundedRectangle(cornerRadius: GlintRadius.m, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: GlintRadius.m, style: .continuous)
+                .strokeBorder(GlintColor.border, lineWidth: GlintLayout.hairline)
+        )
         .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(.isStaticText)
     }
 
     private var tint: Color {
@@ -46,14 +50,6 @@ public struct StatusBanner: View {
         case .info: GlintColor.info
         case .warning: GlintColor.warning
         case .danger: GlintColor.danger
-        }
-    }
-
-    private var symbol: String {
-        switch kind {
-        case .info: "info.circle.fill"
-        case .warning: "exclamationmark.triangle.fill"
-        case .danger: "exclamationmark.octagon.fill"
         }
     }
 }

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  <title>Act for you</title>
+  <path data-part="pointer" d="M5.5 3.8 L16.2 11.1 C16.75 11.45 16.6 12.3 15.96 12.44 L11.9 13.3 C11.6 13.37 11.35 13.57 11.22 13.85 L9.4 17.6 C9.13 18.17 8.28 18.08 8.14 17.47 Z"/>
+  <path data-part="sparkle" d="M18.25 14.75 C18.71 16.25 20.25 17.79 21.75 18.25 C20.25 18.71 18.71 20.25 18.25 21.75 C17.79 20.25 16.25 18.71 14.75 18.25 C16.25 17.79 17.79 16.25 18.25 14.75 Z" fill="currentColor" stroke="none"/>
+</svg>
