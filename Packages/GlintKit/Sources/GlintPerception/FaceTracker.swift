@@ -4,6 +4,9 @@ import GlintCore
 import GlintPlatform
 import Vision
 
+/// Glint's own types are written `GlintCore.FaceObservation` / `GlintCore.Clock` in this file: macOS 15+ Vision
+/// declares its own `FaceObservation`, and the standard library has a `Clock`.
+///
 /// Camera capture + Apple Vision face landmarks (ARCHITECTURE §10.1, Vision provider). Works on Apple Silicon and
 /// Intel Macs. Each frame is analyzed on the capture queue and released immediately: only numeric landmarks leave
 /// this class (G-SEC-01).
@@ -11,17 +14,17 @@ public final class FaceTracker: NSObject, FaceTracking, AVCaptureVideoDataOutput
     @unchecked Sendable {
     // @unchecked: `session` and `configured` are touched only on `sessionQueue`; `sequenceHandler` only on
     // `frameQueue`; the stream continuation is thread-safe.
-    public let observations: AsyncStream<FaceObservation?>
-    private let continuation: AsyncStream<FaceObservation?>.Continuation
+    public let observations: AsyncStream<GlintCore.FaceObservation?>
+    private let continuation: AsyncStream<GlintCore.FaceObservation?>.Continuation
     private let session = AVCaptureSession()
     private let sessionQueue = DispatchQueue(label: "app.glint.camera.session")
     private let frameQueue = DispatchQueue(label: "app.glint.camera.frames", qos: .userInteractive)
     private let sequenceHandler = VNSequenceRequestHandler()
-    private let clock: any Clock
+    private let clock: any GlintCore.Clock
     private var configured = false
 
-    public init(clock: any Clock = SystemClock()) {
-        let pair = AsyncStream<FaceObservation?>.makeStream(bufferingPolicy: .bufferingNewest(1))
+    public init(clock: any GlintCore.Clock = SystemClock()) {
+        let pair = AsyncStream<GlintCore.FaceObservation?>.makeStream(bufferingPolicy: .bufferingNewest(1))
         observations = pair.stream
         continuation = pair.continuation
         self.clock = clock
@@ -117,7 +120,7 @@ public final class FaceTracker: NSObject, FaceTracking, AVCaptureVideoDataOutput
         continuation.yield(detectFace(in: pixelBuffer))
     }
 
-    private func detectFace(in pixelBuffer: CVPixelBuffer) -> FaceObservation? {
+    private func detectFace(in pixelBuffer: CVPixelBuffer) -> GlintCore.FaceObservation? {
         let request = VNDetectFaceLandmarksRequest()
         do {
             try sequenceHandler.perform([request], on: pixelBuffer, orientation: .up)
@@ -134,18 +137,18 @@ public final class FaceTracker: NSObject, FaceTracking, AVCaptureVideoDataOutput
         let imageSize = CGSize(width: width, height: height)
         let h = Double(height)
         // Vision uses a bottom-left origin; Glint uses top-left.
-        func points(_ region: VNFaceLandmarkRegion2D) -> [Point] {
-            region.pointsInImage(imageSize: imageSize).map { Point(x: Double($0.x), y: h - Double($0.y)) }
+        func points(_ region: VNFaceLandmarkRegion2D) -> [GlintCore.Point] {
+            region.pointsInImage(imageSize: imageSize).map { GlintCore.Point(x: Double($0.x), y: h - Double($0.y)) }
         }
         let box = VNImageRectForNormalizedRect(face.boundingBox, width, height)
-        return FaceObservation(
+        return GlintCore.FaceObservation(
             timestamp: clock.now(),
-            imageSize: Size(width: Double(width), height: h),
+            imageSize: GlintCore.Size(width: Double(width), height: h),
             leftEye: points(leftEye),
             rightEye: points(rightEye),
             leftPupil: landmarks.leftPupil.flatMap { points($0).first },
             rightPupil: landmarks.rightPupil.flatMap { points($0).first },
-            faceBounds: Rect(
+            faceBounds: GlintCore.Rect(
                 x: Double(box.minX),
                 y: h - Double(box.maxY),
                 width: Double(box.width),

@@ -4,6 +4,7 @@
 set -euo pipefail
 
 XCODEGEN_VERSION="2.46.0"
+XCODEGEN_TOOL_REVISION="2"  # bump to force reinstall when the install layout changes
 SWIFTLINT_VERSION="0.65.1"
 SWIFTFORMAT_VERSION="0.63.1"
 
@@ -40,10 +41,13 @@ if ! installed swiftformat "$SWIFTFORMAT_VERSION"; then
   echo "$SWIFTFORMAT_VERSION" > "$TOOLS/swiftformat.version"
 fi
 
-if [[ "$OS" == "Darwin" ]] && ! installed xcodegen "$XCODEGEN_VERSION"; then
+if [[ "$OS" == "Darwin" ]] && ! installed xcodegen "$XCODEGEN_VERSION-$XCODEGEN_TOOL_REVISION"; then
   fetch "https://github.com/yonaskolb/XcodeGen/releases/download/$XCODEGEN_VERSION/xcodegen.zip" "$TOOLS"
-  ln -sf "$TOOLS/xcodegen/bin/xcodegen" "$BIN/xcodegen"
-  echo "$XCODEGEN_VERSION" > "$TOOLS/xcodegen.version"
+  # A wrapper, not a symlink: XcodeGen finds its SettingPresets relative to its real location.
+  rm -f "$BIN/xcodegen"  # an older install left a symlink; writing through it would clobber the binary
+  printf '#!/bin/sh\nexec "%s" "$@"\n' "$TOOLS/xcodegen/bin/xcodegen" > "$BIN/xcodegen"
+  chmod +x "$BIN/xcodegen"
+  echo "$XCODEGEN_VERSION-$XCODEGEN_TOOL_REVISION" > "$TOOLS/xcodegen.version"
 fi
 
 echo "Tools installed in $BIN:"
