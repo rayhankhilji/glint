@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Authors Glint's animated SVG motion studies (Design/Motion/*.svg), the motion spec for DESIGN_SYSTEM §6.2.
+"""Authors Saccade's animated SVG motion studies (Design/Motion/*.svg), the motion spec for DESIGN_SYSTEM §6.2.
 
 Overlay language: a precise indigo ring with a soft fill (target), a 2 px progress bar (scroll), a soft line
 highlight (where was I), a shrinking target (calibration). No glows, gradients or sparkles. Timings mirror the
-GlintMotion tokens and the SwiftUI keyframes in GlintUI/Icons/AnimatedIcons.swift; change both together.
+SaccadeMotion tokens and the SwiftUI keyframes in SaccadeUI/Icons/AnimatedIcons.swift; change both together.
 SMIL rule: keySplines control values stay within 0...1 (express overshoot with extra values).
 Usage: python3 scripts/icons/author_motion.py   (writes Design/Motion/)
 """
@@ -77,7 +77,7 @@ wrap("target-click", "Target highlight: acquire, arm, click",
      "blink arms it (2 pt ring, 14% fill); the second clicks: a 24% flash, then the highlight contracts and fades (180 ms).",
      body)
 
-# 2. Double blink teaching loop (2.6 s), same keyframes as GlintMark.doubleBlink ------------------------
+# 2. Double blink teaching loop (2.6 s), same keyframes as SaccadeMark.doubleBlink ------------------------
 T = 2.6
 cx, cy, s = 200, 112, 6.4
 ring_r, cl = 8.25 * s, (cx + 2.75 * s, cy - 2.75 * s, 2.25 * s)
@@ -170,6 +170,6 @@ mark = (f'<circle cx="{cx}" cy="{cy}" r="{f(8.25 * s)}" fill="none" stroke="{INK
         + scale_about(cl[0], cl[1], f'<circle cx="{f(cl[0])}" cy="{f(cl[1])}" r="{f(cl[2])}" fill="{ACCENT}"/>',
                       "1;1;1.3;0.97;1", [0, 1.5, 1.7, 1.88, T], T, [LIN, STD, STD, STD]))
 wrap("live-mark", "Live mark",
-     "While Glint is tracking, the catchlight swells once every 8 s (scale 1 to 1.3, 500 ms). This study shortens "
+     "While Saccade is tracking, the catchlight swells once every 8 s (scale 1 to 1.3, 500 ms). This study shortens "
      "the rest period to 1.5 s.", f'<rect width="400" height="220" rx="12" fill="{CHROME}"/>{mark}')
 print("motion studies written")

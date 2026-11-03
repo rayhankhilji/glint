@@ -5,7 +5,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 if [[ "$(uname -s)" != "Darwin" ]]; then
-  echo "bootstrap.sh sets up the full macOS app. On Linux, run: swift test --package-path Packages/GlintCore" >&2
+  echo "bootstrap.sh sets up the full macOS app. On Linux, run: swift test --package-path Packages/SaccadeCore" >&2
   exit 1
 fi
 
@@ -32,4 +32,4 @@ fi
 xcodegen generate
 echo
 echo "Done. Add the pinned tools to your shell: export PATH=\"$ROOT/.tools/bin:\$PATH\""
-echo "Then: open Glint.xcodeproj"
+echo "Then: open Saccade.xcodeproj"

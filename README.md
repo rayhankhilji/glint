@@ -1,10 +1,10 @@
-# Glint
+# Saccade
 
-Glint is a macOS menu-bar app that reads intent from your webcam. You look at a button and blink twice to click it; when your eyes reach the bottom of what you're reading, the page glides down. It all runs on your Mac: video never leaves it and is never saved.
+Saccade is a macOS menu-bar app that reads intent from your webcam. You look at a button and blink twice to click it; when your eyes reach the bottom of what you're reading, the page glides down. It all runs on your Mac: video never leaves it and is never saved.
 
 ## Status
 
-Glint is early. The build plan has seven phases ([ROADMAP.md](ROADMAP.md)).
+Saccade is early. The build plan has seven phases ([ROADMAP.md](ROADMAP.md)).
 
 | Works now | Not built yet |
 |---|---|
@@ -33,12 +33,12 @@ You need a Mac (Apple Silicon or Intel) with Xcode 26 or newer installed from th
    scripts/build-app.sh --install --open
    ```
 
-   The first build downloads Swift packages and takes a few minutes. Glint then appears in the menu bar as a ring icon, top right; it has no Dock icon.
+   The first build downloads Swift packages and takes a few minutes. Saccade then appears in the menu bar as a ring icon, top right; it has no Dock icon.
 
 3. Use it:
-   - macOS asks for camera access the first time. Allow it (if you miss it: System Settings → Privacy & Security → Camera → Glint).
+   - macOS asks for camera access the first time. Allow it (if you miss it: System Settings → Privacy & Security → Camera → Saccade).
    - Click the ring in the menu bar, then **Calibrate**. Follow the white dot with your eyes for about 15 seconds, keeping your head still.
-   - After **Done**, an indigo ring follows your gaze. Blink twice quickly and it pulses. Turn Glint off from the menu bar switch; the camera light goes off.
+   - After **Done**, an indigo ring follows your gaze. Blink twice quickly and it pulses. Turn Saccade off from the menu bar switch; the camera light goes off.
 
    Tips: face the screen, sit about an arm's length away, and have light in front of you rather than behind. Accuracy varies with camera and lighting; recalibrate if the ring drifts. Intel Macs run at a lower frame rate.
 
@@ -48,7 +48,7 @@ If the build fails, it prints the errors and saves the full log to `build/build.
 tail -40 build/build.log
 ```
 
-To make a disk image you can share, add `--dmg`; it's written to `build/Glint.dmg`. To remove Glint, quit it from its menu and delete `Glint.app` from Applications. Its settings are in `~/Library/Application Support/Glint`.
+To make a disk image you can share, add `--dmg`; it's written to `build/Saccade.dmg`. To remove Saccade, quit it from its menu and delete `Saccade.app` from Applications. Its settings are in `~/Library/Application Support/Saccade`.
 
 ## Develop
 

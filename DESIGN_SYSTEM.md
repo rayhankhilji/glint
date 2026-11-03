@@ -1,6 +1,6 @@
-# Glint — Design System
+# Saccade — Design System
 
-> Version: 2.0 · Updated: 2026-11-03 · Applies to GlintUI (overlay, menu bar, onboarding, calibration, settings, HUD). Tokens live in `Packages/GlintKit/Sources/GlintUI/DesignSystem/`.
+> Version: 2.0 · Updated: 2026-11-03 · Applies to SaccadeUI (overlay, menu bar, onboarding, calibration, settings, HUD). Tokens live in `Packages/SaccadeKit/Sources/SaccadeUI/DesignSystem/`.
 
 ## 1. Design Direction
 
@@ -15,7 +15,7 @@
 **Principles**
 
 1. **One accent.** Indigo marks what matters: the primary action, the switch, selection, focus, the mark's catchlight and the overlay highlight. Everything else is neutral.
-2. **No decoration.** No gradients, glows, blur halos or sparkles. `check-architecture.sh` bans gradient and blur APIs in GlintUI and App. Emphasis comes from weight, opacity and position.
+2. **No decoration.** No gradients, glows, blur halos or sparkles. `check-architecture.sh` bans gradient and blur APIs in SaccadeUI and App. Emphasis comes from weight, opacity and position.
 3. **System-native.** SF Pro for type, SF Symbols for every UI icon. Only the brand mark and menu bar glyphs are custom.
 4. **Hug, don't point.** The overlay highlights the real element's shape; there is no cursor dot in production.
 5. **Anticipate, then act.** Every action has a visible build-up (armed highlight, dwell progress bar) so the user can abort by looking away (G-ML-03).
@@ -23,9 +23,9 @@
 
 ## 2. Color Tokens
 
-All colors live in `Design/tokens.json`, the single source of truth. `scripts/design/build_tokens.py` compiles them to `GlintUI/DesignSystem/GlintColorTokens.swift` (appearance-aware `NSColor` providers, so the Swift package has no asset catalog), and `scripts/contrast.py` checks every documented pair (28/28 pass). Components use `GlintColor.*` only.
+All colors live in `Design/tokens.json`, the single source of truth. `scripts/design/build_tokens.py` compiles them to `SaccadeUI/DesignSystem/SaccadeColorTokens.swift` (appearance-aware `NSColor` providers, so the Swift package has no asset catalog), and `scripts/contrast.py` checks every documented pair (28/28 pass). Components use `SaccadeColor.*` only.
 
-### 2.1 Chrome (Glint's windows)
+### 2.1 Chrome (Saccade's windows)
 
 | Token | Light | Dark | Use |
 |---|---|---|---|
@@ -77,14 +77,14 @@ System fonts only, loaded by the OS with no bundling: **SF Pro** (text and displ
 | `numeric` | 28 / 32 | semibold rounded, tabular | -0.2 | Accuracy "1.4°", countdown |
 | `mono` | 11 / 14 | regular SF Mono | 0 | Diagnostics |
 
-Rules: use sentence case everywhere; tabular numerals for any changing number; max line length 60 ch in onboarding copy; support Dynamic Type equivalents via `.font(GlintFont.body)` mapping onto relative text styles so macOS accessibility text size changes apply.
+Rules: use sentence case everywhere; tabular numerals for any changing number; max line length 60 ch in onboarding copy; support Dynamic Type equivalents via `.font(SaccadeFont.body)` mapping onto relative text styles so macOS accessibility text size changes apply.
 
 ## 4. Spacing, Layout & Grid
 
 - **Base unit 4 pt.** Tokens: `xxs 2 · xs 4 · s 8 · m 12 · l 16 · xl 24 · xxl 32 · x3l 48 · hero 64`.
 - **Windows:** Onboarding 720×520 fixed (content inset `xxl`). Settings 640×480 min, tab content inset `xl`, form rows 44 pt min height, label column 180 pt. Popover width 320, inset `l`, row gap `s`. HUD capsule height 36, horizontal padding `l`, max width 420.
 - **Calibration:** full screen on the gaze display; anchors at 10%/50%/90% in both axes; the instruction card is centered at 50%/18%, max width 440.
-- **Overlay geometry:** glint ring outset = 4 pt beyond the element frame; corner radius `= clamp(frame.height × 0.28, 6, 14) + 4`; minimum ring size 28×28 (small elements are padded symmetrically).
+- **Overlay geometry:** highlight ring outset = 4 pt beyond the element frame; corner radius `= clamp(frame.height × 0.28, 6, 14) + 4`; minimum ring size 28×28 (small elements are padded symmetrically).
 - **Density:** one density (macOS standard). No compact mode.
 
 ## 5. Shape, Elevation & Effects
@@ -108,12 +108,12 @@ Rules: use sentence case everywhere; tabular numerals for any changing number; m
 
 Motion communicates cause → effect and lets users abort. Animate `opacity`, `scale`, `rotation`, `offset`, stroke trim and stroke weight only. Every pattern below has an animated SVG study in `Design/Motion/` whose timings match these tokens; the studies are the motion spec. The overlay renders at the display refresh rate (ProMotion 120 Hz).
 
-### 6.1 Tokens (`GlintMotion`)
+### 6.1 Tokens (`SaccadeMotion`)
 
 | Token | Value | Use |
 |---|---|---|
 | `instant` | 80 ms | Armed brightening |
-| `fast` | 140 ms | Glint acquire fade, chip changes |
+| `fast` | 140 ms | Saccade acquire fade, chip changes |
 | `base` | 220 ms | Popover rows, toggles |
 | `slow` | 320 ms | Onboarding step content |
 | `deliberate` | 520 ms | Glide scroll, hero transitions |
@@ -121,11 +121,11 @@ Motion communicates cause → effect and lets users abort. Animate `opacity`, `s
 | `ease.enter` | cubic-bezier(0, 0, 0, 1) | Appearing elements |
 | `ease.exit` | cubic-bezier(0.3, 0, 1, 1) | Leaving elements |
 | `ease.glide` | cubic-bezier(0.22, 0.61, 0.36, 1) | Scroll glide (gentle start, long soft landing) |
-| `spring.follow` | `.spring(response: 0.22, dampingFraction: 0.86)` | Glint moving between targets |
-| `spring.acquire` | `.spring(response: 0.28, dampingFraction: 0.78)` | Glint scale-in 1.06 → 1.0 |
+| `spring.follow` | `.spring(response: 0.22, dampingFraction: 0.86)` | Saccade moving between targets |
+| `spring.acquire` | `.spring(response: 0.28, dampingFraction: 0.78)` | Saccade scale-in 1.06 → 1.0 |
 | `spring.snappy` | `.spring(response: 0.25, dampingFraction: 0.9)` | Toggles, tab indicator |
 | `spring.gentle` | `.spring(response: 0.45, dampingFraction: 0.85)` | Onboarding layout, HUD entrance |
-| `spring.calibration` | `.spring(response: 0.9, dampingFraction: 1.0)` | Calibration glint drifting between anchors (critically damped, smooth-pursuit friendly) |
+| `spring.calibration` | `.spring(response: 0.9, dampingFraction: 1.0)` | Calibration saccade drifting between anchors (critically damped, smooth-pursuit friendly) |
 
 ### 6.2 Pattern catalogue
 
@@ -147,8 +147,8 @@ Each overlay pattern has an animated SVG study in `Design/Motion/` (written by `
 | **Where was I** | `overlayLineHighlight` band behind the line, 4 pt radius, sweeps in left to right (450 ms), holds 600 ms, fades 600 ms. Study: `where-was-i.svg` | Fade in 150 ms, hold 900 ms, fade 150 ms |
 | **Window focus** | 1.5 pt `overlayRing` outline on the window frame, fades over 300 ms | 150 ms fade |
 | **Calibration** | A white 9 pt dot inside a 1.25 pt ring that tightens from 20 to 6 pt as samples are collected; drifts between anchors with `spring.calibration`. Study: `calibration.svg` | Dot jumps with a fade; ring still tightens |
-| **Live mark** | `GlintMark(.live)`: every 8 s the catchlight swells 1→1.3→1 (500 ms). Study: `live-mark.svg` | Static |
-| **Double blink** | `GlintMark(.doubleBlink)`: ring and catchlight squash toward the center twice (80 ms close, 120 ms open, 180 ms apart), then the catchlight pulses. Study: `double-blink.svg` | Static |
+| **Live mark** | `SaccadeMark(.live)`: every 8 s the catchlight swells 1→1.3→1 (500 ms). Study: `live-mark.svg` | Static |
+| **Double blink** | `SaccadeMark(.doubleBlink)`: ring and catchlight squash toward the center twice (80 ms close, 120 ms open, 180 ms apart), then the catchlight pulses. Study: `double-blink.svg` | Static |
 | **HUD** | Enter y −8→0 + opacity (`spring.gentle`); exit 180 ms; auto-dismiss 2.4 s | Opacity only |
 
 **Choreography rules:** at most one overlay animation runs at a time (click beats progress bar beats acquire). The HUD never animates while a flare plays: it waits 260 ms. Staggers in lists use 30 ms per item, max 6 items.
@@ -157,7 +157,7 @@ Each overlay pattern has an animated SVG study in `Design/Motion/` (written by `
 
 ## 7. Iconography & Imagery
 
-**UI icons are SF Symbols**, listed once in `GlintSymbol` (`GlintUI/Icons/GlintSymbol.swift`) and drawn with `GlintSymbolImage`: 12 pt medium in popover rows, 11 pt in callouts, 20 pt regular in empty states, system size in Settings tabs. Never use `Image(systemName:)` with a literal outside `GlintSymbol`.
+**UI icons are SF Symbols**, listed once in `SaccadeSymbol` (`SaccadeUI/Icons/SaccadeSymbol.swift`) and drawn with `SaccadeSymbolImage`: 12 pt medium in popover rows, 11 pt in callouts, 20 pt regular in empty states, system size in Settings tabs. Never use `Image(systemName:)` with a literal outside `SaccadeSymbol`.
 
 | Use | Symbol |
 |---|---|
@@ -180,18 +180,18 @@ Each overlay pattern has an animated SVG study in `Design/Motion/` (written by `
 | Away | ring + a closed-lid line |
 | Needs attention | ring + `!` |
 
-`scripts/icons/build_icons.py` compiles the mark and menu bar SVGs into Swift vector data (`GlintIconData.swift`, CI `--check`).
+`scripts/icons/build_icons.py` compiles the mark and menu bar SVGs into Swift vector data (`SaccadeIconData.swift`, CI `--check`).
 
-**App icon** (`Design/AppIcon/glint-app-icon.svg`, rasterized by `scripts/icons/render-app-icon.mjs`): the mark at 30× on a flat near-black tile, with a 1.5 pt 9% white edge. Light/dark/tinted variants for Icon Composer are P5.T8.
+**App icon** (`Design/AppIcon/saccade-app-icon.svg`, rasterized by `scripts/icons/render-app-icon.mjs`): the mark at 30× on a flat near-black tile, with a 1.5 pt 9% white edge. Light/dark/tinted variants for Icon Composer are P5.T8.
 
 ## 8. Components
 
-All components live in `GlintUI/Components/`. Each has a snapshot test in light and dark and an accessibility label test.
+All components live in `SaccadeUI/Components/`. Each has a snapshot test in light and dark and an accessibility label test.
 
 | Component | Variants / sizes | States | Accessibility | Do / Don't |
 |---|---|---|---|---|
 | `GlassSurface` | `.regular`, `.clear`; any `Shape` | normal, reduce-transparency (opaque) | Container only | Do wrap whole cards. Don't nest. |
-| `GlintButton` | `.primary` (accent fill), `.secondary` (glass), `.plain` (text), `.destructive`; sizes `regular` (32 h), `large` (40 h) | default, hover (+4% brightness), pressed (scale 0.98, `instant`), focus (focusRing), disabled (40% opacity), loading (inline `ProgressView` + label kept) | `.accessibilityLabel` = visible label; Return triggers `.primary` | One primary per view. Verbs: "Allow camera", not "OK". |
+| `SaccadeButton` | `.primary` (accent fill), `.secondary` (glass), `.plain` (text), `.destructive`; sizes `regular` (32 h), `large` (40 h) | default, hover (+4% brightness), pressed (scale 0.98, `instant`), focus (focusRing), disabled (40% opacity), loading (inline `ProgressView` + label kept) | `.accessibilityLabel` = visible label; Return triggers `.primary` | One primary per view. Verbs: "Allow camera", not "OK". |
 | `ToggleRow` | with/without subtitle | on, off, disabled (with reason subtitle) | Label + value "On/Off" | Don't use for actions. |
 | `SliderRow` | continuous, stepped | default, dragging (live value label), disabled | Value announced with units ("300 milliseconds") | Always show the current value. |
 | `PickerRow` | menu style | default, disabled | | Camera/display pickers show the device name and "(built-in)". |
@@ -201,17 +201,17 @@ All components live in `GlintUI/Components/`. Each has a snapshot test in light 
 | `PermissionCard` | camera, accessibility | notDetermined, requesting, granted (check draw), denied, restricted, relaunchRequired | Status announced via `.accessibilityValue` | Explain *why* in one sentence before the button. |
 | `AccuracyReadout` | excellent, good, fair, poor, notCalibrated | — | "Accuracy: Good, 2.1 degrees" | `StatusDot` + level word + degrees in tabular digits. No pill. |
 | `StatusDot` | any semantic color | — | Hidden; always paired with text | 6 pt circle. |
-| `GlintButtonStyle` | `.primary` (accent fill), `.secondary` (hairline), `.ghostAccent` (text) | default, pressed, disabled 40% | Visible label | 28 pt tall, 6 pt corners, no shadow. |
+| `SaccadeButtonStyle` | `.primary` (accent fill), `.secondary` (hairline), `.ghostAccent` (text) | default, pressed, disabled 40% | Visible label | 28 pt tall, 6 pt corners, no shadow. |
 | `StepIndicator` | 5 steps | upcoming, current (accent capsule 20 pt wide), done | "Step 3 of 5, Calibrate" | |
 | `ProgressRing` | 24, 64 | indeterminate, determinate | Value as percent | Calibration uses a white 1.25 pt ring (§6.2). |
 | `HUDCapsule` | info, warning, success | entering, visible, replacing, exiting | Posted as an announcement (`NSAccessibility.post(… .announcementRequested)`) | ≤ 6 words + optional symbol. |
 | `StatusBanner` | warning, danger, info | with action | Combined element | Inline callout on `subtle`, 6 pt corners, SF Symbol in the severity color, `.ghostAccent` action. One at a time. |
-| `EmptyState` | any `GlintSymbol` | — | Title + description read | 20 pt symbol in `textFaint`, 13 pt title, one 12 pt sentence. |
-| `GlintMark` | `.still`, `.live`, `.doubleBlink` | Reduce Motion → still | Hidden (decorative) | Popover header (live while tracking, 40% when off), About, onboarding. |
-| `PopoverRow` | symbol + title + shortcut/chevron | default, hover (`subtle` fill), pressed, disabled (40%) | Button with identifier `glint.popover.<id>` | 28 pt tall, 6 pt corners, no scaling. |
+| `EmptyState` | any `SaccadeSymbol` | — | Title + description read | 20 pt symbol in `textFaint`, 13 pt title, one 12 pt sentence. |
+| `SaccadeMark` | `.still`, `.live`, `.doubleBlink` | Reduce Motion → still | Hidden (decorative) | Popover header (live while tracking, 40% when off), About, onboarding. |
+| `PopoverRow` | symbol + title + shortcut/chevron | default, hover (`subtle` fill), pressed, disabled (40%) | Button with identifier `saccade.popover.<id>` | 28 pt tall, 6 pt corners, no scaling. |
 | `AppRuleRow` | off, scrollOnly | default, hover (shows remove), default-rule badge text "Default" | Row reads app name + mode | App icon 20 pt + name; mode `Picker`. |
 | `PayloadViewer` | — | loading, empty ("Nothing sent yet"), list | Monospaced text selectable | JSON pretty-printed, SF Mono. |
-| **Overlay:** `GlintRing` | locked, acquiring, armed, uncertain, flare, reject, highContrast | per §6 | Hidden from AX | Never draw a ring smaller than 28×28. |
+| **Overlay:** `SaccadeRing` | locked, acquiring, armed, uncertain, flare, reject, highContrast | per §6 | Hidden from AX | Never draw a ring smaller than 28×28. |
 | **Overlay:** `GazeAura`, `EdgeGlow`, `LineMarker`, `WindowFlash`, `DebugDot` | per §2.1 / §6 | per §6 | Hidden from AX | `DebugDot` is only available with Advanced → Debug gaze dot. |
 
 ## 9. Patterns & Screen Specs
@@ -220,9 +220,9 @@ All components live in `GlintUI/Components/`. Each has a snapshot test in light 
 
 ```text
 ┌──────────────────────────── 300 ─┐
-│ ◎  Glint                  [ ●]  │  ← GlintMark 22 (live while tracking) · 15 pt title · small switch
+│ ◎  Saccade                  [ ●]  │  ← SaccadeMark 22 (live while tracking) · 15 pt title · small switch
 │    ● Tracking · 30 fps          │  ← StatusDot + 12 pt status line
-│ [⚠ Glint can't act — …     Fix] │  ← StatusBanner, only for blocking problems
+│ [⚠ Saccade can't act — …     Fix] │  ← StatusBanner, only for blocking problems
 ├──────────────────────────────────┤  ← 1 px hairline, full bleed
 │ Accuracy           ● Good  2.1°  │  ← AccuracyReadout
 ├──────────────────────────────────┤
@@ -230,7 +230,7 @@ All components live in `GlintUI/Components/`. Each has a snapshot test in light 
 │  ◎  Recalibrate                  │
 │  ⚙  Settings…               ⌘,   │  ← shortcuts in textFaint
 ├──────────────────────────────────┤
-│  ⏻  Quit Glint              ⌘Q   │
+│  ⏻  Quit Saccade              ⌘Q   │
 └──────────────────────────────────┘
 ```
 
@@ -240,11 +240,11 @@ Status dot: green tracking, indigo starting, amber paused/away/low light/not cal
 
 720×520 glass card on the desktop, StepIndicator at the top and the primary button bottom-right.
 
-1. **Welcome:** a large hero glint drifting over a stylized paragraph that "glides". Title "Your Mac, at a glance." Body: "Glint follows your eyes to scroll and click — no hands needed. Everything stays on this Mac." Primary: "Get started".
-2. **Camera:** PermissionCard (`camera` symbol; a `checkmark` replaces it when granted). Copy: "Glint uses your camera to see where you're looking. Video never leaves your Mac and is never saved." States per PermissionCard. No-camera state: "Connect a camera or turn on Continuity Camera."
-3. **Accessibility:** PermissionCard. Copy: "To scroll and click for you, Glint needs Accessibility access. Turn on Glint in the list, then come back." Buttons: "Open System Settings" (primary) and "I've turned it on". The relaunch-required state shows "Restart Glint".
-4. **Calibrate:** a preview card ("20 seconds. Follow the glint with your eyes.") + primary "Start calibration" → full-screen calibration (§9.3).
-5. **Playground:** a scrollable practice article (lorem-free: a short real explainer of how Glint works) with 3 buttons ("Shuffle color", "Like", "Next tip"). Live checklist: ☐ Glide down ☐ Double-blink a button ☐ Right-click (blink + long blink). It completes when the first two are done, then shows the opt-in metrics card (F-12): "Help improve Glint?" with "Share anonymous stats" and "No thanks" given equal weight, plus a "What's shared" link → PayloadViewer sample.
+1. **Welcome:** a large hero saccade drifting over a stylized paragraph that "glides". Title "Your Mac, at a glance." Body: "Saccade follows your eyes to scroll and click — no hands needed. Everything stays on this Mac." Primary: "Get started".
+2. **Camera:** PermissionCard (`camera` symbol; a `checkmark` replaces it when granted). Copy: "Saccade uses your camera to see where you're looking. Video never leaves your Mac and is never saved." States per PermissionCard. No-camera state: "Connect a camera or turn on Continuity Camera."
+3. **Accessibility:** PermissionCard. Copy: "To scroll and click for you, Saccade needs Accessibility access. Turn on Saccade in the list, then come back." Buttons: "Open System Settings" (primary) and "I've turned it on". The relaunch-required state shows "Restart Saccade".
+4. **Calibrate:** a preview card ("20 seconds. Follow the highlight with your eyes.") + primary "Start calibration" → full-screen calibration (§9.3).
+5. **Playground:** a scrollable practice article (lorem-free: a short real explainer of how Saccade works) with 3 buttons ("Shuffle color", "Like", "Next tip"). Live checklist: ☐ Glide down ☐ Double-blink a button ☐ Right-click (blink + long blink). It completes when the first two are done, then shows the opt-in metrics card (F-12): "Help improve Saccade?" with "Share anonymous stats" and "No thanks" given equal weight, plus a "What's shared" link → PayloadViewer sample.
 - Global states: quit/resume (re-enters at the persisted step); VoiceOver (each step's title + body announced on appear).
 
 ### 9.3 Calibration (F-03)
@@ -253,23 +253,23 @@ Full-screen scrim (`overlayScrim` + glass blur of the desktop) on the gaze displ
 
 | Step | Visual | Copy |
 |---|---|---|
-| Intro / waiting | Large glint at center, breathing | "Double-blink when you're ready." Subtext: "Sit like you normally do. Esc to cancel." |
-| Collecting | The glint drifts to each anchor and its progress ring fills; completed anchors leave a faint dot | "Follow the glint." (count "3 of 9" in `caption`) |
-| Face lost | The glint freezes and dims; the card shows a warning | "Look back at the screen to continue." |
-| Validating | 5 quick glints, no ring | "Almost there — just look at each glint." |
+| Intro / waiting | Large saccade at center, breathing | "Double-blink when you're ready." Subtext: "Sit like you normally do. Esc to cancel." |
+| Collecting | The highlight drifts to each anchor and its progress ring fills; completed anchors leave a faint dot | "Follow the highlight." (count "3 of 9" in `caption`) |
+| Face lost | The highlight freezes and dims; the card shows a warning | "Look back at the screen to continue." |
+| Validating | 5 quick saccades, no ring | "Almost there — just look at each saccade." |
 | Result | `numeric` "1.8°" + AccuracyChip + one-line meaning ("Great for buttons and links.") + "Done" (primary) / "Try again" | Poor: "Let's try again with more light in front of you." with "Try again" as primary |
 | Failed | Warning symbol | "Couldn't see your eyes clearly. Try more light in front of you." Buttons: "Try again", "Cancel" |
 
 ### 9.4 Settings (F-11, F-12)
 
-Tabbed `Settings` scene with SF Symbol tabs (§7). About shows the live `GlintMark` (48 pt), the name and the version.
+Tabbed `Settings` scene with SF Symbol tabs (§7). About shows the live `SaccadeMark` (48 pt), the name and the version.
 
 - **General:** Launch at login (Toggle) · Shortcut (ShortcutRow) · Gaze display (Picker) · Camera (Picker; "Recalibrate for this camera" hint when changed).
 - **Gestures:** Double-blink click (Toggle) · Blink sensitivity (Slider: "Fewer accidental clicks" ↔ "More responsive") · Right-click with blink + long blink (Toggle) · Focus follows gaze (Toggle) + Dwell (Slider 600–1500 ms) · Precise targets only (Toggle; footer explains).
 - **Scrolling:** Glide scroll (Toggle) · Bottom zone size (10–25%) · Top zone size (5–20%) · Glide distance (25–60%) · Dwell (200–600 ms) · Live mini-preview (a small article mock with the zones tinted).
-- **Apps:** table of AppRuleRows + "Add current app" + "Add app…" (NSOpenPanel for /Applications) + "Reset to defaults". Empty state (if all removed): "Glint works in every app."
-- **Privacy:** Silent learning (Toggle) + "Reset learning" · Anonymous stats (Toggle) + "Show me exactly what's sent" (PayloadViewer sheet) · "Delete all Glint data…" (destructive with confirm dialog: "This removes your calibration and settings. Glint will start fresh.").
-- **Advanced:** Diagnostics (live table in `mono`: fps, provider, latency p50/p95, sigma, confidence, AX timeouts/min) · Debug gaze dot (Toggle) · Demo capture mode (Toggle; footer: "Shows the glint in screenshots and recordings until Glint restarts.") · Export diagnostics… · Run setup again.
+- **Apps:** table of AppRuleRows + "Add current app" + "Add app…" (NSOpenPanel for /Applications) + "Reset to defaults". Empty state (if all removed): "Saccade works in every app."
+- **Privacy:** Silent learning (Toggle) + "Reset learning" · Anonymous stats (Toggle) + "Show me exactly what's sent" (PayloadViewer sheet) · "Delete all Saccade data…" (destructive with confirm dialog: "This removes your calibration and settings. Saccade will start fresh.").
+- **Advanced:** Diagnostics (live table in `mono`: fps, provider, latency p50/p95, sigma, confidence, AX timeouts/min) · Debug gaze dot (Toggle) · Demo capture mode (Toggle; footer: "Shows the highlight in screenshots and recordings until Saccade restarts.") · Export diagnostics… · Run setup again.
 - **About:** icon, version (build), "Check for Updates…", acknowledgements (licenses list).
 
 States: not calibrated (Gestures/Scrolling show an info banner "Calibrate to use gestures" + button); permission revoked (banner on every tab); camera missing (General shows the warning in the picker row).
@@ -280,16 +280,16 @@ Render-only states per §6.2. Order of precedence when several apply: flare > re
 
 ### 9.6 Playground article
 
-A 900-word explainer, "How Glint reads intent", set in `body` at 15 pt with a 64 ch measure, so first-time users actually read and trigger glide naturally.
+A 900-word explainer, "How Saccade reads intent", set in `body` at 15 pt with a 64 ch measure, so first-time users actually read and trigger glide naturally.
 
 ### 9.7 HUD message catalogue
 
 | Trigger | Style | Copy |
 |---|---|---|
-| Turned on (hotkey) | success | "Glint on" |
-| Turned off | info | "Glint off" |
+| Turned on (hotkey) | success | "Saccade on" |
+| Turned off | info | "Saccade off" |
 | Paused by gesture | info | "Paused — double-blink the ✦ to resume" |
-| Resumed | success | "Glint resumed" |
+| Resumed | success | "Saccade resumed" |
 | Face lost > 3 s while on | info | "Waiting for you…" (only once per 10 min) |
 | Low light > 3 s | warning | "Too dark to see your eyes" |
 | Camera interrupted | warning | "Camera paused by macOS" |
@@ -299,7 +299,7 @@ A 900-word explainer, "How Glint reads intent", set in `body` at 15 pt with a 64
 
 ## 10. Content & Voice
 
-- **Tone:** warm, plain, confident; second person; short. Glint speaks as "Glint", not "we", in UI.
+- **Tone:** warm, plain, confident; second person; short. Saccade speaks as "Saccade", not "we", in UI.
 - **Capitalization:** sentence case for everything, including buttons and window titles.
 - **Buttons:** verb first ("Allow camera", "Start calibration", "Try again"). Never "OK" or "Submit".
 - **Error formula:** what happened + what to do, ≤ 2 short sentences ("Couldn't see your eyes clearly. Try more light in front of you.").
@@ -309,12 +309,12 @@ A 900-word explainer, "How Glint reads intent", set in `body` at 15 pt with a 64
 
 ## 11. Accessibility
 
-- Glint's UI meets WCAG 2.2 AA equivalents: contrast per §2 verified pairs; visible focus (3 pt `focusRing`, offset 2 pt) on every control; full keyboard operation of onboarding, popover, and settings (Tab/Shift-Tab, Space/Return, Esc closes sheets).
+- Saccade's UI meets WCAG 2.2 AA equivalents: contrast per §2 verified pairs; visible focus (3 pt `focusRing`, offset 2 pt) on every control; full keyboard operation of onboarding, popover, and settings (Tab/Shift-Tab, Space/Return, Esc closes sheets).
 - VoiceOver: every control has a label, value, and hint where non-obvious; StepIndicator and PermissionCard expose status; HUD messages are posted as announcements; the calibration instructions are announced on each step change.
 - Overlay windows are excluded from the AX tree and from screen capture (`sharingType = .none`), and never become key.
-- Respect system settings: Reduce Motion (§6 reduced column), Reduce Transparency (opaque surfaces), Increase Contrast (`glint.ring.highContrast`, borders at 20%), Differentiate Without Color (accuracy chip text always present; state never color-only).
-- Hit targets ≥ 28×28 pt in Glint UI.
-- Coexistence: Glint never moves VoiceOver focus; with Voice Control running, Glint still works and announces nothing extra.
+- Respect system settings: Reduce Motion (§6 reduced column), Reduce Transparency (opaque surfaces), Increase Contrast (`saccade.ring.highContrast`, borders at 20%), Differentiate Without Color (accuracy chip text always present; state never color-only).
+- Hit targets ≥ 28×28 pt in Saccade UI.
+- Coexistence: Saccade never moves VoiceOver focus; with Voice Control running, Saccade still works and announces nothing extra.
 
 ## 12. Responsive & Platform
 
@@ -326,7 +326,7 @@ A 900-word explainer, "How Glint reads intent", set in `body` at 15 pt with a 64
 
 ## 13. Implementation
 
-- Tokens live in `Packages/GlintKit/Sources/GlintUI/DesignSystem/`: `GlintColorTokens.swift` (generated) + `GlintColorSupport.swift`, `GlintFont.swift`, `GlintSpacing.swift`, `GlintRadius.swift`, `GlintShadow.swift`, `GlintMotion.swift`, `GlassSurface.swift`. Icons: `Design/Icons/*.svg` → `scripts/icons/build_icons.py` → `GlintUI/Icons/GlintIconData.swift` (generated) rendered by `GlintIcon`, `GlintMark`, `DrawOnIcon` and `GlintIconArtwork.templateImage` (menu bar, tabs). Motion studies: `Design/Motion/*.svg` (authored by `scripts/icons/author_motion.py`). The overlay draws vector paths in SwiftUI; no Metal shaders are needed for crisp light.
+- Tokens live in `Packages/SaccadeKit/Sources/SaccadeUI/DesignSystem/`: `SaccadeColorTokens.swift` (generated) + `SaccadeColorSupport.swift`, `SaccadeFont.swift`, `SaccadeSpacing.swift`, `SaccadeRadius.swift`, `SaccadeShadow.swift`, `SaccadeMotion.swift`, `GlassSurface.swift`. Icons: `Design/Icons/*.svg` → `scripts/icons/build_icons.py` → `SaccadeUI/Icons/SaccadeIconData.swift` (generated) rendered by `SaccadeIcon`, `SaccadeMark`, `DrawOnIcon` and `SaccadeIconArtwork.templateImage` (menu bar, tabs). Motion studies: `Design/Motion/*.svg` (authored by `scripts/icons/author_motion.py`). The overlay draws vector paths in SwiftUI; no Metal shaders are needed for crisp light.
 - **Adding a color:** add it to `Design/tokens.json` (and a contrast pair if it carries text), run `python3 scripts/design/build_tokens.py` and `python3 scripts/contrast.py`, add a row to §2, and update snapshots.
-- **Visual testing:** swift-snapshot-testing for every component and screen state, in light and dark, with Reduce Motion on (static frames) at 1× and 2× scale. Overlay states are snapshotted from `GlintRing` previews with fixed frames.
-- **Previews:** every view has `#Preview` blocks for each state, fed by fixture models in `GlintUI/PreviewFixtures/`.
+- **Visual testing:** swift-snapshot-testing for every component and screen state, in light and dark, with Reduce Motion on (static frames) at 1× and 2× scale. Overlay states are snapshotted from `SaccadeRing` previews with fixed frames.
+- **Previews:** every view has `#Preview` blocks for each state, fed by fixture models in `SaccadeUI/PreviewFixtures/`.

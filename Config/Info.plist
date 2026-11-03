@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>Glint</string>
+	<string>Saccade</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -27,19 +27,19 @@
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Glint uses your camera to see where you're looking. Video never leaves your Mac and is never saved.</string>
+	<string>Saccade uses your camera to see where you're looking. Video never leaves your Mac and is never saved.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string></string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
-	<key>GlintTelemetryAppID</key>
-	<string>$(GLINT_TELEMETRYDECK_APP_ID)</string>
-	<key>GlintSentryDSN</key>
-	<string>$(GLINT_SENTRY_DSN)</string>
+	<key>SaccadeTelemetryAppID</key>
+	<string>$(SACCADE_TELEMETRYDECK_APP_ID)</string>
+	<key>SaccadeSentryDSN</key>
+	<string>$(SACCADE_SENTRY_DSN)</string>
 	<key>SUFeedURL</key>
-	<string>$(GLINT_SPARKLE_FEED_URL)</string>
+	<string>$(SACCADE_SPARKLE_FEED_URL)</string>
 	<key>SUPublicEDKey</key>
-	<string>$(GLINT_SPARKLE_PUBLIC_ED_KEY)</string>
+	<string>$(SACCADE_SPARKLE_PUBLIC_ED_KEY)</string>
 	<key>SUEnableAutomaticChecks</key>
 	<true/>
 	<key>SUScheduledCheckInterval</key>

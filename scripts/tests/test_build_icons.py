@@ -62,7 +62,7 @@ class Sources(unittest.TestCase):
         swift, icons, menubar = bi.generate()
         self.assertIn("mark", icons)
         self.assertEqual(set(menubar), {"tracking", "paused", "off", "away", "needsAttention"})
-        self.assertIn("public enum GlintIconName", swift)
+        self.assertIn("public enum SaccadeIconName", swift)
 
     def test_generated_swift_is_up_to_date(self):
         self.assertEqual(bi.main(["--check"]), 0)

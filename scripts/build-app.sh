@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Builds Glint.app from source on your Mac, ad-hoc signed for local use (no Apple Developer account needed).
+# Builds Saccade.app from source on your Mac, ad-hoc signed for local use (no Apple Developer account needed).
 #
-#   scripts/build-app.sh            # build → build/Glint.app
+#   scripts/build-app.sh            # build → build/Saccade.app
 #   scripts/build-app.sh --install  # …and copy to /Applications (or ~/Applications)
 #   scripts/build-app.sh --open     # …and launch it (look for the ring in the menu bar)
-#   scripts/build-app.sh --dmg      # …and make build/Glint.dmg to share
+#   scripts/build-app.sh --dmg      # …and make build/Saccade.dmg to share
 #
 # Requires a Mac (Apple Silicon or Intel) with Xcode 26 or newer. Signed + notarized releases use scripts/release.sh.
 set -euo pipefail
@@ -45,10 +45,10 @@ export PATH="$ROOT/.tools/bin:$PATH"
 say "Generating the Xcode project"
 xcodegen generate --quiet
 
-say "Building Glint (Release, ad-hoc signed) — the first build fetches Swift packages and takes a few minutes"
+say "Building Saccade (Release, ad-hoc signed) — the first build fetches Swift packages and takes a few minutes"
 LOG="$ROOT/build/build.log"
 mkdir -p build
-if ! xcodebuild -project Glint.xcodeproj -scheme Glint -configuration Release \
+if ! xcodebuild -project Saccade.xcodeproj -scheme Saccade -configuration Release \
     -destination 'generic/platform=macOS' -derivedDataPath build/DerivedData \
     CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= OTHER_CODE_SIGN_FLAGS= \
     ENABLE_HARDENED_RUNTIME=NO build >"$LOG" 2>&1; then
@@ -57,35 +57,35 @@ if ! xcodebuild -project Glint.xcodeproj -scheme Glint -configuration Release \
   fail "Build failed. The full log is $LOG — paste its last 40 lines (tail -40 \"$LOG\") to Claude."
 fi
 
-rm -rf build/Glint.app
-ditto build/DerivedData/Build/Products/Release/Glint.app build/Glint.app
-echo "  Built $ROOT/build/Glint.app"
+rm -rf build/Saccade.app
+ditto build/DerivedData/Build/Products/Release/Saccade.app build/Saccade.app
+echo "  Built $ROOT/build/Saccade.app"
 
-APP="$ROOT/build/Glint.app"
+APP="$ROOT/build/Saccade.app"
 if [[ $INSTALL -eq 1 ]]; then
   say "Installing"
   DEST="/Applications"
   [[ -w "$DEST" ]] || DEST="$HOME/Applications"
   mkdir -p "$DEST"
-  osascript -e 'quit app "Glint"' >/dev/null 2>&1 || true
-  rm -rf "$DEST/Glint.app"
-  ditto "$APP" "$DEST/Glint.app"
-  APP="$DEST/Glint.app"
+  osascript -e 'quit app "Saccade"' >/dev/null 2>&1 || true
+  rm -rf "$DEST/Saccade.app"
+  ditto "$APP" "$DEST/Saccade.app"
+  APP="$DEST/Saccade.app"
   echo "  Installed $APP"
 fi
 
 if [[ $DMG -eq 1 ]]; then
   say "Making a disk image"
   STAGE="$(mktemp -d)"
-  ditto "$ROOT/build/Glint.app" "$STAGE/Glint.app"
+  ditto "$ROOT/build/Saccade.app" "$STAGE/Saccade.app"
   ln -s /Applications "$STAGE/Applications"
-  hdiutil create -volname Glint -srcfolder "$STAGE" -ov -format UDZO "$ROOT/build/Glint.dmg" >/dev/null
+  hdiutil create -volname Saccade -srcfolder "$STAGE" -ov -format UDZO "$ROOT/build/Saccade.dmg" >/dev/null
   rm -rf "$STAGE"
-  echo "  Created $ROOT/build/Glint.dmg (unsigned: other Macs need right-click → Open the first time)"
+  echo "  Created $ROOT/build/Saccade.dmg (unsigned: other Macs need right-click → Open the first time)"
 fi
 
 if [[ $OPEN -eq 1 ]]; then
   say "Launching"
   open "$APP"
-  echo "  Glint runs in the menu bar (the ring icon, top right). It has no Dock icon."
+  echo "  Saccade runs in the menu bar (the ring icon, top right). It has no Dock icon."
 fi

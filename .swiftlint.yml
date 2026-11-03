@@ -1,15 +1,15 @@
 # SwiftLint 0.65.1 — run `swiftlint --strict` (EVAL_GUARDRAILS §7.1)
 included:
   - App
-  - Packages/GlintCore/Sources
-  - Packages/GlintCore/Tests
-  - Packages/GlintKit/Sources
-  - Packages/GlintKit/Tests
+  - Packages/SaccadeCore/Sources
+  - Packages/SaccadeCore/Tests
+  - Packages/SaccadeKit/Sources
+  - Packages/SaccadeKit/Tests
   - UITests
 excluded:
   - "**/.build"
-  - Packages/GlintKit/Sources/GlintUI/Icons/GlintIconData.swift   # generated (scripts/icons/build_icons.py)
-  - Packages/GlintKit/Sources/GlintUI/DesignSystem/GlintColorTokens.swift   # generated (scripts/design/build_tokens.py)
+  - Packages/SaccadeKit/Sources/SaccadeUI/Icons/SaccadeIconData.swift   # generated (scripts/icons/build_icons.py)
+  - Packages/SaccadeKit/Sources/SaccadeUI/DesignSystem/SaccadeColorTokens.swift   # generated (scripts/design/build_tokens.py)
   - .tools
   - build
 
@@ -62,12 +62,12 @@ custom_rules:
   no_print:
     name: "No print"
     regex: '^\s*print\('
-    excluded: '.*/Sources/glint-eval/.*|.*Tests/.*'
-    message: "Use GlintLog (os.Logger) — print is banned (INSTRUCTIONS §6)."
+    excluded: '.*/Sources/saccade-eval/.*|.*Tests/.*'
+    message: "Use SaccadeLog (os.Logger) — print is banned (INSTRUCTIONS §6)."
     severity: error
   no_magic_thresholds:
     name: "No magic thresholds in intent machines"
-    included: '.*/Sources/GlintCore/Intent/.*\.swift'
+    included: '.*/Sources/SaccadeCore/Intent/.*\.swift'
     excluded: '.*/IntentConstants\.swift'
     regex: '(?<![\w.])(?:[2-9]|\d{2,}|\d*\.\d+)(?![\w.])'
     match_kinds: number

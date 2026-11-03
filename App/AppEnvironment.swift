@@ -1,13 +1,13 @@
 import AppKit
-import GlintCore
-import GlintPerception
-import GlintPlatform
-import GlintRuntime
-import GlintServices
-import GlintUI
+import SaccadeCore
+import SaccadePerception
+import SaccadePlatform
+import SaccadeRuntime
+import SaccadeServices
+import SaccadeUI
 
 /// The composition root (ARCHITECTURE §3): builds the object graph and wires streams and windows together.
-/// Decisions live in GlintCore and GlintRuntime; this file only connects them.
+/// Decisions live in SaccadeCore and SaccadeRuntime; this file only connects them.
 @MainActor
 final class AppEnvironment {
     let paths: AppPaths
@@ -24,12 +24,12 @@ final class AppEnvironment {
     private var calibrationOpen = false
 
     static func makeLive() -> AppEnvironment {
-        let isUITest = UserDefaults.standard.bool(forKey: "GlintUITestMode")
+        let isUITest = UserDefaults.standard.bool(forKey: "SaccadeUITestMode")
         return AppEnvironment(paths: .live(), bundle: .main, startUpdater: !isUITest, startTracking: !isUITest)
     }
 
     init(paths: AppPaths, bundle: Bundle, startUpdater: Bool, startTracking: Bool) {
-        let launch = GlintSignposts.shared.begin(.appLaunch)
+        let launch = SaccadeSignposts.shared.begin(.appLaunch)
         self.paths = paths
         settingsStore = SettingsStore(paths: paths)
         let settings = settingsStore.load()
@@ -58,7 +58,7 @@ final class AppEnvironment {
             tracking.apply(settings: settings)
         }
         sync()
-        GlintSignposts.shared.end(.appLaunch, launch)
+        SaccadeSignposts.shared.end(.appLaunch, launch)
     }
 
     // MARK: State → UI
@@ -156,7 +156,7 @@ final class AppEnvironment {
         )
     }
 
-    private func fix(_ attention: GlintStatus.Attention) {
+    private func fix(_ attention: SaccadeStatus.Attention) {
         switch attention {
         case .cameraPermissionMissing:
             open("x-apple.systempreferences:com.apple.preference.security?Privacy_Camera")
@@ -181,7 +181,7 @@ final class AppEnvironment {
         do {
             try settingsStore.save(settings)
         } catch {
-            GlintLog.log(error, in: .storage)
+            SaccadeLog.log(error, in: .storage)
         }
     }
 

@@ -1,4 +1,4 @@
-// Rasterizes Design/AppIcon/glint-app-icon.svg into App/Resources/Assets.xcassets/AppIcon.appiconset (every size).
+// Rasterizes Design/AppIcon/saccade-app-icon.svg into App/Resources/Assets.xcassets/AppIcon.appiconset (every size).
 // Dev-only design tool (not part of the app): needs Node + Playwright's Chromium.
 // Usage: node scripts/icons/render-app-icon.mjs
 import { readFileSync } from 'node:fs';
@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 const require = createRequire(import.meta.url);
 const { chromium } = require('playwright');
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const svg = readFileSync(join(root, 'Design/AppIcon/glint-app-icon.svg'), 'utf8');
+const svg = readFileSync(join(root, 'Design/AppIcon/saccade-app-icon.svg'), 'utf8');
 const set = join(root, 'App/Resources/Assets.xcassets/AppIcon.appiconset');
 const { images } = JSON.parse(readFileSync(join(set, 'Contents.json'), 'utf8'));
 

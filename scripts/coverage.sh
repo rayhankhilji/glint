@@ -4,8 +4,8 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 case "${1:-}" in
-  core) PKG="$ROOT/Packages/GlintCore"; GATES="GlintCore=90" ;;
-  kit)  PKG="$ROOT/Packages/GlintKit";  GATES="GlintServices=80 GlintSystem=60 GlintPerception=60" ;;
+  core) PKG="$ROOT/Packages/SaccadeCore"; GATES="SaccadeCore=90" ;;
+  kit)  PKG="$ROOT/Packages/SaccadeKit";  GATES="SaccadeServices=80 SaccadeSystem=60 SaccadePerception=60" ;;
   *) echo "usage: scripts/coverage.sh core|kit" >&2; exit 2 ;;
 esac
 JSON="$(swift test --package-path "$PKG" --show-codecov-path)"

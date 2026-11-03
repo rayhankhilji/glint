@@ -10,5 +10,5 @@
 --importgrouping testable-last
 --stripunusedargs closure-only
 --header ignore
---exclude .build,.tools,build,**/.build,Packages/*/.build,DerivedData,Packages/GlintKit/Sources/GlintUI/Icons/GlintIconData.swift,Packages/GlintKit/Sources/GlintUI/DesignSystem/GlintColorTokens.swift
+--exclude .build,.tools,build,**/.build,Packages/*/.build,DerivedData,Packages/SaccadeKit/Sources/SaccadeUI/Icons/SaccadeIconData.swift,Packages/SaccadeKit/Sources/SaccadeUI/DesignSystem/SaccadeColorTokens.swift
 --disable redundantReturn,wrapMultilineStatementBraces,wrapPropertyBodies,blankLinesBetweenScopes

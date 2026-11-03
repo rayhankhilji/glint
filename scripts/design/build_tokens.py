@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compiles Design/tokens.json into GlintUI/DesignSystem/GlintColorTokens.swift (generated; never edit by hand).
+"""Compiles Design/tokens.json into SaccadeUI/DesignSystem/SaccadeColorTokens.swift (generated; never edit by hand).
 
 Chrome tokens become appearance-aware colors (NSColor dynamic provider), so the Swift package needs no asset
 catalog. Usage: python3 scripts/design/build_tokens.py [--check]
@@ -10,7 +10,7 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "Design/tokens.json"
-OUTPUT = ROOT / "Packages/GlintKit/Sources/GlintUI/DesignSystem/GlintColorTokens.swift"
+OUTPUT = ROOT / "Packages/SaccadeKit/Sources/SaccadeUI/DesignSystem/SaccadeColorTokens.swift"
 
 
 def rgba(hex_value):
@@ -35,7 +35,7 @@ def generate():
         "import AppKit", "import SwiftUI", "",
         "/// Color tokens (DESIGN_SYSTEM §2). Chrome tokens adapt to light/dark; overlay tokens are fixed because the",
         "/// overlay sits on arbitrary content.",
-        "public enum GlintColor {",
+        "public enum SaccadeColor {",
     ]
     for name, t in tokens["chrome"].items():
         out.append(f"    /// {t['use']}")
@@ -57,7 +57,7 @@ def main(argv):
     swift = generate()
     if "--check" in argv:
         if not OUTPUT.exists() or OUTPUT.read_text() != swift:
-            print("GlintColorTokens.swift is out of date. Run: python3 scripts/design/build_tokens.py")
+            print("SaccadeColorTokens.swift is out of date. Run: python3 scripts/design/build_tokens.py")
             return 1
         print("tokens: up to date")
         return 0

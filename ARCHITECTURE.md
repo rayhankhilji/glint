@@ -1,22 +1,22 @@
-# Glint — Architecture
+# Saccade — Architecture
 
-> Version: 1.0 · Updated: 2026-11-03 · Source of truth for how Glint fits together. If code and this doc disagree, fix one of them in the same PR and record an ADR (§16).
+> Version: 1.0 · Updated: 2026-11-03 · Source of truth for how Saccade fits together. If code and this doc disagree, fix one of them in the same PR and record an ADR (§16).
 
 ## 1. System Overview
 
-Glint is a single, non-sandboxed, Developer ID–signed macOS menu-bar app. A perception pipeline turns camera frames into gaze estimates and eye events entirely on-device (camera → face/iris landmarks on the Neural Engine → features → calibrated mapper → filters → events). A pure-Swift **intent engine** combines those events with a snapshot of the UI under the gaze, read through the macOS Accessibility (AX) API, and decides on actions: snap, click, scroll, focus, or reading marker. A **system layer** performs the actions with AX actions or synthetic `CGEvent`s, and a click-through **overlay** renders the glint. The only network traffic is Sparkle update checks and, if the user opts in, TelemetryDeck/Sentry.
+Saccade is a single, non-sandboxed, Developer ID–signed macOS menu-bar app. A perception pipeline turns camera frames into gaze estimates and eye events entirely on-device (camera → face/iris landmarks on the Neural Engine → features → calibrated mapper → filters → events). A pure-Swift **intent engine** combines those events with a snapshot of the UI under the gaze, read through the macOS Accessibility (AX) API, and decides on actions: snap, click, scroll, focus, or reading marker. A **system layer** performs the actions with AX actions or synthetic `CGEvent`s, and a click-through **overlay** renders the highlight. The only network traffic is Sparkle update checks and, if the user opts in, TelemetryDeck/Sentry.
 
 ```mermaid
 flowchart LR
   subgraph Mac["User's Mac (all processing local)"]
-    CAM["Camera<br/>(built-in / USB / Continuity)"] -->|"CVPixelBuffer 30–60 fps (AVFoundation)"| PER["GlintPerception<br/>CameraService + LandmarkProvider"]
-    PER -->|"FaceObservation (478 landmarks, pose)"| CORE["GlintCore (pure Swift)<br/>FeatureExtractor → GazeMapper → Filters → EventDetectors → IntentEngine"]
-    SYS["GlintSystem<br/>AXService · WindowService · InputMonitor · SystemEvents"] -->|"WorldSnapshot (candidates, scroll area, windows, input state)"| CORE
-    CORE -->|"IntentAction"| ACT["GlintSystem.ActuationService<br/>AXPress / AXShowMenu / AXRaise / CGEvent scroll+click"]
-    CORE -->|"OverlayState"| UI["GlintUI<br/>Overlay · MenuBar · Onboarding · Calibration · Settings"]
+    CAM["Camera<br/>(built-in / USB / Continuity)"] -->|"CVPixelBuffer 30–60 fps (AVFoundation)"| PER["SaccadePerception<br/>CameraService + LandmarkProvider"]
+    PER -->|"FaceObservation (478 landmarks, pose)"| CORE["SaccadeCore (pure Swift)<br/>FeatureExtractor → GazeMapper → Filters → EventDetectors → IntentEngine"]
+    SYS["SaccadeSystem<br/>AXService · WindowService · InputMonitor · SystemEvents"] -->|"WorldSnapshot (candidates, scroll area, windows, input state)"| CORE
+    CORE -->|"IntentAction"| ACT["SaccadeSystem.ActuationService<br/>AXPress / AXShowMenu / AXRaise / CGEvent scroll+click"]
+    CORE -->|"OverlayState"| UI["SaccadeUI<br/>Overlay · MenuBar · Onboarding · Calibration · Settings"]
     ACT -->|"AX API / Quartz Event Services"| APPS["Other apps' windows"]
     SYS -->|"AXUIElement queries (50 ms timeout)"| APPS
-    STORE[("~/Library/Application Support/Glint<br/>settings.json · profiles/*.json · metrics/*.json")]
+    STORE[("~/Library/Application Support/Saccade<br/>settings.json · profiles/*.json · metrics/*.json")]
     CORE <--> |"Codable JSON"| STORE
   end
   UI -->|"HTTPS appcast GET (daily)"| SPARKLE["Sparkle appcast + DMG<br/>(GitHub Releases)"]
@@ -35,51 +35,51 @@ Pinned versions, verified 2026-11-03 (P0.T1). Rule: pin the newest release that 
 | Min OS / hardware | macOS 14.0, Apple Silicon only | — | Neural Engine for latency/energy; `@Observable`, SwiftUI `MenuBarExtra`, shader effects. |
 | UI | SwiftUI + AppKit bridges (`NSPanel`, `NSStatusItem`) | — | SwiftUI for all views; AppKit only for window levels, click-through overlay, status item geometry. |
 | Glass material | `glassEffect()` on macOS 26+, `.ultraThinMaterial`/`NSVisualEffectView` fallback on 14–15 | — | Apple-native liquid glass where available, graceful fallback. |
-| Shaders | SwiftUI `layerEffect`/`colorEffect` with Metal `.metal` files | — | Glint bloom, specular sweep, and flare at 120 Hz on the GPU. |
+| Shaders | SwiftUI `layerEffect`/`colorEffect` with Metal `.metal` files | — | Saccade bloom, specular sweep, and flare at 120 Hz on the GPU. |
 | Camera | AVFoundation `AVCaptureSession` | — | Native, supports Continuity Camera. |
 | Landmarks (primary) | MediaPipe Face Landmarker models (face detector + 478-pt landmarks incl. iris + blendshapes), converted to ONNX, run with ONNX Runtime + Core ML EP | ORT 1.24.2 (`onnxruntime-swift-package-manager`) | Iris landmarks + blink blendshapes; Apache-2.0 models; ANE acceleration. Decided in ADR-002. |
 | Landmarks (fallback) | Apple Vision `VNDetectFaceLandmarksRequest` (revision 3) + `VNDetectFaceRectanglesRequest` (yaw/pitch/roll) | — | Zero-dependency fallback; selected automatically if the ORT provider fails to load. |
-| Math | Hand-written small linear algebra in GlintCore (Cholesky ridge solve, ≤ 64×64) | — | Must compile on Linux (no Accelerate) for agent/CI testing. |
+| Math | Hand-written small linear algebra in SaccadeCore (Cholesky ridge solve, ≤ 64×64) | — | Must compile on Linux (no Accelerate) for agent/CI testing. |
 | Global hotkey | `sindresorhus/KeyboardShortcuts` | 3.1.0 | Battle-tested recorder UI + Carbon hotkeys; MIT. |
 | Launch at login | `SMAppService.mainApp` | — | Native, no helper app. |
 | Updates | Sparkle | 2.10.0 | De facto Mac updater, EdDSA-signed appcasts. |
 | Metrics (opt-in) | TelemetryDeck SwiftSDK | 2.14.2 | Privacy-first, anonymized, no server to run. |
 | Crash reports (opt-in) | Sentry Cocoa SDK | 9.30.2 | Symbolicated crashes; PII off. |
 | Project generation | XcodeGen (`project.yml`) | 2.46.0 | Agents edit YAML, never `project.pbxproj`. |
-| Packages | Swift Package Manager (local packages `Packages/GlintCore`, `Packages/GlintKit`) | — | Modular, testable with `swift test`; GlintCore also on Linux. |
+| Packages | Swift Package Manager (local packages `Packages/SaccadeCore`, `Packages/SaccadeKit`) | — | Modular, testable with `swift test`; SaccadeCore also on Linux. |
 | Tests | Swift Testing (`import Testing`) for units; XCTest/XCUITest for UI; `pointfreeco/swift-snapshot-testing` for view snapshots | 1.19.6 | Modern test macros; snapshot tests for visual regressions. |
 | Lint / format | SwiftLint (strict) + SwiftFormat | SwiftLint 0.65.1, SwiftFormat 0.63.1 | Consistent style, enforced in CI. |
 | Model conversion | Python 3.12 via `uv`, `tf2onnx`, `onnx`, `onnxruntime` (scripts only, not shipped) | — | Reproducible `Models/` artifacts with checksums. |
 | DMG | `create-dmg` (npm or brew) | — | Branded drag-to-install DMG. |
-| CI | GitHub Actions: `ubuntu-24.04` (container `swift:6.4.1-noble`) + `macos-26` (Xcode 27.1) | — | Linux job tests GlintCore cheaply; macOS job builds/tests the app. |
+| CI | GitHub Actions: `ubuntu-24.04` (container `swift:6.4.1-noble`) + `macos-26` (Xcode 27.1) | — | Linux job tests SaccadeCore cheaply; macOS job builds/tests the app. |
 
 ## 3. Component Boundaries
 
-Package layout: two local SwiftPM packages. `Packages/GlintCore` is cross-platform (macOS + Linux) and holds `GlintCore`, `glint-eval` and their tests. `Packages/GlintKit` is macOS-only, depends on GlintCore by path, and holds `GlintPlatform`, `GlintPerception`, `GlintSystem`, `GlintServices`, `GlintUI`, `GlintRuntime` and their tests. The Xcode app target `Glint` (`App/`) is the composition root.
+Package layout: two local SwiftPM packages. `Packages/SaccadeCore` is cross-platform (macOS + Linux) and holds `SaccadeCore`, `saccade-eval` and their tests. `Packages/SaccadeKit` is macOS-only, depends on SaccadeCore by path, and holds `SaccadePlatform`, `SaccadePerception`, `SaccadeSystem`, `SaccadeServices`, `SaccadeUI`, `SaccadeRuntime` and their tests. The Xcode app target `Saccade` (`App/`) is the composition root.
 
 | Component | Responsibility | Owns | Exposes | Depends on | Must NOT |
 |---|---|---|---|---|---|
-| **GlintCore** | All pure logic: geometry, landmark → feature extraction, gaze mapping, filters, fixation/blink detection, blink grammar, snap scoring, scroll/focus/reading state machines, `IntentEngine`, settings models + migrations, trace format, telemetry schema & aggregation | Algorithm state; no I/O | `IntentEngine`, `GazeEstimator`, `FeatureExtractor`, `GazeMapper`, `BlinkGrammar`, models (§4), `Clock` protocol | Foundation only | Import AppKit, AVFoundation, ApplicationServices, Vision, CoreML, SwiftUI; read wall-clock time directly (use injected `Clock`); do file or network I/O. Must compile on Linux. |
-| **GlintPerception** | Camera capture, landmark providers, frame-rate control, `GazePipeline` actor, `TraceRecorder` (debug) | `AVCaptureSession`, ORT session, current `FaceObservation` | `GazePipeline.samples: AsyncStream<GazeSample>`, `LandmarkProvider` protocol | GlintCore, AVFoundation, Vision, onnxruntime | Retain pixel buffers past one inference; write images anywhere; touch AX or UI. |
-| **GlintSystem** | Accessibility queries, window list, actuation (AX actions, CGEvents), input monitoring, permissions, system events (lock/sleep/display changes) | `AXUIElement` registry (`AXElementRef` ↔ `AXUIElement`), event taps/monitors | `AXService`, `WindowService`, `ActuationService`, `InputMonitor`, `PermissionsService`, `SystemEvents` | GlintCore, ApplicationServices, AppKit, CoreGraphics | Decide *whether* to act (only the IntentEngine decides); log AX string values at `.public`; read `AXValue` of secure text fields; post keyboard events. |
-| **GlintServices** | Persistence (settings, profiles, metrics queue), telemetry sending, crash reporter wrapper | Files under Application Support | `SettingsStore`, `ProfileStore`, `MetricsQueue`, `TelemetryClient`, `CrashReporter` | GlintCore, TelemetryDeck, Sentry | Send anything when `MetricsConsent.state != .optedIn`; send fields not in the schema allowlist (§8). |
-| **GlintUI** | All SwiftUI views & AppKit window controllers: overlay, menu bar popover, onboarding, calibration, settings, HUD, Eval Arena (DEBUG) | View state only | Window controllers + views; `DesignTokens` | GlintCore (models), SwiftUI, AppKit | Contain business rules (thresholds, gating); call AX/CGEvent directly; use raw colors/durations (tokens only). |
-| **GlintPlatform** | macOS shared kernel: `GlintLog` (os.Logger categories), `GlintSignposts`, `SystemClock`, `AppPaths` | — | those types | GlintCore, os | Contain domain logic; import SwiftUI/AppKit. |
-| **GlintRuntime** | Orchestration actors: `IntentCoordinator` (perception stream + AX snapshots + input → `IntentEngine` → actions/overlay), `CalibrationCoordinator` (drives the pure `CalibrationSession`, persists profiles), `TrackingController` (on/off, camera start/stop, pause, system events, frame-rate modes), `SilentLearnerService` | Runtime wiring state | Coordinators consumed by GlintUI models via protocols | GlintCore, GlintPerception, GlintSystem, GlintServices | Contain thresholds or decision logic (that's GlintCore); import SwiftUI. |
-| **GlintEval** (library) + **glint-eval** (thin executable) | Replay traces through GlintCore and report metrics; the library holds the logic so it is unit-testable | — | `GlintEval.run(arguments:output:)`, CLI | GlintCore | Depend on macOS frameworks (must run on Linux CI). |
-| **Glint** (app target) | Composition root: builds `AppEnvironment` (instantiates the GlintRuntime coordinators and GlintUI controllers), Sparkle `SPUStandardUpdaterController`, KeyboardShortcuts registration, app lifecycle | Object graph | `@main GlintApp` | All modules, Sparkle, KeyboardShortcuts | Contain algorithms, coordinators, or view code beyond wiring. |
+| **SaccadeCore** | All pure logic: geometry, landmark → feature extraction, gaze mapping, filters, fixation/blink detection, blink grammar, snap scoring, scroll/focus/reading state machines, `IntentEngine`, settings models + migrations, trace format, telemetry schema & aggregation | Algorithm state; no I/O | `IntentEngine`, `GazeEstimator`, `FeatureExtractor`, `GazeMapper`, `BlinkGrammar`, models (§4), `Clock` protocol | Foundation only | Import AppKit, AVFoundation, ApplicationServices, Vision, CoreML, SwiftUI; read wall-clock time directly (use injected `Clock`); do file or network I/O. Must compile on Linux. |
+| **SaccadePerception** | Camera capture, landmark providers, frame-rate control, `GazePipeline` actor, `TraceRecorder` (debug) | `AVCaptureSession`, ORT session, current `FaceObservation` | `GazePipeline.samples: AsyncStream<GazeSample>`, `LandmarkProvider` protocol | SaccadeCore, AVFoundation, Vision, onnxruntime | Retain pixel buffers past one inference; write images anywhere; touch AX or UI. |
+| **SaccadeSystem** | Accessibility queries, window list, actuation (AX actions, CGEvents), input monitoring, permissions, system events (lock/sleep/display changes) | `AXUIElement` registry (`AXElementRef` ↔ `AXUIElement`), event taps/monitors | `AXService`, `WindowService`, `ActuationService`, `InputMonitor`, `PermissionsService`, `SystemEvents` | SaccadeCore, ApplicationServices, AppKit, CoreGraphics | Decide *whether* to act (only the IntentEngine decides); log AX string values at `.public`; read `AXValue` of secure text fields; post keyboard events. |
+| **SaccadeServices** | Persistence (settings, profiles, metrics queue), telemetry sending, crash reporter wrapper | Files under Application Support | `SettingsStore`, `ProfileStore`, `MetricsQueue`, `TelemetryClient`, `CrashReporter` | SaccadeCore, TelemetryDeck, Sentry | Send anything when `MetricsConsent.state != .optedIn`; send fields not in the schema allowlist (§8). |
+| **SaccadeUI** | All SwiftUI views & AppKit window controllers: overlay, menu bar popover, onboarding, calibration, settings, HUD, Eval Arena (DEBUG) | View state only | Window controllers + views; `DesignTokens` | SaccadeCore (models), SwiftUI, AppKit | Contain business rules (thresholds, gating); call AX/CGEvent directly; use raw colors/durations (tokens only). |
+| **SaccadePlatform** | macOS shared kernel: `SaccadeLog` (os.Logger categories), `SaccadeSignposts`, `SystemClock`, `AppPaths` | — | those types | SaccadeCore, os | Contain domain logic; import SwiftUI/AppKit. |
+| **SaccadeRuntime** | Orchestration actors: `IntentCoordinator` (perception stream + AX snapshots + input → `IntentEngine` → actions/overlay), `CalibrationCoordinator` (drives the pure `CalibrationSession`, persists profiles), `TrackingController` (on/off, camera start/stop, pause, system events, frame-rate modes), `SilentLearnerService` | Runtime wiring state | Coordinators consumed by SaccadeUI models via protocols | SaccadeCore, SaccadePerception, SaccadeSystem, SaccadeServices | Contain thresholds or decision logic (that's SaccadeCore); import SwiftUI. |
+| **SaccadeEval** (library) + **saccade-eval** (thin executable) | Replay traces through SaccadeCore and report metrics; the library holds the logic so it is unit-testable | — | `SaccadeEval.run(arguments:output:)`, CLI | SaccadeCore | Depend on macOS frameworks (must run on Linux CI). |
+| **Saccade** (app target) | Composition root: builds `AppEnvironment` (instantiates the SaccadeRuntime coordinators and SaccadeUI controllers), Sparkle `SPUStandardUpdaterController`, KeyboardShortcuts registration, app lifecycle | Object graph | `@main SaccadeApp` | All modules, Sparkle, KeyboardShortcuts | Contain algorithms, coordinators, or view code beyond wiring. |
 
-`IntentCoordinator` (GlintRuntime, an actor) is the only place that combines the async perception stream with async AX snapshots and calls `IntentEngine.step(...)`, then dispatches actions to `ActuationService` and overlay state to the UI.
+`IntentCoordinator` (SaccadeRuntime, an actor) is the only place that combines the async perception stream with async AX snapshots and calls `IntentEngine.step(...)`, then dispatches actions to `ActuationService` and overlay state to the UI.
 
 ## 4. Data Model
 
-There is no database. Persistent entities are Codable JSON files written atomically (`Data.write(options: .atomic)`) under `~/Library/Application Support/Glint/`. Runtime entities live in memory only.
+There is no database. Persistent entities are Codable JSON files written atomically (`Data.write(options: .atomic)`) under `~/Library/Application Support/Saccade/`. Runtime entities live in memory only.
 
 **Conventions**
 
 - IDs: `UUID` (v4, Foundation) as `id`.
 - Timestamps: persisted as ISO-8601 UTC strings (`Date` + `.iso8601` strategy); in-memory monotonic time is `TimeInterval` seconds from the injected `Clock` (`mach_continuous_time`-based in production).
-- Coordinates: **global display points, top-left origin** (Quartz/AX convention). Convert to AppKit bottom-left only inside GlintUI window code via `ScreenGeometry.toAppKit(_:)`.
+- Coordinates: **global display points, top-left origin** (Quartz/AX convention). Convert to AppKit bottom-left only inside SaccadeUI window code via `ScreenGeometry.toAppKit(_:)`.
 - Every file has `schemaVersion: Int`. `SettingsMigrator` / `ProfileMigrator` upgrade step by step (`v1→v2`, …). Shipped migration steps are never edited; add a new step. If a file is unreadable: rename it to `<name>.corrupt-<ISO date>.json`, load defaults, and show a HUD notice once.
 
 ```mermaid
@@ -101,7 +101,7 @@ erDiagram
 | schemaVersion | Int | = 1 | |
 | isEnabled | Bool | default true | last on/off state (F-10) |
 | onboarding | `OnboardingProgress` enum: `notStarted`,`camera`,`accessibility`,`calibrate`,`playground`,`completed` | default `notStarted` | F-01.AC4 resume |
-| (hotkey) | — | — | not in `Settings`: KeyboardShortcuts stores `toggleGlint` (default ⌃⌥G) in UserDefaults; one source of truth |
+| (hotkey) | — | — | not in `Settings`: KeyboardShortcuts stores `toggleSaccade` (default ⌃⌥G) in UserDefaults; one source of truth |
 | launchAtLogin | Bool | default false | `SMAppService` state is the source of truth; this mirrors the user's intent |
 | gazeDisplayUUID | String? | nil = display containing camera / main display | `CGDisplayCreateUUIDFromDisplayID` |
 | cameraUniqueID | String? | nil = first front-facing / built-in | `AVCaptureDevice.uniqueID` |
@@ -224,7 +224,7 @@ File name: `profiles/<sha256(cameraUniqueID + "|" + displayUUID) prefix 16>.json
 | `WindowInfo` | `windowID: CGWindowID`, `pid`, `bundleID`, `frame`, `isFocused` | WindowService |
 | `WorldSnapshot` | `t`, `candidates`, `scrollArea`, `windowUnderGaze`, `focusedWindow`, `secondsSinceKeyDown`, `mouseButtonDown`, `lastPhysicalPointerMoveT`, `lastPhysicalScrollT`, `frontAppRule`, `statusItemFrame`, `lineRect: Rect?` | IntentCoordinator → IntentEngine |
 | `IntentAction` | enum: `.press(AXElementRef, fallbackPoint)`, `.showMenu(AXElementRef, fallbackPoint)`, `.glide(ScrollAreaRef, deltaPt, at: Point, durationMs)`, `.focus(WindowInfo)`, `.setPaused(Bool)`, `.markLine(Rect)`, `.manualAccessibility(pid)` | IntentEngine → ActuationService / UI |
-| `OverlayState` | `glint: GlintVisual?` (`frame`, `phase`: `.acquiring/.locked/.armed/.uncertain(second: Rect)/.flare/.reject`), `aura: (center, radius)?`, `edgeGlow: (rect, edge, progress)?`, `lineMarker: Rect?`, `windowFlash: Rect?`, `debugDot: Point?` | IntentEngine → OverlayController |
+| `OverlayState` | `saccade: SaccadeVisual?` (`frame`, `phase`: `.acquiring/.locked/.armed/.uncertain(second: Rect)/.flare/.reject`), `aura: (center, radius)?`, `edgeGlow: (rect, edge, progress)?`, `lineMarker: Rect?`, `windowFlash: Rect?`, `debugDot: Point?` | IntentEngine → OverlayController |
 
 **Indexes / lookups:** `ProfileStore` keeps an in-memory dictionary `[ProfileKey: CalibrationProfile]`. `AXService` keeps an LRU of `AXElementRef → AXUIElement` (max 512, cleared on app switch).
 
@@ -232,15 +232,15 @@ File name: `profiles/<sha256(cameraUniqueID + "|" + displayUUID) prefix 16>.json
 
 ## 5. Internal API & Event Contracts
 
-Glint has no HTTP API. Its "API" is the set of Swift protocols between modules plus three outbound network integrations (§8). Contracts below are normative: names and signatures must match.
+Saccade has no HTTP API. Its "API" is the set of Swift protocols between modules plus three outbound network integrations (§8). Contracts below are normative: names and signatures must match.
 
 ### 5.1 Module protocols
 
 ```swift
-// GlintCore
+// SaccadeCore
 public protocol Clock: Sendable { func now() -> TimeInterval }
 
-public protocol LandmarkProviding: Sendable {            // implemented in GlintPerception
+public protocol LandmarkProviding: Sendable {            // implemented in SaccadePerception
   var kind: LandmarkProviderKind { get }                 // .mediapipe | .vision
   func observe(_ frame: CameraFrame) async throws -> FaceObservation?   // nil = no face
 }
@@ -258,29 +258,29 @@ public struct IntentEngine {                             // pure, value type, de
 }
 
 public enum GazeMapperFitter {
-  public static func fit(samples: [CalibrationSample], now: Date) throws(GlintError) -> MapperModel
+  public static func fit(samples: [CalibrationSample], now: Date) throws(SaccadeError) -> MapperModel
   public static func looError(_ model: MapperModel, samples: [CalibrationSample]) -> Double
 }
 ```
 
 ```swift
-// GlintSystem
+// SaccadeSystem
 public protocol AXServicing: Sendable {
   func snapshot(around p: Point, radius: Double, timeout: Duration) async -> AXSnapshot   // candidates + scroll area + lineRect
   func setManualAccessibility(pid: pid_t) async
-  func perform(_ action: AXActionName, on ref: AXElementRef) async throws(GlintError)
+  func perform(_ action: AXActionName, on ref: AXElementRef) async throws(SaccadeError)
   func scrollValue(of ref: AXElementRef) async -> Double?
 }
 public protocol WindowServicing: Sendable {
   func window(at p: Point) -> WindowInfo?
   func focusedWindow() -> WindowInfo?
-  func raise(_ w: WindowInfo) async throws(GlintError)
+  func raise(_ w: WindowInfo) async throws(SaccadeError)
 }
 public protocol ActuationServicing: Sendable {
-  func execute(_ action: IntentAction) async -> ActuationResult      // .done | .fallbackUsed | .failed(GlintError)
+  func execute(_ action: IntentAction) async -> ActuationResult      // .done | .fallbackUsed | .failed(SaccadeError)
 }
 public protocol InputMonitoring: Sendable {
-  var physicalClicks: AsyncStream<PhysicalClick> { get }            // excludes events with Glint's sourceUserData tag
+  var physicalClicks: AsyncStream<PhysicalClick> { get }            // excludes events with Saccade's sourceUserData tag
   var physicalActivity: AsyncStream<PhysicalActivity> { get }       // pointer moves > 4 pt, scroll, mouse down/up
   func secondsSinceLastKeyDown() -> TimeInterval                    // CGEventSource.secondsSinceLastEventType
 }
@@ -293,16 +293,16 @@ public protocol PermissionsServicing: Sendable {
 ```
 
 ```swift
-// GlintServices
+// SaccadeServices
 public protocol SettingsStoring: Sendable {
   func load() -> Settings
-  func save(_ s: Settings) throws(GlintError)
+  func save(_ s: Settings) throws(SaccadeError)
   var changes: AsyncStream<Settings> { get }
 }
 public protocol ProfileStoring: Sendable {
   func profile(for key: ProfileKey) -> CalibrationProfile?
-  func save(_ p: CalibrationProfile) throws(GlintError)
-  func deleteAll() throws(GlintError)
+  func save(_ p: CalibrationProfile) throws(SaccadeError)
+  func deleteAll() throws(SaccadeError)
 }
 public protocol TelemetryClienting: Sendable {
   func signal(_ s: TelemetrySignal) async      // no-op unless optedIn; TelemetrySignal is a closed enum (§8)
@@ -320,29 +320,29 @@ public protocol TelemetryClienting: Sendable {
 | SystemEvents | `events` | `.screenLocked/.unlocked/.willSleep/.didWake/.displaysChanged/.sessionResigned/.sessionActive` | AppEnvironment | F-10 |
 | IntentEngine | `IntentAction` | §4 | ActuationService / OverlayController / PauseController | F-05–F-10 |
 | IntentEngine | `OverlayState` | §4 | OverlayController (MainActor, display link) | F-05, F-07, F-09 |
-| CalibrationCoordinator (wrapping GlintCore `CalibrationSession`) | `CalibrationProgress` | `.waitingForDoubleBlink/.anchor(i, progress)/.faceLost/.validating(i)/.result(level, errorDeg)/.failed(reason)` | CalibrationView | F-03 |
+| CalibrationCoordinator (wrapping SaccadeCore `CalibrationSession`) | `CalibrationProgress` | `.waitingForDoubleBlink/.anchor(i, progress)/.faceLost/.validating(i)/.result(level, errorDeg)/.failed(reason)` | CalibrationView | F-03 |
 | SilentLearner | `modelUpdated(MapperModel)` | | GazePipeline (atomic swap) | F-04 |
 
-### 5.3 Error catalogue (`GlintError`)
+### 5.3 Error catalogue (`SaccadeError`)
 
-`GlintError` is a single `enum` in GlintCore (`Error, Equatable, Sendable`) with a stable `code: String` used in logs, diagnostics export and (bucketed) telemetry.
+`SaccadeError` is a single `enum` in SaccadeCore (`Error, Equatable, Sendable`) with a stable `code: String` used in logs, diagnostics export and (bucketed) telemetry.
 
 | Code | Case | Raised by | User-facing surface | Recovery |
 |---|---|---|---|---|
 | `CAMERA_PERMISSION_DENIED` | `.cameraPermissionDenied` | PermissionsService | Onboarding denied state / popover banner | Open System Settings |
 | `CAMERA_RESTRICTED` | `.cameraRestricted` | PermissionsService | "Your organization blocks camera access" | None |
-| `AX_PERMISSION_MISSING` | `.accessibilityNotTrusted` | PermissionsService, AXService | Banner "Glint can't act — Accessibility is off" | Deep link + relaunch prompt |
+| `AX_PERMISSION_MISSING` | `.accessibilityNotTrusted` | PermissionsService, AXService | Banner "Saccade can't act — Accessibility is off" | Deep link + relaunch prompt |
 | `CAMERA_NOT_FOUND` | `.cameraNotFound` | CameraService | "Connect a camera or turn on Continuity Camera" | Auto-retry on device connect notification |
 | `CAMERA_INTERRUPTED` | `.cameraInterrupted(reason)` | CameraService | HUD "Camera paused by macOS" | Auto-restart with backoff 0.5/1/2 s, then every 5 s |
-| `MODEL_LOAD_FAILED` | `.modelLoadFailed(provider)` | LandmarkProvider | Silent fallback to Vision; if both fail, popover "Glint couldn't start its vision engine. Reinstall Glint." | Fallback provider |
+| `MODEL_LOAD_FAILED` | `.modelLoadFailed(provider)` | LandmarkProvider | Silent fallback to Vision; if both fail, popover "Saccade couldn't start its vision engine. Reinstall Saccade." | Fallback provider |
 | `MODEL_CHECKSUM_MISMATCH` | `.modelChecksumMismatch` | ModelLoader | same as above | Refuse to load (G-SEC-08) |
 | `NOT_CALIBRATED` | `.notCalibrated` | IntentCoordinator | Popover chip "Not calibrated" + Calibrate CTA | Run F-03 |
 | `CALIBRATION_INSUFFICIENT` | `.calibrationInsufficient(anchorsOK: Int)` | CalibrationSession | Failed state copy | Retry |
 | `MAPPER_SINGULAR` | `.mapperSingular` | GazeMapperFitter | none (keep old model) | Increase lambda ×10, retry once |
 | `AX_TIMEOUT` | `.axTimeout` | AXService | none (diagnostics counter) | Keep previous snapshot |
 | `AX_ACTION_UNSUPPORTED` | `.axActionUnsupported(action)` | AXService | none | ActuationService uses CGEvent fallback |
-| `AX_ELEMENT_GONE` | `.axElementInvalid` | AXService | glint reject shake | Drop lock |
-| `ACTUATION_FAILED` | `.actuationFailed` | ActuationService | glint reject shake | none |
+| `AX_ELEMENT_GONE` | `.axElementInvalid` | AXService | saccade reject shake | Drop lock |
+| `ACTUATION_FAILED` | `.actuationFailed` | ActuationService | saccade reject shake | none |
 | `SETTINGS_CORRUPT` | `.settingsCorrupt` | SettingsStore | HUD once "Settings were reset" | Backup + defaults |
 | `PERSISTENCE_FAILED` | `.persistenceFailed` | Stores | HUD "Couldn't save — check disk space" | Retry on next change |
 | `UPDATE_FAILED` | (Sparkle-owned) | Sparkle | Only on manual check (Sparkle UI) | Sparkle retries |
@@ -356,7 +356,7 @@ sequenceDiagram
   participant C as CameraService (capture queue)
   participant P as GazePipeline (actor)
   participant L as LandmarkProvider (ORT/CoreML)
-  participant E as GazeEstimator (GlintCore)
+  participant E as GazeEstimator (SaccadeCore)
   participant I as IntentCoordinator (actor)
   participant A as AXService (ax queue)
   participant O as OverlayController (MainActor)
@@ -388,10 +388,10 @@ sequenceDiagram
   participant AX as AXService
   participant O as Overlay
   U->>E: fixation on "Next →" ≥ 250 ms (lock stable, not uncertain)
-  E-->>O: glint .locked
+  E-->>O: saccade .locked
   U->>G: blink 1 (closure ≥ thr, 50–350 ms)
   G-->>E: .firstBlink → freeze lock target
-  E-->>O: glint .armed
+  E-->>O: saccade .armed
   U->>G: blink 2 within gap 80–450 ms
   G-->>E: .doubleBlink(pattern ≤ 900 ms)
   E->>E: wait ≤ 300 ms for gaze reopen within max(1.5σ, 40pt) of frozen target
@@ -401,12 +401,12 @@ sequenceDiagram
     alt success
       AX-->>Act: .success
     else AX_ACTION_UNSUPPORTED / failure
-      Act->>Act: save cursor; CGEvent leftMouseDown/Up at fallbackPoint (sourceUserData = GLINT_TAG); restore cursor
+      Act->>Act: save cursor; CGEvent leftMouseDown/Up at fallbackPoint (sourceUserData = SACCADE_TAG); restore cursor
     end
     Act-->>E: ActuationResult
-    E-->>O: glint .flare (260 ms) then cooldown 500 ms
+    E-->>O: saccade .flare (260 ms) then cooldown 500 ms
   else gate fails
-    E-->>O: glint .reject (2 pt shake)
+    E-->>O: saccade .reject (2 pt shake)
   end
 ```
 
@@ -425,7 +425,7 @@ sequenceDiagram
     E-->>O: clear glow (at end → one 4 pt rubber-band nudge)
   else
     E->>Act: .glide(area, delta = 0.40·visibleHeight, at: gaze, 520 ms)
-    Act->>Act: post CGEvent scrollWheel (pixel units, phase began→changed→ended) at 120 Hz, eased (glide curve), location = gaze, tagged GLINT_TAG
+    Act->>Act: post CGEvent scrollWheel (pixel units, phase began→changed→ended) at 120 Hz, eased (glide curve), location = gaze, tagged SACCADE_TAG
     Note over Act: Fallback (ADR-005): if the area doesn't move within 150 ms, step AXVerticalScrollBar AXValue
     E->>E: cooldown 700 ms, then re-evaluate zone
   end
@@ -447,7 +447,7 @@ sequenceDiagram
   CC-->>CV: .waitingForDoubleBlink
   P-->>CC: blink events → BlinkSignature (open/closed EAR, gaps)
   loop 9 anchors
-    CC-->>CV: .anchor(i) (glint glides there, pauses 1.2 s)
+    CC-->>CV: .anchor(i) (saccade glides there, pauses 1.2 s)
     P-->>CC: features (skip first 300 ms; discard if faceVisible=false)
   end
   CC->>F: fit(explicit samples)
@@ -474,7 +474,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-  participant Agg as MetricsAggregator (GlintCore)
+  participant Agg as MetricsAggregator (SaccadeCore)
   participant Q as MetricsQueue
   participant T as TelemetryClient
   participant TD as TelemetryDeck
@@ -489,7 +489,7 @@ sequenceDiagram
 
 ## 7. Frontend Architecture
 
-All UI is in GlintUI; windows are created by controllers owned by `AppEnvironment`.
+All UI is in SaccadeUI; windows are created by controllers owned by `AppEnvironment`.
 
 | Surface | Type | Shown when | Data source | Calls | Feature |
 |---|---|---|---|---|---|
@@ -504,21 +504,21 @@ All UI is in GlintUI; windows are created by controllers owned by `AppEnvironmen
 
 **State strategy:** `@Observable` models on `@MainActor`, one per surface, fed by AsyncStreams from actors. No Combine in new code. Settings changes flow `View → SettingsModel → SettingsStore.save → changes stream → IntentCoordinator.update(settings:)`. URL/navigation state does not apply.
 
-**Overlay rendering:** `OverlayController` subscribes to `OverlayState`, keeps the latest value, and renders on `NSView.displayLink(target:selector:)` ticks. Glint position and size are animated by SwiftUI springs (DESIGN_SYSTEM §6). The specular sweep and flare are Metal shaders. The overlay never takes key or main window status.
+**Overlay rendering:** `OverlayController` subscribes to `OverlayState`, keeps the latest value, and renders on `NSView.displayLink(target:selector:)` ticks. Saccade position and size are animated by SwiftUI springs (DESIGN_SYSTEM §6). The specular sweep and flare are Metal shaders. The overlay never takes key or main window status.
 
 ## 8. Third-Party Integrations
 
 | Integration | Purpose | Package | Auth | Config | Webhooks | Rate limits | Failure behavior | Local dev |
 |---|---|---|---|---|---|---|---|---|
-| **ONNX Runtime** | Run MediaPipe landmark models on ANE/GPU/CPU | `microsoft/onnxruntime-swift-package-manager` (product `onnxruntime`) | none | `Models/*.onnx` + `Models/checksums.sha256` | — | — | Load fails → Vision provider (`MODEL_LOAD_FAILED`) | Same models; `GLINT_PROVIDER=vision` env forces fallback |
+| **ONNX Runtime** | Run MediaPipe landmark models on ANE/GPU/CPU | `microsoft/onnxruntime-swift-package-manager` (product `onnxruntime`) | none | `Models/*.onnx` + `Models/checksums.sha256` | — | — | Load fails → Vision provider (`MODEL_LOAD_FAILED`) | Same models; `SACCADE_PROVIDER=vision` env forces fallback |
 | **MediaPipe models** | face detector (short-range), face landmarks (478 incl. iris), blendshapes | Downloaded by `scripts/models/fetch_and_convert.py` from Google's MediaPipe model storage; converted with `tf2onnx` | — | Pinned URLs + SHA-256 in `scripts/models/manifest.json` | — | — | Checksum mismatch → refuse (G-SEC-08) | Converted ONNX committed via Git LFS |
 | **Apple Vision** | Fallback landmarks | system | — | — | — | — | — | — |
-| **Sparkle** | Auto-update (F-14) | `sparkle-project/Sparkle` 2.10.0 | EdDSA public key in Info.plist `SUPublicEDKey` | `SUFeedURL` (`GLINT_SPARKLE_FEED_URL`), `SUEnableAutomaticChecks = YES`, `SUScheduledCheckInterval = 86400` | — | GitHub Releases | Silent retry; errors shown only on manual check | `GLINT_SPARKLE_FEED_URL` → local `python3 -m http.server` serving a test appcast |
-| **TelemetryDeck** | Opt-in metrics | `TelemetryDeck/SwiftSDK` 2.14.2 | App ID | `GLINT_TELEMETRYDECK_APP_ID` | — | Free-tier signal quota; we send ≤ ~3 signals/user/day | Queue up to 7 days, then drop | `testMode` auto-enabled in DEBUG; or leave App ID empty → client is a no-op |
-| **Sentry** | Opt-in crash reports | `getsentry/sentry-cocoa` 9.30.2 | DSN | `GLINT_SENTRY_DSN`; options: `sendDefaultPii = false`, `attachScreenshot = false`, `attachViewHierarchy = false`, `enableAutoBreadcrumbTracking = false`, `beforeSend` scrubber | — | Sentry plan quota | Never initialized unless opted in; init failure is ignored | Empty DSN → no-op |
-| **KeyboardShortcuts** | Global hotkey + recorder | `sindresorhus/KeyboardShortcuts` 3.1.0 | — | Name `toggleGlint` default ⌃⌥G | — | — | Registration conflict → Settings shows "Shortcut in use" | — |
+| **Sparkle** | Auto-update (F-14) | `sparkle-project/Sparkle` 2.10.0 | EdDSA public key in Info.plist `SUPublicEDKey` | `SUFeedURL` (`SACCADE_SPARKLE_FEED_URL`), `SUEnableAutomaticChecks = YES`, `SUScheduledCheckInterval = 86400` | — | GitHub Releases | Silent retry; errors shown only on manual check | `SACCADE_SPARKLE_FEED_URL` → local `python3 -m http.server` serving a test appcast |
+| **TelemetryDeck** | Opt-in metrics | `TelemetryDeck/SwiftSDK` 2.14.2 | App ID | `SACCADE_TELEMETRYDECK_APP_ID` | — | Free-tier signal quota; we send ≤ ~3 signals/user/day | Queue up to 7 days, then drop | `testMode` auto-enabled in DEBUG; or leave App ID empty → client is a no-op |
+| **Sentry** | Opt-in crash reports | `getsentry/sentry-cocoa` 9.30.2 | DSN | `SACCADE_SENTRY_DSN`; options: `sendDefaultPii = false`, `attachScreenshot = false`, `attachViewHierarchy = false`, `enableAutoBreadcrumbTracking = false`, `beforeSend` scrubber | — | Sentry plan quota | Never initialized unless opted in; init failure is ignored | Empty DSN → no-op |
+| **KeyboardShortcuts** | Global hotkey + recorder | `sindresorhus/KeyboardShortcuts` 3.1.0 | — | Name `toggleSaccade` default ⌃⌥G | — | — | Registration conflict → Settings shows "Shortcut in use" | — |
 | **GitHub Releases** | Host DMG + `appcast.xml` | `gh` CLI in release workflow | `GITHUB_TOKEN` (CI) | — | — | — | Release job fails loudly | — |
-| **Homebrew tap** | `brew install --cask` | separate repo `homebrew-tap`, `Casks/glint.rb` | `HOMEBREW_TAP_TOKEN` (CI) | — | — | — | Manual PR if the bot fails | — |
+| **Homebrew tap** | `brew install --cask` | separate repo `homebrew-tap`, `Casks/saccade.rb` | `HOMEBREW_TAP_TOKEN` (CI) | — | — | — | Manual PR if the bot fails | — |
 
 **TelemetrySignal allowlist (closed enum, the only things ever sent):**
 
@@ -547,22 +547,22 @@ In-process scheduled work only (no server).
 
 ## 10. ML / Perception Subsystem
 
-Glint has no LLMs. This section specifies the on-device perception and intent models.
+Saccade has no LLMs. This section specifies the on-device perception and intent models.
 
 ### 10.1 Landmark providers
 
 - **MediaPipeORTProvider** (default): (1) the face detector (short-range BlazeFace, 128×128 input) runs only when there is no face track or every 30th frame; (2) the landmark model (256×256 crop around the tracked face, rotation-normalized by eye line) → 478 landmarks (468 face + 10 iris); (3) the blendshape model (input: 146 selected landmarks) → 52 blendshapes, of which `eyeBlinkLeft/Right` and `eyeSquint*` are used. ORT session options: Core ML EP with `MLComputeUnits.all`, `ModelFormat=MLProgram`, static input shapes. Preprocessing uses vImage on the pixel buffer; the buffer is released immediately after the crop tensor is built.
 - **VisionProvider** (fallback): `VNDetectFaceLandmarksRequest` (constellation 76-point) gives pupils + eye contours; head pose comes from `VNFaceObservation.yaw/pitch/roll`. Blink uses the eye aspect ratio from contours. Expected accuracy is lower; the provider kind is shown in Advanced → Diagnostics.
-- Selection: `ModelLoader` verifies the SHA-256 of each `.onnx` file against `checksums.sha256`, creates the ORT session, and runs a warm-up inference. On failure it uses Vision and records `MODEL_LOAD_FAILED`. The `GLINT_PROVIDER` env var (DEBUG only) forces a provider.
+- Selection: `ModelLoader` verifies the SHA-256 of each `.onnx` file against `checksums.sha256`, creates the ORT session, and runs a warm-up inference. On failure it uses Vision and records `MODEL_LOAD_FAILED`. The `SACCADE_PROVIDER` env var (DEBUG only) forces a provider.
 
-### 10.2 Features (`FeatureExtractor`, GlintCore)
+### 10.2 Features (`FeatureExtractor`, SaccadeCore)
 
 For each eye: the eye-corner frame is defined by the inner/outer canthus landmarks (origin = midpoint, x-axis = corner→corner, scale = half corner distance). The iris center (mean of the 5 iris landmarks) is expressed in that frame → `irisL`, `irisR`. Head pose comes from the face transform matrix (MediaPipe) or Vision angles. `faceX/Y` = nose-bridge position normalized to image size; `faceScale` = inter-ocular distance / image width (depth proxy). EAR = (vertical lid distances) / (horizontal corner distance). Closure = `clamp((openEAR − EAR) / (openEAR − closedEAR), 0, 1)`, blended 50/50 with the blendshape `eyeBlink*` when available. Feature vector length = 14, `featureVersion = 1`.
 
 ### 10.3 Gaze mapper (`GazeMapper`, ridge regression)
 
 - Basis expansion φ(x): `[1, irisL, irisR, irisL², irisR², irisL.x·irisL.y, irisR.x·irisR.y, yaw, pitch, roll, faceX, faceY, faceScale, irisL·faceScale, irisR·faceScale, yaw·irisL.x, pitch·irisL.y, yaw·irisR.x, pitch·irisR.y]` (≈ 30 terms), standardized.
-- Separate ridge regressions for x and y, `λ ∈ {1e-4 … 1e1}` chosen by leave-one-out (closed form via the hat matrix), solved with Cholesky in GlintCore.
+- Separate ridge regressions for x and y, `λ ∈ {1e-4 … 1e1}` chosen by leave-one-out (closed form via the hat matrix), solved with Cholesky in SaccadeCore.
 - Uncertainty: `sigmaPt = residualSigmaPt × (1 + 0.5 × mahalanobis(pose, poseCentroid, poseCovInv)) × (1 + 2 × (1 − confidence))`, clamped to [15, 300] pt.
 - Angular conversion for metrics: the distance estimate comes from `faceScale` with an assumed 63 mm IPD and the camera FOV (default 70° diagonal, overridable per camera model table); the display pt→mm factor comes from `CGDisplayScreenSize`.
 
@@ -574,24 +574,24 @@ For each eye: the eye-corner frame is defined by the inner/outer canthus landmar
 - **BlinkDetector**: per frame, both-eyes closure ≥ `closureThreshold` for ≥ 2 frames and 50–350 ms → `Blink{depth, symmetric}`; 400–900 ms → long closure; > 900 ms → `eyesClosed` (rest, never an action).
 - **BlinkGrammar**: a state machine over blinks: `idle → firstBlink → (doubleBlink | blinkLongBlink | timeout)` using `gapMsRange` and the 900 ms total pattern; requires `depth ≥ deliberateMinDepth` for both blinks when `sensitivity < 0.7`.
 
-### 10.5 Intent engine (GlintCore, pure)
+### 10.5 Intent engine (SaccadeCore, pure)
 
 Sub-machines are stepped in this order on every sample: `PauseMachine` → `AppRuleGate` → `SnapMachine` (F-05) → `ClickMachine` (F-06) → `ScrollZoneMachine` (F-07) → `FocusDwellMachine` (F-08) → `ReadingTracker` (F-09) → `OverlayComposer`. Each is a `struct` with explicit `State` enum and transition tests. Thresholds live in `IntentConstants` (one file); settings override a documented subset.
 
 ### 10.6 Determinism & traces
 
-- Trace format `glint-trace/v1` (JSONL): header `{version, provider, fps, display: {sizePt, mmPerPt}, camera: {model}, participant: {id(pseudonymous), glasses: Bool, lighting: enum}}`. Then one line per frame `{t, landmarks?: [[x,y,z]] (478), blend?: {eyeBlinkLeft, eyeBlinkRight}, pose: [yaw,pitch,roll], conf}`, plus label lines `{t, label: {kind: "target"|"intendedDoubleBlink"|"intendedRightClick"|"readingLine"|"scrollIntent", rect?, id?}}`.
+- Trace format `saccade-trace/v1` (JSONL): header `{version, provider, fps, display: {sizePt, mmPerPt}, camera: {model}, participant: {id(pseudonymous), glasses: Bool, lighting: enum}}`. Then one line per frame `{t, landmarks?: [[x,y,z]] (478), blend?: {eyeBlinkLeft, eyeBlinkRight}, pose: [yaw,pitch,roll], conf}`, plus label lines `{t, label: {kind: "target"|"intendedDoubleBlink"|"intendedRightClick"|"readingLine"|"scrollIntent", rect?, id?}}`.
 - Replays use `ManualClock`, so outputs are bit-identical (F-15.AC1).
 
 ## 11. Security Architecture
 
 - **No authN/authZ:** single-user local app, no accounts. The trust boundary is the user's macOS session.
-- **macOS permissions (TCC):** Camera (`NSCameraUsageDescription`: "Glint uses your camera to see where you're looking. Video never leaves your Mac and is never saved.") and Accessibility (needed to read UI elements and act). Input Monitoring is **not** requested: typing detection uses `CGEventSource.secondsSinceLastEventType` (no content) and mouse monitoring uses `NSEvent.addGlobalMonitorForEvents` for mouse types only.
+- **macOS permissions (TCC):** Camera (`NSCameraUsageDescription`: "Saccade uses your camera to see where you're looking. Video never leaves your Mac and is never saved.") and Accessibility (needed to read UI elements and act). Input Monitoring is **not** requested: typing detection uses `CGEventSource.secondsSinceLastEventType` (no content) and mouse monitoring uses `NSEvent.addGlobalMonitorForEvents` for mouse types only.
 - **Entitlements (hardened runtime):** `com.apple.security.device.camera = true`. No `com.apple.security.cs.disable-library-validation`, no JIT, no `allow-unsigned-executable-memory` (verify ORT works without them in P1.T3; if not, record an ADR before adding any).
 - **Not sandboxed** (ADR-003). Compensating controls: network allowlist (G-SEC-05), no file access outside Application Support and the user-chosen diagnostics export path.
-- **Event posting:** only mouse click (left/right), scroll-wheel, and AX actions (`AXPress`, `AXShowMenu`, `AXRaise`). Never keyboard events. Every posted CGEvent is tagged with `eventSourceUserData = 0x474C494E54` ("GLINT") so our own monitors ignore it.
-- **Data handling:** pixel buffers never leave GlintPerception and are released after one inference. AX string attributes (titles, values) are read only for role/subrole/action checks and are never logged at `.public`, stored, or sent. Secure text fields are filtered at the AXService level.
-- **Secrets:** `GLINT_TELEMETRYDECK_APP_ID`, `GLINT_SENTRY_DSN`, `GLINT_SPARKLE_PUBLIC_ED_KEY` are public-by-design identifiers embedded at build time from `Config/Secrets.xcconfig` (gitignored). Private material (`SPARKLE_PRIVATE_ED_KEY`, Developer ID certificate `.p12` + password, notary credentials, tap token) exists only in GitHub Actions secrets and the release machine's keychain.
+- **Event posting:** only mouse click (left/right), scroll-wheel, and AX actions (`AXPress`, `AXShowMenu`, `AXRaise`). Never keyboard events. Every posted CGEvent is tagged with `eventSourceUserData = 0x474C494E54` ("SACCADE") so our own monitors ignore it.
+- **Data handling:** pixel buffers never leave SaccadePerception and are released after one inference. AX string attributes (titles, values) are read only for role/subrole/action checks and are never logged at `.public`, stored, or sent. Secure text fields are filtered at the AXService level.
+- **Secrets:** `SACCADE_TELEMETRYDECK_APP_ID`, `SACCADE_SENTRY_DSN`, `SACCADE_SPARKLE_PUBLIC_ED_KEY` are public-by-design identifiers embedded at build time from `Config/Secrets.xcconfig` (gitignored). Private material (`SPARKLE_PRIVATE_ED_KEY`, Developer ID certificate `.p12` + password, notary credentials, tap token) exists only in GitHub Actions secrets and the release machine's keychain.
 - **Update integrity:** Sparkle EdDSA + HTTPS + Developer ID code-signature check on the update.
 - **Model integrity:** SHA-256 verified at load.
 - **Input validation:** all persisted JSON is decoded with strict `Codable` (unknown keys ignored, missing required keys → migration/defaults); settings values are clamped to documented ranges in `Settings.validated()`.
@@ -600,37 +600,37 @@ Sub-machines are stepped in this order on every sample: `PauseMachine` → `AppR
 
 | Environment | Build config | Differences |
 |---|---|---|
-| Local dev | Debug | Eval Arena + debug gaze dot available; TelemetryDeck `testMode`; Sentry disabled; `GLINT_PROVIDER` / `GLINT_FAKE_CAMERA` env overrides honored; Sparkle feed may point at a local server |
-| CI | Debug (tests) / Release (build check) | Linux job: GlintCore + glint-eval only; macOS job: unsigned build (`CODE_SIGNING_ALLOWED=NO`) + tests |
+| Local dev | Debug | Eval Arena + debug gaze dot available; TelemetryDeck `testMode`; Sentry disabled; `SACCADE_PROVIDER` / `SACCADE_FAKE_CAMERA` env overrides honored; Sparkle feed may point at a local server |
+| CI | Debug (tests) / Release (build check) | Linux job: SaccadeCore + saccade-eval only; macOS job: unsigned build (`CODE_SIGNING_ALLOWED=NO`) + tests |
 | Beta | Release, channel `beta` | Sparkle feed `appcast-beta.xml`; metrics prompt same as prod |
 | Production | Release | Signed, notarized, Sparkle `appcast.xml` |
 
 | Name | Required | Example (fake) | Used by | Secret? |
 |---|---|---|---|---|
-| `GLINT_DEVELOPMENT_TEAM` | release | `ABCDE12345` | `Config/Base.xcconfig` → `DEVELOPMENT_TEAM`; `scripts/release.sh` | no |
-| `GLINT_BUNDLE_ID` | yes (default `com.example.glint`) | `com.example.glint` | `Config/Base.xcconfig` → `PRODUCT_BUNDLE_IDENTIFIER` | no |
-| `GLINT_TELEMETRYDECK_APP_ID` | no (empty = disabled) | `00000000-0000-0000-0000-000000000000` | GlintServices via Info.plist `GlintTelemetryAppID` | no |
-| `GLINT_SENTRY_DSN` | no (empty = disabled) | `https://abc@o0.ingest.sentry.io/0` | GlintServices via Info.plist `GlintSentryDSN` | no |
-| `GLINT_SPARKLE_FEED_URL` | release | `https://github.com/<owner>/glint-releases/releases/latest/download/appcast.xml` | Info.plist `SUFeedURL` | no |
-| `GLINT_SPARKLE_PUBLIC_ED_KEY` | release | `base64…=` | Info.plist `SUPublicEDKey` | no |
+| `SACCADE_DEVELOPMENT_TEAM` | release | `ABCDE12345` | `Config/Base.xcconfig` → `DEVELOPMENT_TEAM`; `scripts/release.sh` | no |
+| `SACCADE_BUNDLE_ID` | yes (default `com.example.saccade`) | `com.example.saccade` | `Config/Base.xcconfig` → `PRODUCT_BUNDLE_IDENTIFIER` | no |
+| `SACCADE_TELEMETRYDECK_APP_ID` | no (empty = disabled) | `00000000-0000-0000-0000-000000000000` | SaccadeServices via Info.plist `SaccadeTelemetryAppID` | no |
+| `SACCADE_SENTRY_DSN` | no (empty = disabled) | `https://abc@o0.ingest.sentry.io/0` | SaccadeServices via Info.plist `SaccadeSentryDSN` | no |
+| `SACCADE_SPARKLE_FEED_URL` | release | `https://github.com/<owner>/saccade-releases/releases/latest/download/appcast.xml` | Info.plist `SUFeedURL` | no |
+| `SACCADE_SPARKLE_PUBLIC_ED_KEY` | release | `base64…=` | Info.plist `SUPublicEDKey` | no |
 | `SPARKLE_PRIVATE_ED_KEY` | release CI | — | `generate_appcast` / `sign_update` | **yes** |
 | `MACOS_CERT_P12_BASE64` / `MACOS_CERT_PASSWORD` | release CI | — | keychain import | **yes** |
 | `NOTARY_APPLE_ID` / `NOTARY_TEAM_ID` / `NOTARY_APP_PASSWORD` | release CI | — | `xcrun notarytool submit` | **yes** |
-| `NOTARY_PROFILE` | release (local) | `glint-notary` | `scripts/release.sh` (notarytool keychain profile) | no |
-| `GLINT_STORAGE_ROOT` | no (tests) | `/tmp/glint-test-x` | `AppPaths.live` | no |
+| `NOTARY_PROFILE` | release (local) | `saccade-notary` | `scripts/release.sh` (notarytool keychain profile) | no |
+| `SACCADE_STORAGE_ROOT` | no (tests) | `/tmp/saccade-test-x` | `AppPaths.live` | no |
 | `HOMEBREW_TAP_TOKEN` | release CI | — | cask bump | **yes** |
-| `GLINT_PROVIDER` | no (DEBUG) | `vision` | ModelLoader | no |
-| `GLINT_FAKE_CAMERA` | no (DEBUG) | `/path/to/trace.jsonl` | Replays a trace instead of the camera (UI tests) | no |
+| `SACCADE_PROVIDER` | no (DEBUG) | `vision` | ModelLoader | no |
+| `SACCADE_FAKE_CAMERA` | no (DEBUG) | `/path/to/trace.jsonl` | Replays a trace instead of the camera (UI tests) | no |
 
 Build-time values flow `Config/Secrets.xcconfig` → `Config/Base.xcconfig` → Info.plist keys. `Config/Secrets.example.xcconfig` is committed with the fake values above. xcconfig treats `//` as a comment, so URLs are written `https:/$()/host/...`.
 
 ## 13. Deployment & Infrastructure
 
-- **Hosting (F-14):** release artifacts (`Glint-<version>.dmg`, `Glint-<version>.zip` for Sparkle, `appcast.xml`) on GitHub Releases (repo per Q1). No servers.
+- **Hosting (F-14):** release artifacts (`Saccade-<version>.dmg`, `Saccade-<version>.zip` for Sparkle, `appcast.xml`) on GitHub Releases (repo per Q1). No servers.
 - **CI pipeline (`.github/workflows/ci.yml`, on every PR):**
-  1. `core-linux` (ubuntu, `swift:6.4.1-noble`): `swift test` for GlintCore + GlintEval with the coverage gate; from P2.T8 also `glint-eval --dataset Evals/datasets/ci --check`.
+  1. `core-linux` (ubuntu, `swift:6.4.1-noble`): `swift test` for SaccadeCore + SaccadeEval with the coverage gate; from P2.T8 also `saccade-eval --dataset Evals/datasets/ci --check`.
   2. `lint` (ubuntu): `swiftformat --lint .`, `swiftlint --strict`, `scripts/check-architecture.sh` (+ self-test), `scripts/check-licenses.sh` (+ self-test), `scripts/contrast.py`.
-  3. `app-macos` (macos-26, Xcode 27.1+): `swift test --package-path Packages/GlintKit` (unit + snapshot), `xcodegen generate`, `xcodebuild test` (app build + UI tests).
+  3. `app-macos` (macos-26, Xcode 27.1+): `swift test --package-path Packages/SaccadeKit` (unit + snapshot), `xcodegen generate`, `xcodebuild test` (app build + UI tests).
 - **Release pipeline (`.github/workflows/release.yml`, on tag `v*`):** import cert → `xcodebuild archive` (Release) → `xcodebuild -exportArchive` (Developer ID) → `xcrun notarytool submit --wait` → `xcrun stapler staple` → `create-dmg` → notarize + staple the DMG → `ditto -c -k` zip for Sparkle → `generate_appcast` with private key → `gh release create` → bump Homebrew cask → post-release smoke (`spctl --assess`).
 - **Versioning:** SemVer `MARKETING_VERSION`; `CURRENT_PROJECT_VERSION` = CI run number. The Sparkle `sparkle:version` is the build number.
 - **Rollback:** publish a new appcast entry pointing at the previous build with a higher build number (Sparkle never downgrades), e.g. `1.0.2 (build 210)` containing 1.0.0's code. A `scripts/rollback.sh <good-tag>` re-tags and reruns the release with a bumped build number.
@@ -639,9 +639,9 @@ Build-time values flow `Config/Secrets.xcconfig` → `Config/Base.xcconfig` → 
 ## 14. Observability
 
 - **Logging:** `os.Logger(subsystem: "<bundle id>", category: …)` with categories `perception`, `gaze`, `intent`, `ax`, `actuation`, `ui`, `storage`, `telemetry`, `update`. Interpolated values default to `.private`; only enums, numbers, and error codes are `.public`. No `print`.
-- **Signposts:** `OSSignposter` intervals `frame`, `landmarks`, `map`, `intent`, `axSnapshot`, `render` for Instruments (`xctrace`) profiling; P1.T10 adds a `Glint.tracetemplate`.
+- **Signposts:** `OSSignposter` intervals `frame`, `landmarks`, `map`, `intent`, `axSnapshot`, `render` for Instruments (`xctrace`) profiling; P1.T10 adds a `Saccade.tracetemplate`.
 - **Diagnostics panel** (Settings → Advanced): live fps, provider, p50/p95 latency, sigmaPt, confidence, AX timeouts/min, last 20 intent decisions (enum only). "Export diagnostics" writes this JSON (no images, no AX strings) to a user-chosen path.
-- **Crash/errors:** Sentry (opt-in) with `beforeSend` dropping `message` strings that aren't `GlintError.code`s and stripping breadcrumbs.
+- **Crash/errors:** Sentry (opt-in) with `beforeSend` dropping `message` strings that aren't `SaccadeError.code`s and stripping breadcrumbs.
 - **Product metrics:** TelemetryDeck (opt-in) per §8; dashboards: activation funnel, daily actions, calibration buckets, false-click proxy, latency buckets.
 - **Alerts:** Sentry alert on a new issue or a crash-free rate < 99.5% (24 h); TelemetryDeck weekly email digest.
 
@@ -674,8 +674,8 @@ Context: iris landmarks and blink blendshapes are essential for accuracy; Vision
 **ADR-003 — Developer ID distribution, not sandboxed, no Mac App Store**
 Context: posting synthetic events and acting on other apps via AX require Accessibility trust, which is unavailable to sandboxed apps. Decision: hardened runtime + notarization, outside the App Store. Consequences: Sparkle for updates; stricter self-imposed guardrails (G-SEC).
 
-**ADR-004 — Pure, Linux-compilable GlintCore**
-Context: coding agents and cheap CI run on Linux; the riskiest logic (mapping, blink grammar, intent) is pure math and state machines. Decision: GlintCore imports Foundation only, and all time is injected. Consequences: hand-written linear algebra; `CGPoint`-like types are our own `Point/Rect/Size`, with conversion extensions in GlintSystem/GlintUI.
+**ADR-004 — Pure, Linux-compilable SaccadeCore**
+Context: coding agents and cheap CI run on Linux; the riskiest logic (mapping, blink grammar, intent) is pure math and state machines. Decision: SaccadeCore imports Foundation only, and all time is injected. Consequences: hand-written linear algebra; `CGPoint`-like types are our own `Point/Rect/Size`, with conversion extensions in SaccadeSystem/SaccadeUI.
 
 **ADR-005 — Scroll injection via located pixel scroll-wheel CGEvents, AX scroll-bar fallback**
 Context: zone scroll must scroll the area under the gaze without moving the cursor. Decision: post `CGEvent(scrollWheelEvent2Source:units: .pixel …)` with `location = gaze`, phases set, and the tag. P3.T7 verifies routing in the compatibility apps; if an app routes by cursor position, use AX `AXVerticalScrollBar` `AXValue` stepping for that area. Consequences: per-app fallback map in `ScrollCompatibility.swift`.
@@ -692,8 +692,8 @@ Context: user chose opt-in anonymous metrics through a privacy-first service. De
 **ADR-011 — Apple Vision first; universal (Apple Silicon + Intel) builds**
 Context: the user may be on an Intel Mac, and the ADR-002 spike (MediaPipe via ONNX Runtime vs Vision) needs a Mac this project couldn't reach. Decision: ship the Apple Vision provider (`FaceTracker`, `VNDetectFaceLandmarksRequest` at 640×480) as the only provider for now; build universal (`ARCHS = $(ARCHS_STANDARD)`). Features are provider-agnostic (`FaceObservation` → `GazeFeatures`), so the MediaPipe/ORT provider can be added later behind the same `FaceTracking` protocol and chosen by the ADR-002 rule. Consequences: zero model downloads or conversion; lower pupil precision than iris landmarks; Intel frame rate is lower and the performance budgets in EVAL_GUARDRAILS §6 apply to Apple Silicon only.
 
-**ADR-010 — GlintPlatform shared macOS kernel**
-Context: logging, signposts, the production clock and storage paths are needed by every GlintKit module, but GlintCore can't import `os` and GlintUI must not depend on GlintSystem. Decision: a small `GlintPlatform` module that every GlintKit module may import; it holds no domain logic. Consequences: one more target; `check-architecture.sh` keeps SwiftUI/AppKit out of it by review.
+**ADR-010 — SaccadePlatform shared macOS kernel**
+Context: logging, signposts, the production clock and storage paths are needed by every SaccadeKit module, but SaccadeCore can't import `os` and SaccadeUI must not depend on SaccadeSystem. Decision: a small `SaccadePlatform` module that every SaccadeKit module may import; it holds no domain logic. Consequences: one more target; `check-architecture.sh` keeps SwiftUI/AppKit out of it by review.
 
 **ADR-009 — XcodeGen-generated project**
 Context: agents corrupt `project.pbxproj`. Decision: `project.yml` is the source; `*.xcodeproj` is gitignored. Consequences: `xcodegen generate` is step one of every build.

@@ -1,5 +1,5 @@
 import Foundation
-import GlintPlatform
+import SaccadePlatform
 import Sparkle
 
 /// Sparkle 2 auto-updates (F-14, ADR-003). Starts only when the build carries an EdDSA public key and a feed
@@ -13,7 +13,7 @@ final class Updater {
             feedURL: bundle.object(forInfoDictionaryKey: "SUFeedURL") as? String,
             publicKey: bundle.object(forInfoDictionaryKey: "SUPublicEDKey") as? String
         ) else {
-            GlintLog.logger(.update).info("updater disabled: no feed URL or public key in this build")
+            SaccadeLog.logger(.update).info("updater disabled: no feed URL or public key in this build")
             return nil
         }
         controller = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)

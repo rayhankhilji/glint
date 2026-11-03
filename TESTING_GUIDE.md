@@ -1,17 +1,17 @@
-# Glint — Testing Guide
+# Saccade — Testing Guide
 
 > Version: 1.0 · Updated: 2026-11-03 · Every command here is copy-pasteable from the repo root. If one stops working, fix the command or this doc in the same PR.
 
 ## 1. Strategy
 
-Glint's risk is not CRUD bugs; it's **perception and intent quality** (accuracy, false clicks) and **system integration** (AX, events, permissions). The pyramid reflects that:
+Saccade's risk is not CRUD bugs; it's **perception and intent quality** (accuracy, false clicks) and **system integration** (AX, events, permissions). The pyramid reflects that:
 
 | Layer | Share | Runs on | What it's for |
 |---|---|---|---|
-| Unit (GlintCore) | ~55% | Linux + macOS | Every state machine transition, math (features, ridge, filters), blink grammar, snap scoring, settings migration, telemetry schema |
-| Replay / eval (`glint-eval`) | ~15% | Linux + macOS | End-to-end pipeline quality on recorded landmark traces with ground truth: the gate for accuracy and false actions |
-| Integration (GlintKit incl. GlintRuntime, with protocol fakes) | ~15% | macOS | Stores, IntentCoordinator/CalibrationCoordinator/TrackingController wiring, ActuationService decisions with a fake event poster, AXService filtering over fake trees, camera restart logic |
-| Snapshot (GlintUI) | ~10% | macOS | Every component and screen state, light/dark, reduced motion |
+| Unit (SaccadeCore) | ~55% | Linux + macOS | Every state machine transition, math (features, ridge, filters), blink grammar, snap scoring, settings migration, telemetry schema |
+| Replay / eval (`saccade-eval`) | ~15% | Linux + macOS | End-to-end pipeline quality on recorded landmark traces with ground truth: the gate for accuracy and false actions |
+| Integration (SaccadeKit incl. SaccadeRuntime, with protocol fakes) | ~15% | macOS | Stores, IntentCoordinator/CalibrationCoordinator/TrackingController wiring, ActuationService decisions with a fake event poster, AXService filtering over fake trees, camera restart logic |
+| Snapshot (SaccadeUI) | ~10% | macOS | Every component and screen state, light/dark, reduced motion |
 | UI (XCUITest) | ~5% | macOS | Onboarding flow, popover, settings persistence, using a fake camera and fake permissions |
 | Manual / hardware QA | checklist | Real Mac | Real camera, real TCC prompts, real AX in third-party apps, feel and motion |
 
@@ -19,36 +19,36 @@ Glint's risk is not CRUD bugs; it's **perception and intent quality** (accuracy,
 
 ## 2. Setup
 
-Prerequisites: a dev Mac on macOS 26.6+ (Apple Silicon) with Xcode 27.1+ (`xcode-select -p` points to it), Homebrew, Git LFS. The app itself runs on macOS 14+. Linux (agents/CI) only needs the Swift 6.4 toolchain (`swift --version` ≥ 6.4) for GlintCore.
+Prerequisites: a dev Mac on macOS 26.6+ (Apple Silicon) with Xcode 27.1+ (`xcode-select -p` points to it), Homebrew, Git LFS. The app itself runs on macOS 14+. Linux (agents/CI) only needs the Swift 6.4 toolchain (`swift --version` ≥ 6.4) for SaccadeCore.
 
 From a clean clone (macOS):
 
 ```bash
 git clone <repo-url> glint && cd glint
 scripts/bootstrap.sh
-swift test --package-path Packages/GlintCore
-swift test --package-path Packages/GlintKit
-xcodebuild -project Glint.xcodeproj -scheme Glint -destination 'platform=macOS,arch=arm64' test
+swift test --package-path Packages/SaccadeCore
+swift test --package-path Packages/SaccadeKit
+xcodebuild -project Saccade.xcodeproj -scheme Saccade -destination 'platform=macOS,arch=arm64' test
 ```
 
-From a clean clone (Linux, GlintCore only):
+From a clean clone (Linux, SaccadeCore only):
 
 ```bash
 git lfs install && git lfs pull --include="Evals/datasets/ci/**"
-swift test --package-path Packages/GlintCore
-swift run --package-path Packages/GlintCore glint-eval --dataset Evals/datasets/ci --check
+swift test --package-path Packages/SaccadeCore
+swift run --package-path Packages/SaccadeCore saccade-eval --dataset Evals/datasets/ci --check
 ```
 
 **Test configuration:** no `.env` is needed. Tests read only these environment variables:
 
 ```bash
 # Optional overrides used by tests and DEBUG builds (fake values)
-GLINT_FAKE_CAMERA=Evals/datasets/ci/onboarding-happy.jsonl   # UI tests: replay landmarks instead of the camera
-GLINT_FAKE_PERMISSIONS=camera:granted,ax:granted             # UI tests: FakePermissionsService states
-GLINT_PROVIDER=vision                                        # force fallback provider (DEBUG)
+SACCADE_FAKE_CAMERA=Evals/datasets/ci/onboarding-happy.jsonl   # UI tests: replay landmarks instead of the camera
+SACCADE_FAKE_PERMISSIONS=camera:granted,ax:granted             # UI tests: FakePermissionsService states
+SACCADE_PROVIDER=vision                                        # force fallback provider (DEBUG)
 SNAPSHOT_RECORD=1                                            # re-record snapshots (never in CI)
-GLINT_SNAPSHOT_BOOTSTRAP=1                                   # CI only, until Mac-recorded references are committed
-GLINT_STORAGE_ROOT=/tmp/glint-test-<uuid>                    # stores write here in tests (set automatically by TestSupport)
+SACCADE_SNAPSHOT_BOOTSTRAP=1                                   # CI only, until Mac-recorded references are committed
+SACCADE_STORAGE_ROOT=/tmp/saccade-test-<uuid>                    # stores write here in tests (set automatically by TestSupport)
 ```
 
 **Test storage:** stores take a root URL. `TestSupport.makeTempRoot()` creates a unique temp directory per test and deletes it in teardown. Tests never touch the real Application Support.
@@ -57,28 +57,28 @@ GLINT_STORAGE_ROOT=/tmp/glint-test-<uuid>                    # stores write here
 
 | Command | Runs | Time | When |
 |---|---|---|---|
-| `swift test --package-path Packages/GlintCore` | All core unit + eval-lib tests | ~20 s | Every change |
-| `swift test --package-path Packages/GlintCore --filter BlinkGrammarTests` | One suite | ~3 s | Iterating |
-| `swift test --package-path Packages/GlintCore --filter "T-F06"` | Tests whose display name contains the ID (`@Test("T-F06-AC2 …")`) | ~5 s | Verifying an AC |
-| `swift test --package-path Packages/GlintCore --enable-code-coverage` then `scripts/coverage.sh core` | Coverage report + gate (§7) | ~40 s | Before commit |
-| `swift test --package-path Packages/GlintKit` | Integration + snapshot tests | ~60 s | When GlintKit changes |
-| `SNAPSHOT_RECORD=1 swift test --package-path Packages/GlintKit --filter GlintUITests` | Re-record snapshots (review the PNG diffs!) | ~60 s | Intentional visual change |
-| `xcodebuild -project Glint.xcodeproj -scheme Glint -destination 'platform=macOS,arch=arm64' test` | App build + XCUITest (package tests run via `swift test`) | ~5 min | Before PR / phase end |
-| `xcodebuild … test -only-testing:GlintUITestsApp/OnboardingUITests` | One UI test class | ~90 s | Iterating UI flows |
-| `swift run --package-path Packages/GlintCore glint-eval --dataset Evals/datasets/ci --check` | CI eval gate (thresholds + baseline diff) | ~30 s | Any perception/intent change |
-| `swift run --package-path Packages/GlintCore -c release glint-eval --dataset Evals/datasets/v1 --report Evals/reports/latest.md --by-subgroup` | Full eval report | ~5 min | Phase end, release |
-| `swift run --package-path Packages/GlintCore glint-eval --dataset Evals/datasets/ci --update-baseline` | Rewrite `baseline.json` | ~30 s | Only with human approval (EVAL_GUARDRAILS §9) |
+| `swift test --package-path Packages/SaccadeCore` | All core unit + eval-lib tests | ~20 s | Every change |
+| `swift test --package-path Packages/SaccadeCore --filter BlinkGrammarTests` | One suite | ~3 s | Iterating |
+| `swift test --package-path Packages/SaccadeCore --filter "T-F06"` | Tests whose display name contains the ID (`@Test("T-F06-AC2 …")`) | ~5 s | Verifying an AC |
+| `swift test --package-path Packages/SaccadeCore --enable-code-coverage` then `scripts/coverage.sh core` | Coverage report + gate (§7) | ~40 s | Before commit |
+| `swift test --package-path Packages/SaccadeKit` | Integration + snapshot tests | ~60 s | When SaccadeKit changes |
+| `SNAPSHOT_RECORD=1 swift test --package-path Packages/SaccadeKit --filter SaccadeUITests` | Re-record snapshots (review the PNG diffs!) | ~60 s | Intentional visual change |
+| `xcodebuild -project Saccade.xcodeproj -scheme Saccade -destination 'platform=macOS,arch=arm64' test` | App build + XCUITest (package tests run via `swift test`) | ~5 min | Before PR / phase end |
+| `xcodebuild … test -only-testing:SaccadeUITestsApp/OnboardingUITests` | One UI test class | ~90 s | Iterating UI flows |
+| `swift run --package-path Packages/SaccadeCore saccade-eval --dataset Evals/datasets/ci --check` | CI eval gate (thresholds + baseline diff) | ~30 s | Any perception/intent change |
+| `swift run --package-path Packages/SaccadeCore -c release saccade-eval --dataset Evals/datasets/v1 --report Evals/reports/latest.md --by-subgroup` | Full eval report | ~5 min | Phase end, release |
+| `swift run --package-path Packages/SaccadeCore saccade-eval --dataset Evals/datasets/ci --update-baseline` | Rewrite `baseline.json` | ~30 s | Only with human approval (EVAL_GUARDRAILS §9) |
 | `scripts/check-architecture.sh` | Import rules, network allowlist, banned APIs | ~2 s | Every commit |
 | `scripts/check-licenses.sh` | Dependency license allowlist | ~2 s | Dependency changes |
-| `scripts/perf.sh` | Launches a Release build with `GLINT_FAKE_CAMERA` + signposts, records 60 s with `xctrace`, prints p50/p95 per stage | ~2 min | Pipeline changes, P1/P5 |
+| `scripts/perf.sh` | Launches a Release build with `SACCADE_FAKE_CAMERA` + signposts, records 60 s with `xctrace`, prints p50/p95 per stage | ~2 min | Pipeline changes, P1/P5 |
 
 ## 4. Mock Data & Fixtures
 
-### 4.1 Factories (GlintCore `TestSupport` target)
+### 4.1 Factories (SaccadeCore `TestSupport` target)
 
 | Factory | Location | Defaults |
 |---|---|---|
-| `Fixtures.settings(_:)` | `Packages/GlintCore/Sources/GlintCoreTestSupport/Fixtures+Settings.swift` | `Settings.defaults` with overrides via a closure |
+| `Fixtures.settings(_:)` | `Packages/SaccadeCore/Sources/SaccadeCoreTestSupport/Fixtures+Settings.swift` | `Settings.defaults` with overrides via a closure |
 | `Fixtures.profile(level:samples:)` | `…/Fixtures+Profile.swift` | Synthetic profile from `SyntheticEye` with a known ground-truth mapping |
 | `Fixtures.fixation(at:duration:sigma:)` | `…/Fixtures+Gaze.swift` | 300 ms, sigma 60 pt |
 | `Fixtures.blinkSequence(_ pattern: [BlinkSpec])` | `…/Fixtures+Blink.swift` | Generates per-frame closure values at 30 fps |
@@ -106,26 +106,26 @@ GLINT_STORAGE_ROOT=/tmp/glint-test-<uuid>                    # stores write here
 | Actuation | `RecordingEventPoster` captures posted CGEvent descriptors (type, location, deltas, tag) without posting. |
 | Window list | `FakeWindowService` with scripted windows. |
 | Input | `FakeInputMonitor` emits physical clicks/activity and returns a scripted `secondsSinceLastKeyDown`. |
-| Permissions | `FakePermissionsService` driven by `GLINT_FAKE_PERMISSIONS`. |
+| Permissions | `FakePermissionsService` driven by `SACCADE_FAKE_PERMISSIONS`. |
 | TelemetryDeck / Sentry | `SpyTelemetryClient`; a `URLProtocol` spy (`NetworkSpy`) asserts no requests leave in consent-off tests. |
 | Sparkle | Local appcast served by `python3 -m http.server` from `Tests/Fixtures/appcast/` in the manual update test (§10); not in CI. |
 
 ### 4.4 Time and randomness
 
-- GlintCore uses `ManualClock` in all tests (`clock.advance(by: 0.033)`).
+- SaccadeCore uses `ManualClock` in all tests (`clock.advance(by: 0.033)`).
 - `SyntheticEye` and any noise use `SeededGenerator(seed:)` (SplitMix64); the seed is printed on failure.
 - No `sleep` in tests. Async tests use `confirmation` (Swift Testing) with explicit expected counts.
 
 ## 5. Test Suites
 
-### 5.1 Unit (GlintCore) — `Packages/GlintCore/Tests/GlintCoreTests/`
+### 5.1 Unit (SaccadeCore) — `Packages/SaccadeCore/Tests/SaccadeCoreTests/`
 
 Naming: `<Type>Tests.swift`; each AC-mapped test's display name starts with its test ID.
 
 ```swift
-// Packages/GlintCore/Tests/GlintCoreTests/ClickMachineTests.swift — T-F06-AC4
+// Packages/SaccadeCore/Tests/SaccadeCoreTests/ClickMachineTests.swift — T-F06-AC4
 import Testing
-@testable import GlintCore
+@testable import SaccadeCore
 
 @Test("T-F06-AC4 double blink on an uncertain lock does not click")
 func uncertainLockDoesNotClick() {
@@ -135,25 +135,25 @@ func uncertainLockDoesNotClick() {
              + Fixtures.blinkSequence([.blink(ms: 120), .gap(ms: 200), .blink(ms: 120)])
   let actions = engine.replay(frames, world: world)
   #expect(!actions.contains { if case .press = $0 { true } else { false } })
-  #expect(engine.lastOverlay.glint?.phase == .reject)
+  #expect(engine.lastOverlay.saccade?.phase == .reject)
 }
 ```
 
-### 5.2 Replay / eval — `Packages/GlintCore/Sources/glint-eval/`, `Tests/GlintEvalTests/`
+### 5.2 Replay / eval — `Packages/SaccadeCore/Sources/saccade-eval/`, `Tests/SaccadeEvalTests/`
 
-`glint-eval` loads traces, runs `FeatureExtractor → GazeMapper (fit from the trace's calibration segment) → filters → detectors → IntentEngine` with a `FakeWorld` built from the trace's labels (targets become AX candidates), and computes metrics (EVAL_GUARDRAILS §7.3). `--check` compares against thresholds and `baseline.json` and exits non-zero on failure with a Markdown diff. `GlintEvalTests` verify determinism (T-F15-AC1) and the regression detection (T-F15-AC3) on synthetic traces.
+`saccade-eval` loads traces, runs `FeatureExtractor → GazeMapper (fit from the trace's calibration segment) → filters → detectors → IntentEngine` with a `FakeWorld` built from the trace's labels (targets become AX candidates), and computes metrics (EVAL_GUARDRAILS §7.3). `--check` compares against thresholds and `baseline.json` and exits non-zero on failure with a Markdown diff. `SaccadeEvalTests` verify determinism (T-F15-AC1) and the regression detection (T-F15-AC3) on synthetic traces.
 
-### 5.3 Integration (GlintKit) — `Packages/GlintKit/Tests/*`
+### 5.3 Integration (SaccadeKit) — `Packages/SaccadeKit/Tests/*`
 
-Example targets: `SettingsStoreTests` (atomic write, corrupt-file recovery), `ProfileStoreTests`, `IntentCoordinatorTests`, `CalibrationCoordinatorTests`, `TrackingControllerTests` (GlintRuntimeTests: pipeline + fake AX + recording poster + fake system events), `ActuationServiceTests` (AXPress first, CGEvent fallback, tag, cursor restore), `AXServiceFilterTests` (secure fields, excluded apps, `AXManualAccessibility` once per pid), `CameraRestartTests`, `NetworkEgressTests`, `ModelLoaderTests` (`.requiresModels`).
+Example targets: `SettingsStoreTests` (atomic write, corrupt-file recovery), `ProfileStoreTests`, `IntentCoordinatorTests`, `CalibrationCoordinatorTests`, `TrackingControllerTests` (SaccadeRuntimeTests: pipeline + fake AX + recording poster + fake system events), `ActuationServiceTests` (AXPress first, CGEvent fallback, tag, cursor restore), `AXServiceFilterTests` (secure fields, excluded apps, `AXManualAccessibility` once per pid), `CameraRestartTests`, `NetworkEgressTests`, `ModelLoaderTests` (`.requiresModels`).
 
-### 5.4 Snapshot (GlintUI) — `Packages/GlintKit/Tests/GlintUITests/`
+### 5.4 Snapshot (SaccadeUI) — `Packages/SaccadeKit/Tests/SaccadeUITests/`
 
 One test per component state (DESIGN_SYSTEM §8) and screen state (§9), named `test_<Component>_<state>_<appearance>`. Each runs light + dark at 2× and once with `\.accessibilityReduceMotion = true`. Perceptual precision is 0.98, so tiny anti-aliasing differences pass.
 
 ### 5.5 UI (XCUITest) — `UITests/`
 
-Launches the app with `GLINT_FAKE_CAMERA`, `GLINT_FAKE_PERMISSIONS`, `GLINT_STORAGE_ROOT`, and `-GlintUITestMode YES` (disables the real overlay window and Sparkle). Classes: `OnboardingUITests`, `PopoverUITests`, `SettingsUITests`. Accessibility identifiers follow `glint.<surface>.<element>` (e.g. `glint.onboarding.camera.allow`).
+Launches the app with `SACCADE_FAKE_CAMERA`, `SACCADE_FAKE_PERMISSIONS`, `SACCADE_STORAGE_ROOT`, and `-SaccadeUITestMode YES` (disables the real overlay window and Sparkle). Classes: `OnboardingUITests`, `PopoverUITests`, `SettingsUITests`. Accessibility identifiers follow `saccade.<surface>.<element>` (e.g. `saccade.onboarding.camera.allow`).
 
 ### 5.6 Compatibility harness (manual, real AX)
 
@@ -169,42 +169,42 @@ DEBUG menu → "Run compatibility harness". With Accessibility granted, it opens
 
 ## 6. Acceptance Test Matrix
 
-Status values: `planned`, `written`, `passing`. Layer key: U = unit (GlintCore), R = replay/eval, I = integration (GlintKit), S = snapshot, UI = XCUITest, M = manual QA.
+Status values: `planned`, `written`, `passing`. Layer key: U = unit (SaccadeCore), R = replay/eval, I = integration (SaccadeKit), S = snapshot, UI = XCUITest, M = manual QA.
 
 | Test ID | AC | Layer | File | Status |
 |---|---|---|---|---|
 | T-F01-AC1 | F-01.AC1 | UI | UITests/OnboardingUITests.swift | planned |
-| T-F01-AC2 | F-01.AC2 | UI + S | UITests/OnboardingUITests.swift; GlintUITests/PermissionCardSnapshotTests.swift | planned |
-| T-F01-AC3 | F-01.AC3 | I | GlintKit/Tests/GlintUITests/OnboardingModelTests.swift | planned |
+| T-F01-AC2 | F-01.AC2 | UI + S | UITests/OnboardingUITests.swift; SaccadeUITests/PermissionCardSnapshotTests.swift | planned |
+| T-F01-AC3 | F-01.AC3 | I | SaccadeKit/Tests/SaccadeUITests/OnboardingModelTests.swift | planned |
 | T-F01-AC4 | F-01.AC4 | UI | UITests/OnboardingUITests.swift | planned |
 | T-F01-AC5 | F-01.AC5 | UI + S | UITests/OnboardingUITests.swift | planned |
 | T-F01-AC6 | F-01.AC6 | UI | UITests/OnboardingUITests.swift | planned |
 | T-F02-AC1 | F-02.AC1 | M (perf.sh) | scripts/perf.sh → TASK_LOG evidence | planned |
-| T-F02-AC2 | F-02.AC2 | R | glint-eval suite `gaze-accuracy` | planned |
-| T-F02-AC3 | F-02.AC3 | U | GlintCoreTests/BlinkDetectorTests.swift | planned |
-| T-F02-AC4 | F-02.AC4 | U + I | GlintCoreTests/GazeEstimatorTests.swift; IntentCoordinatorTests.swift | planned |
-| T-F02-AC5 | F-02.AC5 | I + M | GlintPerceptionTests/CameraRestartTests.swift | planned |
+| T-F02-AC2 | F-02.AC2 | R | saccade-eval suite `gaze-accuracy` | planned |
+| T-F02-AC3 | F-02.AC3 | U | SaccadeCoreTests/BlinkDetectorTests.swift | planned |
+| T-F02-AC4 | F-02.AC4 | U + I | SaccadeCoreTests/GazeEstimatorTests.swift; IntentCoordinatorTests.swift | planned |
+| T-F02-AC5 | F-02.AC5 | I + M | SaccadePerceptionTests/CameraRestartTests.swift | planned |
 | T-F02-AC6 | F-02.AC6 | I + arch | NetworkEgressTests.swift; scripts/check-architecture.sh; GazePipelineRetentionTests.swift | planned |
-| T-F03-AC1 | F-03.AC1 | U | GlintCoreTests/CalibrationScriptTests.swift (scripted timing) | planned |
-| T-F03-AC2 | F-03.AC2 | U + I | GlintCoreTests/CalibrationSessionTests.swift; GlintRuntimeTests/CalibrationCoordinatorTests.swift | planned |
-| T-F03-AC3 | F-03.AC3 | U | GlintCoreTests/CalibrationSessionTests.swift | planned |
+| T-F03-AC1 | F-03.AC1 | U | SaccadeCoreTests/CalibrationScriptTests.swift (scripted timing) | planned |
+| T-F03-AC2 | F-03.AC2 | U + I | SaccadeCoreTests/CalibrationSessionTests.swift; SaccadeRuntimeTests/CalibrationCoordinatorTests.swift | planned |
+| T-F03-AC3 | F-03.AC3 | U | SaccadeCoreTests/CalibrationSessionTests.swift | planned |
 | T-F03-AC4 | F-03.AC4 | U + I | CalibrationSessionTests.swift; CalibrationCoordinatorTests.swift | planned |
 | T-F03-AC5 | F-03.AC5 | UI | UITests/CalibrationUITests.swift | planned |
 | T-F03-AC6 | F-03.AC6 | M | §10 VoiceOver checklist | planned |
-| T-F04-AC1 | F-04.AC1 | U + R | GlintCoreTests/SilentLearnerTests.swift; glint-eval `implicit` | planned |
+| T-F04-AC1 | F-04.AC1 | U + R | SaccadeCoreTests/SilentLearnerTests.swift; saccade-eval `implicit` | planned |
 | T-F04-AC2 | F-04.AC2 | U | SilentLearnerTests.swift | planned |
 | T-F04-AC3 | F-04.AC3 | U | SilentLearnerTests.swift | planned |
 | T-F04-AC4 | F-04.AC4 | I | IntentCoordinatorTests.swift | planned |
 | T-F04-AC5 | F-04.AC5 | I | InputMonitorTagTests.swift | planned |
-| T-F05-AC1 | F-05.AC1 | R | glint-eval `arena-standard` | planned |
-| T-F05-AC2 | F-05.AC2 | R | glint-eval `arena-dense` | planned |
-| T-F05-AC3 | F-05.AC3 | U + R | GlintCoreTests/SnapMachineTests.swift; glint-eval `arena-jitter` | planned |
+| T-F05-AC1 | F-05.AC1 | R | saccade-eval `arena-standard` | planned |
+| T-F05-AC2 | F-05.AC2 | R | saccade-eval `arena-dense` | planned |
+| T-F05-AC3 | F-05.AC3 | U + R | SaccadeCoreTests/SnapMachineTests.swift; saccade-eval `arena-jitter` | planned |
 | T-F05-AC4 | F-05.AC4 | I | IntentCoordinatorTests.swift (FakeAXService latency 80 ms) | planned |
 | T-F05-AC5 | F-05.AC5 | I | AXServiceFilterTests.swift | planned |
 | T-F05-AC6 | F-05.AC6 | I + M | AXServiceFilterTests.swift; compat harness | planned |
-| T-F06-AC1 | F-06.AC1 | U + R | ClickMachineTests.swift; glint-eval `blink-intended` latency | planned |
-| T-F06-AC2 | F-06.AC2 | R | glint-eval `reading-natural` | planned |
-| T-F06-AC3 | F-06.AC3 | R | glint-eval `blink-intended` | planned |
+| T-F06-AC1 | F-06.AC1 | U + R | ClickMachineTests.swift; saccade-eval `blink-intended` latency | planned |
+| T-F06-AC2 | F-06.AC2 | R | saccade-eval `reading-natural` | planned |
+| T-F06-AC3 | F-06.AC3 | R | saccade-eval `blink-intended` | planned |
 | T-F06-AC4 | F-06.AC4 | U | ClickMachineTests.swift | planned |
 | T-F06-AC5 | F-06.AC5 | U + I + M | ClickMachineTests.swift; ActuationServiceTests.swift | planned |
 | T-F06-AC6 | F-06.AC6 | I | ActuationServiceTests.swift | planned |
@@ -223,11 +223,11 @@ Status values: `planned`, `written`, `passing`. Layer key: U = unit (GlintCore),
 | T-F09-AC2 | F-09.AC2 | U | ReadingTrackerTests.swift | planned |
 | T-F09-AC3 | F-09.AC3 | U | ReadingTrackerTests.swift | planned |
 | T-F09-AC4 | F-09.AC4 | I | AXServiceFilterTests.swift; log privacy lint | planned |
-| T-F10-AC1 | F-10.AC1 | I + M | GlintRuntimeTests/TrackingControllerTests.swift | planned |
+| T-F10-AC1 | F-10.AC1 | I + M | SaccadeRuntimeTests/TrackingControllerTests.swift | planned |
 | T-F10-AC2 | F-10.AC2 | U | PauseMachineTests.swift | planned |
 | T-F10-AC3 | F-10.AC3 | U + I | PauseMachineTests.swift; FrameRateControllerTests.swift | planned |
 | T-F10-AC4 | F-10.AC4 | U | AppRuleGateTests.swift | planned |
-| T-F10-AC5 | F-10.AC5 | I + M | GlintRuntimeTests/TrackingControllerTests.swift (fake SystemEvents) | planned |
+| T-F10-AC5 | F-10.AC5 | I + M | SaccadeRuntimeTests/TrackingControllerTests.swift (fake SystemEvents) | planned |
 | T-F10-AC6 | F-10.AC6 | U | PauseMachineTests.swift | planned |
 | T-F11-AC1 | F-11.AC1 | I + UI | SettingsStoreTests.swift; SettingsUITests.swift | planned |
 | T-F11-AC2 | F-11.AC2 | UI + S | PopoverUITests.swift; BannerSnapshotTests.swift | planned |
@@ -240,24 +240,24 @@ Status values: `planned`, `written`, `passing`. Layer key: U = unit (GlintCore),
 | T-F12-AC3 | F-12.AC3 | I | MetricsQueueTests.swift | planned |
 | T-F12-AC4 | F-12.AC4 | S + UI | PayloadViewerSnapshotTests.swift | planned |
 | T-F13-AC1 | F-13.AC1 | UI + M | AccessibilityAuditTests.swift | planned |
-| T-F13-AC2 | F-13.AC2 | S | GlintRingSnapshotTests.swift (reduced motion) + OverlayMotionSpecTests.swift | planned |
-| T-F13-AC3 | F-13.AC3 | S | GlintRingSnapshotTests.swift (high contrast) | planned |
+| T-F13-AC2 | F-13.AC2 | S | SaccadeRingSnapshotTests.swift (reduced motion) + OverlayMotionSpecTests.swift | planned |
+| T-F13-AC3 | F-13.AC3 | S | SaccadeRingSnapshotTests.swift (high contrast) | planned |
 | T-F13-AC4 | F-13.AC4 | I + M | OverlayWindowTests.swift (AX hidden, sharingType) | planned |
 | T-F14-AC1 | F-14.AC1 | CI release job | .github/workflows/release.yml post-step | planned |
 | T-F14-AC2 | F-14.AC2 | M | §10 update test | planned |
 | T-F14-AC3 | F-14.AC3 | M | §10 tampered update test | planned |
 | T-F14-AC4 | F-14.AC4 | M | §10 Homebrew test | planned |
-| T-F15-AC1 | F-15.AC1 | U | GlintEvalTests/DeterminismTests.swift | planned |
-| T-F15-AC2 | F-15.AC2 | U | GlintCoreTests/TraceSchemaTests.swift | planned |
-| T-F15-AC3 | F-15.AC3 | U | GlintEvalTests/RegressionGateTests.swift | planned |
+| T-F15-AC1 | F-15.AC1 | U | SaccadeEvalTests/DeterminismTests.swift | planned |
+| T-F15-AC2 | F-15.AC2 | U | SaccadeCoreTests/TraceSchemaTests.swift | planned |
+| T-F15-AC3 | F-15.AC3 | U | SaccadeEvalTests/RegressionGateTests.swift | planned |
 
 ## 7. Expected Results
 
 "Green" means:
 
-- All Swift Testing and XCTest suites pass on macOS; the GlintCore suites also pass on Linux.
-- Coverage: GlintCore ≥ 90%, GlintServices ≥ 80%, GlintSystem/GlintPerception ≥ 60% (`scripts/coverage.sh` gates).
-- `glint-eval --check` passes all blocking thresholds (EVAL_GUARDRAILS §7.3) with no regression > 2 pp vs baseline.
+- All Swift Testing and XCTest suites pass on macOS; the SaccadeCore suites also pass on Linux.
+- Coverage: SaccadeCore ≥ 90%, SaccadeServices ≥ 80%, SaccadeSystem/SaccadePerception ≥ 60% (`scripts/coverage.sh` gates).
+- `saccade-eval --check` passes all blocking thresholds (EVAL_GUARDRAILS §7.3) with no regression > 2 pp vs baseline.
 - `performAccessibilityAudit()` reports zero issues on the audited screens.
 - Snapshot tests: no unexpected diffs.
 - `check-architecture.sh` and `check-licenses.sh`: exit 0.
@@ -271,15 +271,15 @@ Status values: `planned`, `written`, `passing`. Layer key: U = unit (GlintCore),
 
 ```bash
 swiftformat . && swiftlint --strict
-swift test --package-path Packages/GlintCore --filter <AffectedSuite>
+swift test --package-path Packages/SaccadeCore --filter <AffectedSuite>
 scripts/check-architecture.sh
 ```
 
 Add, as needed:
 
 ```bash
-swift run --package-path Packages/GlintCore glint-eval --dataset Evals/datasets/ci --check    # perception/intent touched
-swift test --package-path Packages/GlintKit --filter <AffectedSuite>                          # GlintKit touched (macOS)
+swift run --package-path Packages/SaccadeCore saccade-eval --dataset Evals/datasets/ci --check    # perception/intent touched
+swift test --package-path Packages/SaccadeKit --filter <AffectedSuite>                          # SaccadeKit touched (macOS)
 ```
 
 **Before commit:** the full `swift test` for each touched package.
@@ -287,10 +287,10 @@ swift test --package-path Packages/GlintKit --filter <AffectedSuite>            
 **Phase-end loop:**
 
 ```bash
-swift test --package-path Packages/GlintCore --enable-code-coverage && scripts/coverage.sh core
-swift test --package-path Packages/GlintKit --enable-code-coverage && scripts/coverage.sh kit
-xcodebuild -project Glint.xcodeproj -scheme Glint -destination 'platform=macOS,arch=arm64' test
-swift run --package-path Packages/GlintCore -c release glint-eval --dataset Evals/datasets/v1 --report Evals/reports/latest.md --by-subgroup
+swift test --package-path Packages/SaccadeCore --enable-code-coverage && scripts/coverage.sh core
+swift test --package-path Packages/SaccadeKit --enable-code-coverage && scripts/coverage.sh kit
+xcodebuild -project Saccade.xcodeproj -scheme Saccade -destination 'platform=macOS,arch=arm64' test
+swift run --package-path Packages/SaccadeCore -c release saccade-eval --dataset Evals/datasets/v1 --report Evals/reports/latest.md --by-subgroup
 scripts/perf.sh
 ```
 
@@ -299,12 +299,12 @@ Then do the manual QA items for the phase (§10).
 **Reading failures:**
 
 - Swift Testing prints `#expect` source locations; seeds from `SeededGenerator` are in the failure message.
-- `glint-eval --check` writes `Evals/reports/check-<timestamp>.md` with per-metric diffs and the worst 10 traces.
+- `saccade-eval --check` writes `Evals/reports/check-<timestamp>.md` with per-metric diffs and the worst 10 traces.
 - XCUITest artifacts land in `build/TestResults.xcresult`. Open it with `xcrun xcresulttool get --path build/TestResults.xcresult --format json` or in Xcode.
 - Snapshot failures write `__Snapshots__/…_failure.png` next to the reference.
 - Signpost traces from `perf.sh` go to `build/perf/*.trace`.
 
-**If you're on Linux:** you can only run the GlintCore and glint-eval loops. Mark macOS-only verification as "pending macOS CI" in TASK_LOG and rely on the CI `app-macos` job before marking the task done.
+**If you're on Linux:** you can only run the SaccadeCore and saccade-eval loops. Mark macOS-only verification as "pending macOS CI" in TASK_LOG and rely on the CI `app-macos` job before marking the task done.
 
 ## 9. CI Pipeline
 
@@ -312,9 +312,9 @@ Then do the manual QA items for the phase (§10).
 
 | Job | Runner | Steps | Required for merge |
 |---|---|---|---|
-| `core-linux` | ubuntu-24.04, container `swift:6.4.1-noble` | `swift test --package-path Packages/GlintCore`, coverage gate; `glint-eval --dataset Evals/datasets/ci --check` from P2.T8 | yes |
+| `core-linux` | ubuntu-24.04, container `swift:6.4.1-noble` | `swift test --package-path Packages/SaccadeCore`, coverage gate; `saccade-eval --dataset Evals/datasets/ci --check` from P2.T8 | yes |
 | `lint` | ubuntu-24.04 | pinned tools via `install-tools.sh`; `swiftformat --lint .`, `swiftlint --strict`, `check-architecture.sh` + self-test, `check-licenses.sh` + self-test, `contrast.py` | yes |
-| `app-macos` | macos-26 + Xcode 27.1+ | `swift test --package-path Packages/GlintKit` (unit + snapshot; uploads `__Snapshots__`), `xcodegen generate`, `xcodebuild test` (app + UI tests, ad-hoc signed), xcresult on failure | yes |
+| `app-macos` | macos-26 + Xcode 27.1+ | `swift test --package-path Packages/SaccadeKit` (unit + snapshot; uploads `__Snapshots__`), `xcodegen generate`, `xcodebuild test` (app + UI tests, ad-hoc signed), xcresult on failure | yes |
 | `nightly` (schedule 03:17 UTC) | both | full `v1` eval with `--by-subgroup`, quarantined tests, dependency audit (`swift package show-dependencies` vs advisories) | no (opens an issue on failure) |
 | `release` (tag `v*`) | macos-latest | ARCHITECTURE §13 release pipeline + `spctl --assess` (T-F14-AC1) + entitlement diff (G-SEC-07) | — |
 
@@ -325,18 +325,18 @@ Run on a real Apple Silicon Mac with a real camera. Record results in TASK_LOG w
 - [ ] **First run on a clean user account:** real Camera and Accessibility prompts, deep link works, relaunch path works; time to first hands-free click < 90 s (Journey 1).
 - [ ] **Lighting matrix:** normal office light, dim (lamp only), backlit (window behind) → correct HUD guidance, no actions while low-confidence.
 - [ ] **Glasses:** regular and anti-reflective glasses → calibration level ≥ Fair.
-- [ ] **Distance / posture:** 45 cm, 65 cm, 85 cm; leaning back; head turned 20° → glint still locks the right targets on the Playground.
+- [ ] **Distance / posture:** 45 cm, 65 cm, 85 cm; leaning back; head turned 20° → saccade still locks the right targets on the Playground.
 - [ ] **Natural use, 15 min reading in Safari + Chrome:** zero unintended clicks; glide feels smooth; "where was I" appears after looking away ≥ 2 s.
 - [ ] **Compatibility harness** (§5.6) report reviewed; failures logged in the Decisions or Blockers table.
 - [ ] **Focus follows gaze:** typing in Notes while glancing at Slack doesn't switch focus; after stopping typing, it switches after ~0.9 s.
-- [ ] **Controls:** ⌃⌥G toggles and the green camera light goes off within 1 s; pause gesture via the menu bar icon; lock the screen and the camera stops; 1Password gets no glint.
+- [ ] **Controls:** ⌃⌥G toggles and the green camera light goes off within 1 s; pause gesture via the menu bar icon; lock the screen and the camera stops; 1Password gets no saccade.
 - [ ] **VoiceOver on:** complete onboarding, change a setting, run calibration (instructions announced).
 - [ ] **Reduce Motion, Increase Contrast, Reduce Transparency:** all surfaces correct.
 - [ ] **Light/Dark switch** while the popover is open.
-- [ ] **Overlay not captured (T-F11-AC6):** take a screenshot with ⌘⇧4 and a screen recording; the glint must not appear. Turn on Demo capture mode: it appears. Relaunch: it's hidden again.
+- [ ] **Overlay not captured (T-F11-AC6):** take a screenshot with ⌘⇧4 and a screen recording; the highlight must not appear. Turn on Demo capture mode: it appears. Relaunch: it's hidden again.
 - [ ] **Energy:** Activity Monitor Energy Impact "Low" average over 10 min tracking on battery.
 - [ ] **Updates (T-F14-AC2/AC3):** install vN, serve vN+1 from a local appcast, update, and confirm settings and permissions persist; a tampered zip is rejected.
-- [ ] **Homebrew (T-F14-AC4):** `brew install --cask <tap>/glint` on a clean VM.
-- [ ] **Launch at login (T-F11-AC5):** reboot and confirm Glint starts in its last state.
+- [ ] **Homebrew (T-F14-AC4):** `brew install --cask <tap>/saccade` on a clean VM.
+- [ ] **Launch at login (T-F11-AC5):** reboot and confirm Saccade starts in its last state.
 - [ ] **Motion feel review:** acquire, follow, flare, reject, glide, line marker at 60 Hz and 120 Hz; no jank.
 - [ ] **Copy review** against DESIGN_SYSTEM §10.
